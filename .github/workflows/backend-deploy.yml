@@ -1,0 +1,50 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Only deploy after CI passes
+    needs: []
+
+    # Uncomment when ready to deploy
+    # environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+
+      - name: Build and Push Docker image
+        working-directory: backend
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          docker build -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/api:${{ github.sha }} .
+          docker build -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/api:latest .
+          docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/api:${{ github.sha }}
+          docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/api:latest
+
+      - name: Deploy to Cloud Run
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          gcloud run deploy aso-api \
+            --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/api:${{ github.sha }} \
+            --region asia-northeast1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}"
