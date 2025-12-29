@@ -45,7 +45,9 @@ jobs:
 
       - name: Download dependencies
         working-directory: backend
-        run: go mod download
+        run: |
+          go mod tidy
+          go mod download
 
       - name: Run tests
         working-directory: backend
@@ -68,6 +70,10 @@ jobs:
         with:
           go-version: '1.23'
 
+      - name: Tidy modules
+        working-directory: backend
+        run: go mod tidy
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
@@ -85,9 +91,11 @@ jobs:
         with:
           go-version: '1.23'
 
-      - name: Build
+      - name: Tidy and Build
         working-directory: backend
-        run: go build -o api ./cmd/api
+        run: |
+          go mod tidy
+          go build -o api ./cmd/api
 
       - name: Build Docker image
         working-directory: backend
