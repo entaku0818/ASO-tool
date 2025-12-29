@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS ranking_history;
+DROP TABLE IF EXISTS keywords;

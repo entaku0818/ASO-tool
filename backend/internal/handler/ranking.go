@@ -1,0 +1,93 @@
+package handler
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/service"
+	"github.com/go-chi/chi/v5"
+)
+
+type RankingHandler struct {
+	service *service.RankingService
+}
+
+func NewRankingHandler(service *service.RankingService) *RankingHandler {
+	return &RankingHandler{service: service}
+}
+
+func (h *RankingHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req model.CreateRankingRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	ranking, err := h.service.Create(r.Context(), &req)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, ranking)
+}
+
+func (h *RankingHandler) ListByKeyword(w http.ResponseWriter, r *http.Request) {
+	keywordID := chi.URLParam(r, "keywordID")
+
+	limit := 30
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
+	rankings, err := h.service.ListByKeyword(r.Context(), keywordID, limit)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if rankings == nil {
+		rankings = []*model.RankingHistory{}
+	}
+
+	respondJSON(w, http.StatusOK, rankings)
+}
+
+func (h *RankingHandler) ListByApp(w http.ResponseWriter, r *http.Request) {
+	appID := chi.URLParam(r, "appID")
+
+	days := 30
+	if d := r.URL.Query().Get("days"); d != "" {
+		if parsed, err := strconv.Atoi(d); err == nil && parsed > 0 {
+			days = parsed
+		}
+	}
+
+	rankings, err := h.service.ListByApp(r.Context(), appID, days)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if rankings == nil {
+		rankings = []*model.RankingWithKeyword{}
+	}
+
+	respondJSON(w, http.StatusOK, rankings)
+}
+
+func (h *RankingHandler) GetLatest(w http.ResponseWriter, r *http.Request) {
+	keywordID := chi.URLParam(r, "keywordID")
+
+	ranking, err := h.service.GetLatestByKeyword(r.Context(), keywordID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, ranking)
+}

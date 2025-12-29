@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -13,8 +13,8 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/api
+# Tidy and build
+RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/api
 
 # Runtime stage
 FROM alpine:3.19

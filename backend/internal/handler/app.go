@@ -105,7 +105,12 @@ func handleServiceError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusNotFound, "not found")
 	case errors.Is(err, model.ErrNameRequired),
 		errors.Is(err, model.ErrBundleIDRequired),
-		errors.Is(err, model.ErrInvalidPlatform):
+		errors.Is(err, model.ErrInvalidPlatform),
+		errors.Is(err, model.ErrAppIDRequired),
+		errors.Is(err, model.ErrKeywordRequired),
+		errors.Is(err, model.ErrKeywordIDRequired),
+		errors.Is(err, model.ErrReviewIDRequired),
+		errors.Is(err, model.ErrInvalidRating):
 		respondError(w, http.StatusBadRequest, err.Error())
 	default:
 		respondError(w, http.StatusInternalServerError, "internal server error")

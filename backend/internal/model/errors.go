@@ -7,5 +7,14 @@ var (
 	ErrNameRequired     = errors.New("name is required")
 	ErrBundleIDRequired = errors.New("bundle_id is required")
 	ErrInvalidPlatform  = errors.New("platform must be 'ios' or 'android'")
-	ErrAlreadyExists    = errors.New("app already exists")
+	ErrAlreadyExists    = errors.New("already exists")
+
+	// Keyword errors
+	ErrAppIDRequired     = errors.New("app_id is required")
+	ErrKeywordRequired   = errors.New("keyword is required")
+	ErrKeywordIDRequired = errors.New("keyword_id is required")
+
+	// Review errors
+	ErrReviewIDRequired = errors.New("review_id is required")
+	ErrInvalidRating    = errors.New("rating must be between 1 and 5")
 )

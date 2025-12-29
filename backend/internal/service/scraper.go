@@ -1,0 +1,146 @@
+package service
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/repository"
+	"github.com/entaku0818/aso-tool/backend/internal/scraper"
+)
+
+type ScraperService struct {
+	appStoreScraper   *scraper.AppStoreScraper
+	googlePlayScraper *scraper.GooglePlayScraper
+	keywordRepo       *repository.KeywordRepository
+	rankingRepo       *repository.RankingRepository
+	reviewRepo        *repository.ReviewRepository
+	appRepo           *repository.AppRepository
+}
+
+func NewScraperService(
+	keywordRepo *repository.KeywordRepository,
+	rankingRepo *repository.RankingRepository,
+	reviewRepo *repository.ReviewRepository,
+	appRepo *repository.AppRepository,
+) *ScraperService {
+	return &ScraperService{
+		appStoreScraper:   scraper.NewAppStoreScraper(),
+		googlePlayScraper: scraper.NewGooglePlayScraper(),
+		keywordRepo:       keywordRepo,
+		rankingRepo:       rankingRepo,
+		reviewRepo:        reviewRepo,
+		appRepo:           appRepo,
+	}
+}
+
+// FetchAppInfo fetches app info from the store and returns it
+func (s *ScraperService) FetchAppInfo(ctx context.Context, bundleID string, platform model.Platform, country string) (*scraper.AppInfo, error) {
+	switch platform {
+	case model.PlatformIOS:
+		return s.appStoreScraper.GetAppInfo(ctx, bundleID, country)
+	case model.PlatformAndroid:
+		return s.googlePlayScraper.GetAppInfo(ctx, bundleID, country)
+	default:
+		return nil, fmt.Errorf("unsupported platform: %s", platform)
+	}
+}
+
+// UpdateKeywordRankings fetches and stores rankings for all keywords of an app
+func (s *ScraperService) UpdateKeywordRankings(ctx context.Context, appID string) (int, error) {
+	app, err := s.appRepo.Get(ctx, appID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get app: %w", err)
+	}
+
+	keywords, err := s.keywordRepo.ListByApp(ctx, appID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list keywords: %w", err)
+	}
+
+	updated := 0
+	for _, keyword := range keywords {
+		var rank *int
+		var err error
+
+		switch app.Platform {
+		case model.PlatformIOS:
+			rank, err = s.appStoreScraper.GetAppRanking(ctx, app.BundleID, keyword.Keyword, keyword.Country)
+		case model.PlatformAndroid:
+			rank, err = s.googlePlayScraper.GetAppRanking(ctx, app.BundleID, keyword.Keyword, keyword.Country)
+		}
+
+		if err != nil {
+			continue // Skip failed keywords
+		}
+
+		_, err = s.rankingRepo.Create(ctx, &model.CreateRankingRequest{
+			KeywordID: keyword.ID,
+			Rank:      rank,
+		})
+		if err != nil {
+			continue
+		}
+		updated++
+	}
+
+	return updated, nil
+}
+
+// FetchReviews fetches and stores new reviews for an app
+func (s *ScraperService) FetchReviews(ctx context.Context, appID string, itunesID string) (int, error) {
+	app, err := s.appRepo.Get(ctx, appID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get app: %w", err)
+	}
+
+	var reviews []scraper.Review
+
+	switch app.Platform {
+	case model.PlatformIOS:
+		// For iOS, we need the iTunes track ID (numeric)
+		if itunesID == "" {
+			return 0, fmt.Errorf("iTunes ID is required for iOS apps")
+		}
+		reviews, err = s.appStoreScraper.GetReviews(ctx, itunesID, "jp", 1)
+	case model.PlatformAndroid:
+		reviews, err = s.googlePlayScraper.GetReviews(ctx, app.BundleID, "jp", 1)
+	}
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to fetch reviews: %w", err)
+	}
+
+	stored := 0
+	for _, review := range reviews {
+		reviewedAt := review.ReviewedAt
+		_, err := s.reviewRepo.Create(ctx, &model.CreateReviewRequest{
+			AppID:      appID,
+			ReviewID:   review.ID,
+			Author:     review.Author,
+			Rating:     review.Rating,
+			Title:      review.Title,
+			Content:    review.Content,
+			Version:    review.Version,
+			ReviewedAt: &reviewedAt,
+		})
+		if err != nil {
+			continue // Skip duplicates
+		}
+		stored++
+	}
+
+	return stored, nil
+}
+
+// SearchApps searches for apps in the store
+func (s *ScraperService) SearchApps(ctx context.Context, keyword string, platform model.Platform, country string, limit int) ([]scraper.SearchResult, error) {
+	switch platform {
+	case model.PlatformIOS:
+		return s.appStoreScraper.SearchKeyword(ctx, keyword, country, limit)
+	case model.PlatformAndroid:
+		return s.googlePlayScraper.SearchKeyword(ctx, keyword, country, limit)
+	default:
+		return nil, fmt.Errorf("unsupported platform: %s", platform)
+	}
+}

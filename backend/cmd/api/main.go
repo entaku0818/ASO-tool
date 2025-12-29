@@ -43,6 +43,21 @@ func main() {
 	appService := service.NewAppService(appRepo)
 	appHandler := handler.NewAppHandler(appService)
 
+	keywordRepo := repository.NewKeywordRepository(pool)
+	keywordService := service.NewKeywordService(keywordRepo)
+	keywordHandler := handler.NewKeywordHandler(keywordService)
+
+	rankingRepo := repository.NewRankingRepository(pool)
+	rankingService := service.NewRankingService(rankingRepo)
+	rankingHandler := handler.NewRankingHandler(rankingService)
+
+	reviewRepo := repository.NewReviewRepository(pool)
+	reviewService := service.NewReviewService(reviewRepo)
+	reviewHandler := handler.NewReviewHandler(reviewService)
+
+	scraperService := service.NewScraperService(keywordRepo, rankingRepo, reviewRepo, appRepo)
+	scraperHandler := handler.NewScraperHandler(scraperService)
+
 	// Router setup
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -65,7 +80,43 @@ func main() {
 			r.Get("/{id}", appHandler.Get)
 			r.Put("/{id}", appHandler.Update)
 			r.Delete("/{id}", appHandler.Delete)
+
+			// Nested routes for app-specific resources
+			r.Route("/{appID}/keywords", func(r chi.Router) {
+				r.Get("/", keywordHandler.ListByApp)
+				r.Post("/", keywordHandler.Create)
+				r.Get("/{keywordID}", keywordHandler.Get)
+				r.Delete("/{keywordID}", keywordHandler.Delete)
+				r.Get("/{keywordID}/rankings", rankingHandler.ListByKeyword)
+				r.Get("/{keywordID}/rankings/latest", rankingHandler.GetLatest)
+			})
+
+			r.Route("/{appID}/rankings", func(r chi.Router) {
+				r.Get("/", rankingHandler.ListByApp)
+			})
+
+			r.Route("/{appID}/reviews", func(r chi.Router) {
+				r.Get("/", reviewHandler.ListByApp)
+				r.Post("/", reviewHandler.Create)
+				r.Get("/stats", reviewHandler.GetStats)
+				r.Get("/{reviewID}", reviewHandler.Get)
+				r.Delete("/{reviewID}", reviewHandler.Delete)
+			})
 		})
+
+		// Rankings endpoint for creating new rankings
+		r.Post("/rankings", rankingHandler.Create)
+
+		// Scraper endpoints
+		r.Route("/scraper", func(r chi.Router) {
+			r.Get("/app-info", scraperHandler.FetchAppInfo)
+			r.Get("/search", scraperHandler.SearchApps)
+			r.Post("/trigger", scraperHandler.TriggerAllUpdates)
+		})
+
+		// App-specific scraper actions
+		r.Post("/apps/{appID}/scrape/rankings", scraperHandler.UpdateRankings)
+		r.Post("/apps/{appID}/scrape/reviews", scraperHandler.FetchReviews)
 	})
 
 	// Server setup
