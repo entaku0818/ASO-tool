@@ -24,9 +24,6 @@ export default function RootLayout({
               <Link href="/" className="text-gray-600 hover:text-gray-900">
                 ダッシュボード
               </Link>
-              <Link href="/rankings" className="text-gray-600 hover:text-gray-900">
-                ランキング
-              </Link>
               <Link href="/keywords" className="text-gray-600 hover:text-gray-900">
                 キーワード検索
               </Link>
