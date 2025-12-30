@@ -66,10 +66,16 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// Health check
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+	// Health check with DB status
+	r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
+		dbStatus := "ok"
+		if err := pool.Ping(req.Context()); err != nil {
+			dbStatus = "error: " + err.Error()
+		}
+
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
+		_, _ = w.Write([]byte(`{"status":"ok","database":"` + dbStatus + `"}`))
 	})
 
 	// API routes

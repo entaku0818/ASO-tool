@@ -1,0 +1,59 @@
+name: Cloud SQL Scheduler
+
+on:
+  schedule:
+    # Stop at 23:00 JST (14:00 UTC)
+    - cron: '0 14 * * *'
+    # Start at 8:00 JST (23:00 UTC previous day)
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - start
+          - stop
+
+jobs:
+  manage-db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Determine action
+        id: action
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" = "0 14 * * *" ]; then
+            echo "action=stop" >> $GITHUB_OUTPUT
+          else
+            echo "action=start" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop Cloud SQL
+        if: steps.action.outputs.action == 'stop'
+        run: |
+          gcloud sql instances patch aso-db \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --activation-policy=NEVER \
+            --quiet
+          echo "Cloud SQL instance stopped"
+
+      - name: Start Cloud SQL
+        if: steps.action.outputs.action == 'start'
+        run: |
+          gcloud sql instances patch aso-db \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --activation-policy=ALWAYS \
+            --quiet
+          echo "Cloud SQL instance started"
