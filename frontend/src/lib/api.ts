@@ -104,3 +104,42 @@ export async function getReviews(appId: string): Promise<Review[]> {
 export async function getReviewStats(appId: string): Promise<ReviewStats> {
   return fetchApi<ReviewStats>(`/api/apps/${appId}/reviews/stats`)
 }
+
+// Tracked Keywords
+export type TrackedKeyword = {
+  id: string
+  keyword: string
+  country: string
+  platform: string
+  created_at: string
+}
+
+export type SearchResult = {
+  id: string
+  tracked_keyword_id: string
+  rank: number
+  app_name: string
+  bundle_id: string
+  developer: string
+  recorded_at: string
+}
+
+export async function getTrackedKeywords(): Promise<TrackedKeyword[]> {
+  return fetchApi<TrackedKeyword[]>('/api/tracked-keywords')
+}
+
+export async function getTrackedKeyword(id: string): Promise<TrackedKeyword> {
+  return fetchApi<TrackedKeyword>(`/api/tracked-keywords/${id}`)
+}
+
+export async function getSearchResults(id: string): Promise<SearchResult[]> {
+  return fetchApi<SearchResult[]>(`/api/tracked-keywords/${id}/results`)
+}
+
+export async function triggerTrackedKeywordUpdate(id: string): Promise<{ message: string; results_stored: number }> {
+  return fetchApi(`/api/tracked-keywords/${id}/trigger`, { method: 'POST' })
+}
+
+export async function triggerAllTrackedKeywordUpdates(): Promise<{ message: string; keywords_processed: number; results_stored: number }> {
+  return fetchApi('/api/tracked-keywords/trigger', { method: 'POST' })
+}
