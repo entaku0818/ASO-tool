@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { App, Keyword, getApps, getKeywords, getLatestRanking } from '@/lib/api'
+import { useRankings } from '@/hooks/useRankings'
+import { RankingChart } from '@/components/RankingChart'
 
 type KeywordRanking = {
   app: App
@@ -10,9 +12,25 @@ type KeywordRanking = {
   rank: number | null
 }
 
+function RankingChartSection({ keywordId, keywordName }: { keywordId: string; keywordName: string }) {
+  const { rankings, isLoading } = useRankings(keywordId)
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <h3 className="text-lg font-semibold mb-4">「{keywordName}」の順位推移</h3>
+      {isLoading ? (
+        <p className="text-gray-500">読み込み中...</p>
+      ) : (
+        <RankingChart rankings={rankings} />
+      )}
+    </div>
+  )
+}
+
 export default function RankingsPage() {
   const [rankings, setRankings] = useState<KeywordRanking[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedKeyword, setSelectedKeyword] = useState<KeywordRanking | null>(null)
 
   useEffect(() => {
     async function fetchAllRankings() {
@@ -85,10 +103,18 @@ export default function RankingsPage() {
         </Link>
       </div>
 
+      {selectedKeyword && (
+        <RankingChartSection
+          keywordId={selectedKeyword.keyword.id}
+          keywordName={selectedKeyword.keyword.keyword}
+        />
+      )}
+
       {rankings.length === 0 ? (
         <p className="text-gray-600">キーワードが登録されていません</p>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
+          <p className="text-sm text-gray-500 p-3 border-b">キーワードをクリックで順位推移を表示</p>
           <table className="w-full">
             <thead className="bg-gray-100">
               <tr>
@@ -99,10 +125,11 @@ export default function RankingsPage() {
               </tr>
             </thead>
             <tbody>
-              {rankings.map((item, index) => (
+              {rankings.map((item) => (
                 <tr
                   key={`${item.keyword.id}`}
-                  className={`border-b hover:bg-gray-50 ${getRankBgColor(item.rank)}`}
+                  className={`border-b cursor-pointer ${selectedKeyword?.keyword.id === item.keyword.id ? 'bg-blue-50' : getRankBgColor(item.rank)} hover:bg-gray-100`}
+                  onClick={() => setSelectedKeyword(item)}
                 >
                   <td className={`py-3 px-4 font-bold text-lg ${getRankColor(item.rank)}`}>
                     {item.rank === null ? '圏外' : `${item.rank}位`}
@@ -112,6 +139,7 @@ export default function RankingsPage() {
                     <Link
                       href={`/apps/${item.app.id}`}
                       className="text-blue-600 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {item.app.name}
                     </Link>
