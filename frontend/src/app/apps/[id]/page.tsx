@@ -1,11 +1,22 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '@/hooks/useApp'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
+import { useRankings } from '@/hooks/useRankings'
+import { RankingChart } from '@/components/RankingChart'
 
-function KeywordRow({ keyword }: { keyword: KeywordWithRanking }) {
+function KeywordRow({
+  keyword,
+  isSelected,
+  onSelect
+}: {
+  keyword: KeywordWithRanking
+  isSelected: boolean
+  onSelect: () => void
+}) {
   const rankColor = keyword.latestRank === null
     ? 'text-gray-500'
     : keyword.latestRank <= 10
@@ -15,7 +26,10 @@ function KeywordRow({ keyword }: { keyword: KeywordWithRanking }) {
     : 'text-red-600'
 
   return (
-    <tr className="border-b hover:bg-gray-50">
+    <tr
+      className={`border-b cursor-pointer ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+      onClick={onSelect}
+    >
       <td className="py-3 px-4">{keyword.keyword}</td>
       <td className="py-3 px-4">{keyword.country}</td>
       <td className={`py-3 px-4 font-bold ${rankColor}`}>
@@ -25,11 +39,27 @@ function KeywordRow({ keyword }: { keyword: KeywordWithRanking }) {
   )
 }
 
+function RankingChartSection({ keywordId, keywordName }: { keywordId: string; keywordName: string }) {
+  const { rankings, isLoading } = useRankings(keywordId)
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <h3 className="text-lg font-semibold mb-4">「{keywordName}」の順位推移</h3>
+      {isLoading ? (
+        <p className="text-gray-500">読み込み中...</p>
+      ) : (
+        <RankingChart rankings={rankings} />
+      )}
+    </div>
+  )
+}
+
 export default function AppDetailPage() {
   const params = useParams()
   const appId = params.id as string
   const { app, isLoading: appLoading, error: appError } = useApp(appId)
   const { keywords, isLoading: keywordsLoading } = useKeywords(appId)
+  const [selectedKeyword, setSelectedKeyword] = useState<KeywordWithRanking | null>(null)
 
   if (appLoading) {
     return (
@@ -87,9 +117,17 @@ export default function AppDetailPage() {
         )}
       </div>
 
+      {selectedKeyword && (
+        <RankingChartSection
+          keywordId={selectedKeyword.id}
+          keywordName={selectedKeyword.keyword}
+        />
+      )}
+
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b">
           <h3 className="text-lg font-semibold">キーワード順位 ({keywords.length}件)</h3>
+          <p className="text-sm text-gray-500">クリックで順位推移を表示</p>
         </div>
 
         {keywordsLoading ? (
@@ -107,7 +145,12 @@ export default function AppDetailPage() {
             </thead>
             <tbody>
               {sortedKeywords.map((keyword) => (
-                <KeywordRow key={keyword.id} keyword={keyword} />
+                <KeywordRow
+                  key={keyword.id}
+                  keyword={keyword}
+                  isSelected={selectedKeyword?.id === keyword.id}
+                  onSelect={() => setSelectedKeyword(keyword)}
+                />
               ))}
             </tbody>
           </table>
