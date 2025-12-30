@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -111,24 +110,28 @@ func (h *ScraperHandler) SearchApps(w http.ResponseWriter, r *http.Request) {
 
 // TriggerAllUpdates triggers updates for all apps (for scheduler)
 func (h *ScraperHandler) TriggerAllUpdates(w http.ResponseWriter, r *http.Request) {
-	// This endpoint can be called by Cloud Scheduler
-	// In a production environment, you'd want to add authentication
-
-	var req struct {
-		UpdateRankings bool   `json:"update_rankings"`
-		FetchReviews   bool   `json:"fetch_reviews"`
-		ITunesIDs      map[string]string `json:"itunes_ids"` // app_id -> itunes_id mapping
+	results, err := h.service.TriggerAllUpdates(r.Context())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		// If no body, update rankings by default
-		req.UpdateRankings = true
+	totalApps := len(results)
+	totalKeywords := 0
+	failedApps := 0
+	for _, count := range results {
+		if count < 0 {
+			failedApps++
+		} else {
+			totalKeywords += count
+		}
 	}
 
-	// Note: In a real implementation, you'd iterate through all apps
-	// and update rankings/reviews for each one
-
-	respondJSON(w, http.StatusOK, map[string]string{
-		"message": "update triggered",
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message":          "update completed",
+		"apps_processed":   totalApps,
+		"keywords_updated": totalKeywords,
+		"failed_apps":      failedApps,
+		"details":          results,
 	})
 }

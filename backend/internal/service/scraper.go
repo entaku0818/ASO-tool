@@ -144,3 +144,23 @@ func (s *ScraperService) SearchApps(ctx context.Context, keyword string, platfor
 		return nil, fmt.Errorf("unsupported platform: %s", platform)
 	}
 }
+
+// TriggerAllUpdates updates rankings for all apps
+func (s *ScraperService) TriggerAllUpdates(ctx context.Context) (map[string]int, error) {
+	apps, err := s.appRepo.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list apps: %w", err)
+	}
+
+	results := make(map[string]int)
+	for _, app := range apps {
+		count, err := s.UpdateKeywordRankings(ctx, app.ID)
+		if err != nil {
+			results[app.ID] = -1 // indicate error
+			continue
+		}
+		results[app.ID] = count
+	}
+
+	return results, nil
+}
