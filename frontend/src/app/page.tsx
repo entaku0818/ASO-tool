@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useApps } from '@/hooks/useApps'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 
@@ -80,18 +81,20 @@ export default function Home() {
       ) : (
         <div className="space-y-6">
           {apps.map((app) => (
-            <div key={app.id} className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">{app.name}</h3>
-                  <p className="text-sm text-gray-500">{app.bundle_id}</p>
+            <Link key={app.id} href={`/apps/${app.id}`} className="block">
+              <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">{app.name}</h3>
+                    <p className="text-sm text-gray-500">{app.bundle_id}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    {app.platform.toUpperCase()}
+                  </span>
                 </div>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                  {app.platform.toUpperCase()}
-                </span>
+                <KeywordList appId={app.id} />
               </div>
-              <KeywordList appId={app.id} />
-            </div>
+            </Link>
           ))}
         </div>
       )}
