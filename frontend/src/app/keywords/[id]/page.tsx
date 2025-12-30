@@ -1,26 +1,30 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { TrackedKeyword, SearchResult, getTrackedKeyword, getSearchResults, triggerTrackedKeywordUpdate } from '@/lib/api'
 
-export default function KeywordDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params)
+export default function KeywordDetailPage() {
+  const params = useParams()
+  const id = params.id as string
   const [keyword, setKeyword] = useState<TrackedKeyword | null>(null)
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
-    fetchData()
-  }, [resolvedParams.id])
+    if (id) {
+      fetchData()
+    }
+  }, [id])
 
   async function fetchData() {
     setIsLoading(true)
     try {
       const [keywordData, resultsData] = await Promise.all([
-        getTrackedKeyword(resolvedParams.id),
-        getSearchResults(resolvedParams.id)
+        getTrackedKeyword(id),
+        getSearchResults(id)
       ])
       setKeyword(keywordData)
       setResults(resultsData || [])
@@ -34,7 +38,7 @@ export default function KeywordDetailPage({ params }: { params: Promise<{ id: st
   async function handleUpdate() {
     setIsUpdating(true)
     try {
-      await triggerTrackedKeywordUpdate(resolvedParams.id)
+      await triggerTrackedKeywordUpdate(id)
       await fetchData()
     } finally {
       setIsUpdating(false)
