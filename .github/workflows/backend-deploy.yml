@@ -1,18 +1,18 @@
 name: Deploy Backend
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Backend CI"]
+    types: [completed]
     branches: [main]
-    paths: ['backend/**']
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Only deploy after CI passes
-    needs: []
+    # Only deploy if CI passed
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
-    # Uncomment when ready to deploy
-    # environment: production
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -47,4 +47,10 @@ jobs:
             --region asia-northeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}"
+            --add-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
+            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            --memory 256Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 3 \
+            --concurrency 80

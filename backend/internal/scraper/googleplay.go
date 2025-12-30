@@ -54,7 +54,7 @@ func (s *GooglePlayScraper) GetAppInfo(ctx context.Context, bundleID string, cou
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch app info: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("app not found: %s", bundleID)
@@ -97,7 +97,7 @@ func (s *GooglePlayScraper) SearchKeyword(ctx context.Context, keyword string, c
 	if err != nil {
 		return nil, fmt.Errorf("failed to search apps: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)

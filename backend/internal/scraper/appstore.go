@@ -69,7 +69,7 @@ func (s *AppStoreScraper) GetAppInfo(ctx context.Context, bundleID string, count
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch app info: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -115,7 +115,7 @@ func (s *AppStoreScraper) SearchKeyword(ctx context.Context, keyword string, cou
 	if err != nil {
 		return nil, fmt.Errorf("failed to search apps: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -164,7 +164,7 @@ func (s *AppStoreScraper) GetReviews(ctx context.Context, appID string, country 
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch reviews: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -187,7 +187,7 @@ func (s *AppStoreScraper) GetReviews(ctx context.Context, appID string, country 
 		}
 
 		rating := 0
-		fmt.Sscanf(entry.ImRating.Label, "%d", &rating)
+		_, _ = fmt.Sscanf(entry.ImRating.Label, "%d", &rating)
 
 		reviewedAt, _ := time.Parse(time.RFC3339, entry.Updated.Label)
 

@@ -255,9 +255,27 @@ cd backend && go run cmd/migrate/main.go up
 
 ---
 
-## 次のアクション
+## ドキュメント
 
-- [ ] `docker-compose.yml` 作成 (PostgreSQL + API)
-- [ ] Go プロジェクト初期化
-- [ ] DBスキーマ設計
-- [ ] 最初のAPIエンドポイント作成
+- [GCP セットアップガイド](./docs/gcp-setup.md) - Cloud Run, Cloud SQL, Artifact Registry の設定
+- [Firebase セットアップガイド](./docs/firebase-setup.md) - Firebase Hosting の設定
+
+## 進捗状況
+
+### 完了
+
+- [x] Docker Compose 環境 (PostgreSQL + Go API)
+- [x] Go プロジェクト初期化 + DBスキーマ設計
+- [x] アプリ CRUD API
+- [x] キーワード、ランキング、レビュー API
+- [x] App Store / Google Play スクレイパー
+- [x] ユニットテスト
+- [x] CI/CD ワークフロー (GitHub Actions)
+- [x] GCP/Firebase セットアップドキュメント
+
+### 次のステップ
+
+- [ ] GCP プロジェクト作成・設定
+- [ ] Cloud SQL 本番環境構築
+- [ ] Frontend (Next.js) 実装
+- [ ] Cloud Scheduler 定期実行設定

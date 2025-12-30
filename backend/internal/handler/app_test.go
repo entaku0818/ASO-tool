@@ -311,7 +311,9 @@ func TestAppHandler_List(t *testing.T) {
 		}
 
 		var apps []model.App
-		json.NewDecoder(rec.Body).Decode(&apps)
+		if err := json.NewDecoder(rec.Body).Decode(&apps); err != nil {
+			t.Fatalf("Failed to decode response: %v", err)
+		}
 		if len(apps) != 0 {
 			t.Errorf("List() returned %d apps, want 0", len(apps))
 		}
@@ -331,7 +333,9 @@ func TestAppHandler_List(t *testing.T) {
 		}
 
 		var apps []model.App
-		json.NewDecoder(rec.Body).Decode(&apps)
+		if err := json.NewDecoder(rec.Body).Decode(&apps); err != nil {
+			t.Fatalf("Failed to decode response: %v", err)
+		}
 		if len(apps) != 2 {
 			t.Errorf("List() returned %d apps, want 2", len(apps))
 		}
