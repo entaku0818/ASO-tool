@@ -8,18 +8,42 @@ import (
 )
 
 type KeywordService struct {
-	repo *repository.KeywordRepository
+	repo            *repository.KeywordRepository
+	appRepo         *repository.AppRepository
+	trackedKeyRepo  *repository.TrackedKeywordRepository
 }
 
 func NewKeywordService(repo *repository.KeywordRepository) *KeywordService {
 	return &KeywordService{repo: repo}
 }
 
+func NewKeywordServiceWithTracking(repo *repository.KeywordRepository, appRepo *repository.AppRepository, trackedKeyRepo *repository.TrackedKeywordRepository) *KeywordService {
+	return &KeywordService{
+		repo:           repo,
+		appRepo:        appRepo,
+		trackedKeyRepo: trackedKeyRepo,
+	}
+}
+
 func (s *KeywordService) Create(ctx context.Context, req *model.CreateKeywordRequest) (*model.Keyword, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return s.repo.Create(ctx, req)
+
+	keyword, err := s.repo.Create(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Auto-create tracked keyword if tracking repo is available
+	if s.trackedKeyRepo != nil && s.appRepo != nil {
+		app, err := s.appRepo.Get(ctx, req.AppID)
+		if err == nil {
+			s.trackedKeyRepo.Create(ctx, req.Keyword, req.Country, string(app.Platform))
+		}
+	}
+
+	return keyword, nil
 }
 
 func (s *KeywordService) Get(ctx context.Context, id string) (*model.Keyword, error) {

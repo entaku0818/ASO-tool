@@ -135,3 +135,47 @@ func (h *ScraperHandler) TriggerAllUpdates(w http.ResponseWriter, r *http.Reques
 		"details":          results,
 	})
 }
+
+// UpdateTrackedKeywords triggers search results update for all tracked keywords
+func (h *ScraperHandler) UpdateTrackedKeywords(w http.ResponseWriter, r *http.Request) {
+	results, err := h.service.UpdateTrackedKeywordResults(r.Context())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalKeywords := len(results)
+	totalResults := 0
+	failedKeywords := 0
+	for _, count := range results {
+		if count < 0 {
+			failedKeywords++
+		} else {
+			totalResults += count
+		}
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message":            "tracked keywords updated",
+		"keywords_processed": totalKeywords,
+		"results_stored":     totalResults,
+		"failed_keywords":    failedKeywords,
+		"details":            results,
+	})
+}
+
+// UpdateSingleTrackedKeyword triggers search results update for a specific tracked keyword
+func (h *ScraperHandler) UpdateSingleTrackedKeyword(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	count, err := h.service.UpdateSingleTrackedKeyword(r.Context(), id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"message":        "tracked keyword updated",
+		"results_stored": count,
+	})
+}

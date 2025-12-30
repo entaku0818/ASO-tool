@@ -44,8 +44,12 @@ func main() {
 	appService := service.NewAppService(appRepo)
 	appHandler := handler.NewAppHandler(appService)
 
+	trackedKeywordRepo := repository.NewTrackedKeywordRepository(pool)
+	trackedKeywordService := service.NewTrackedKeywordService(trackedKeywordRepo)
+	trackedKeywordHandler := handler.NewTrackedKeywordHandler(trackedKeywordService)
+
 	keywordRepo := repository.NewKeywordRepository(pool)
-	keywordService := service.NewKeywordService(keywordRepo)
+	keywordService := service.NewKeywordServiceWithTracking(keywordRepo, appRepo, trackedKeywordRepo)
 	keywordHandler := handler.NewKeywordHandler(keywordService)
 
 	rankingRepo := repository.NewRankingRepository(pool)
@@ -56,7 +60,7 @@ func main() {
 	reviewService := service.NewReviewService(reviewRepo)
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
-	scraperService := service.NewScraperService(keywordRepo, rankingRepo, reviewRepo, appRepo)
+	scraperService := service.NewScraperServiceWithTracking(keywordRepo, rankingRepo, reviewRepo, appRepo, trackedKeywordRepo)
 	scraperHandler := handler.NewScraperHandler(scraperService)
 
 	// Router setup
@@ -132,6 +136,15 @@ func main() {
 		// App-specific scraper actions
 		r.Post("/apps/{appID}/scrape/rankings", scraperHandler.UpdateRankings)
 		r.Post("/apps/{appID}/scrape/reviews", scraperHandler.FetchReviews)
+
+		// Tracked keywords endpoints
+		r.Route("/tracked-keywords", func(r chi.Router) {
+			r.Get("/", trackedKeywordHandler.List)
+			r.Post("/trigger", scraperHandler.UpdateTrackedKeywords)
+			r.Get("/{id}", trackedKeywordHandler.Get)
+			r.Get("/{id}/results", trackedKeywordHandler.GetSearchResults)
+			r.Post("/{id}/trigger", scraperHandler.UpdateSingleTrackedKeyword)
+		})
 	})
 
 	// Server setup

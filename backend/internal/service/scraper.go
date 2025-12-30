@@ -10,12 +10,13 @@ import (
 )
 
 type ScraperService struct {
-	appStoreScraper   *scraper.AppStoreScraper
-	googlePlayScraper *scraper.GooglePlayScraper
-	keywordRepo       *repository.KeywordRepository
-	rankingRepo       *repository.RankingRepository
-	reviewRepo        *repository.ReviewRepository
-	appRepo           *repository.AppRepository
+	appStoreScraper    *scraper.AppStoreScraper
+	googlePlayScraper  *scraper.GooglePlayScraper
+	keywordRepo        *repository.KeywordRepository
+	rankingRepo        *repository.RankingRepository
+	reviewRepo         *repository.ReviewRepository
+	appRepo            *repository.AppRepository
+	trackedKeywordRepo *repository.TrackedKeywordRepository
 }
 
 func NewScraperService(
@@ -31,6 +32,24 @@ func NewScraperService(
 		rankingRepo:       rankingRepo,
 		reviewRepo:        reviewRepo,
 		appRepo:           appRepo,
+	}
+}
+
+func NewScraperServiceWithTracking(
+	keywordRepo *repository.KeywordRepository,
+	rankingRepo *repository.RankingRepository,
+	reviewRepo *repository.ReviewRepository,
+	appRepo *repository.AppRepository,
+	trackedKeywordRepo *repository.TrackedKeywordRepository,
+) *ScraperService {
+	return &ScraperService{
+		appStoreScraper:    scraper.NewAppStoreScraper(),
+		googlePlayScraper:  scraper.NewGooglePlayScraper(),
+		keywordRepo:        keywordRepo,
+		rankingRepo:        rankingRepo,
+		reviewRepo:         reviewRepo,
+		appRepo:            appRepo,
+		trackedKeywordRepo: trackedKeywordRepo,
 	}
 }
 
@@ -163,4 +182,104 @@ func (s *ScraperService) TriggerAllUpdates(ctx context.Context) (map[string]int,
 	}
 
 	return results, nil
+}
+
+// UpdateTrackedKeywordResults fetches and stores search results for all tracked keywords
+func (s *ScraperService) UpdateTrackedKeywordResults(ctx context.Context) (map[string]int, error) {
+	if s.trackedKeywordRepo == nil {
+		return nil, fmt.Errorf("tracked keyword repository not configured")
+	}
+
+	trackedKeywords, err := s.trackedKeywordRepo.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tracked keywords: %w", err)
+	}
+
+	results := make(map[string]int)
+	for _, tk := range trackedKeywords {
+		var searchResults []scraper.SearchResult
+		var searchErr error
+
+		platform := model.Platform(tk.Platform)
+		switch platform {
+		case model.PlatformIOS:
+			searchResults, searchErr = s.appStoreScraper.SearchKeyword(ctx, tk.Keyword, tk.Country, 50)
+		case model.PlatformAndroid:
+			searchResults, searchErr = s.googlePlayScraper.SearchKeyword(ctx, tk.Keyword, tk.Country, 50)
+		default:
+			results[tk.ID] = -1
+			continue
+		}
+
+		if searchErr != nil {
+			results[tk.ID] = -1
+			continue
+		}
+
+		// Convert to repository format
+		repoResults := make([]repository.SearchResult, len(searchResults))
+		for i, sr := range searchResults {
+			repoResults[i] = repository.SearchResult{
+				Rank:      sr.Rank,
+				AppName:   sr.AppInfo.Name,
+				BundleID:  sr.AppInfo.BundleID,
+				Developer: sr.AppInfo.Developer,
+			}
+		}
+
+		if err := s.trackedKeywordRepo.SaveSearchResults(ctx, tk.ID, repoResults); err != nil {
+			results[tk.ID] = -1
+			continue
+		}
+
+		results[tk.ID] = len(repoResults)
+	}
+
+	return results, nil
+}
+
+// UpdateSingleTrackedKeyword fetches and stores search results for a specific tracked keyword
+func (s *ScraperService) UpdateSingleTrackedKeyword(ctx context.Context, trackedKeywordID string) (int, error) {
+	if s.trackedKeywordRepo == nil {
+		return 0, fmt.Errorf("tracked keyword repository not configured")
+	}
+
+	tk, err := s.trackedKeywordRepo.Get(ctx, trackedKeywordID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tracked keyword: %w", err)
+	}
+
+	var searchResults []scraper.SearchResult
+	var searchErr error
+
+	platform := model.Platform(tk.Platform)
+	switch platform {
+	case model.PlatformIOS:
+		searchResults, searchErr = s.appStoreScraper.SearchKeyword(ctx, tk.Keyword, tk.Country, 50)
+	case model.PlatformAndroid:
+		searchResults, searchErr = s.googlePlayScraper.SearchKeyword(ctx, tk.Keyword, tk.Country, 50)
+	default:
+		return 0, fmt.Errorf("unsupported platform: %s", tk.Platform)
+	}
+
+	if searchErr != nil {
+		return 0, fmt.Errorf("failed to search keyword: %w", searchErr)
+	}
+
+	// Convert to repository format
+	repoResults := make([]repository.SearchResult, len(searchResults))
+	for i, sr := range searchResults {
+		repoResults[i] = repository.SearchResult{
+			Rank:      sr.Rank,
+			AppName:   sr.AppInfo.Name,
+			BundleID:  sr.AppInfo.BundleID,
+			Developer: sr.AppInfo.Developer,
+		}
+	}
+
+	if err := s.trackedKeywordRepo.SaveSearchResults(ctx, tk.ID, repoResults); err != nil {
+		return 0, fmt.Errorf("failed to save search results: %w", err)
+	}
+
+	return len(repoResults), nil
 }
