@@ -77,3 +77,30 @@ export async function deleteKeyword(appId: string, keywordId: string): Promise<v
     method: 'DELETE',
   })
 }
+
+export type Review = {
+  id: string
+  app_id: string
+  review_id: string
+  author: string
+  rating: number
+  title: string
+  content: string
+  version: string
+  posted_at: string
+  created_at: string
+}
+
+export type ReviewStats = {
+  total_count: number
+  average_rating: number
+  rating_counts: { [key: number]: number }
+}
+
+export async function getReviews(appId: string): Promise<Review[]> {
+  return fetchApi<Review[]>(`/api/apps/${appId}/reviews`)
+}
+
+export async function getReviewStats(appId: string): Promise<ReviewStats> {
+  return fetchApi<ReviewStats>(`/api/apps/${appId}/reviews/stats`)
+}

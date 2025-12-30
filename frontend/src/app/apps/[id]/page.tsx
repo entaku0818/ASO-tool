@@ -8,6 +8,7 @@ import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 import { useRankings } from '@/hooks/useRankings'
 import { RankingChart } from '@/components/RankingChart'
 import { createKeyword, deleteKeyword } from '@/lib/api'
+import { ReviewsSection } from '@/components/ReviewsSection'
 
 function KeywordRow({
   keyword,
@@ -222,6 +223,10 @@ export default function AppDetailPage() {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="mt-6">
+        <ReviewsSection appId={appId} />
       </div>
     </div>
   )
