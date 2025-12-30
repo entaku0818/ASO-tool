@@ -47,16 +47,16 @@ export function ReviewsSection({ appId }: { appId: string }) {
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b">
         <h3 className="text-lg font-semibold">レビュー ({reviews.length}件)</h3>
-        {stats && (
+        {stats && stats.rating_counts && (
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-1">
-              <StarRating rating={Math.round(stats.average_rating)} />
-              <span className="font-bold">{stats.average_rating.toFixed(1)}</span>
+              <StarRating rating={Math.round(stats.average_rating || 0)} />
+              <span className="font-bold">{(stats.average_rating || 0).toFixed(1)}</span>
             </div>
             <div className="text-sm text-gray-500">
               {[5, 4, 3, 2, 1].map((r) => (
                 <span key={r} className="mr-2">
-                  {r}★: {stats.rating_counts[r] || 0}
+                  {r}★: {stats.rating_counts?.[r] || 0}
                 </span>
               ))}
             </div>
