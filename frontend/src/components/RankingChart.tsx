@@ -30,7 +30,7 @@ export function RankingChart({ rankings }: Props) {
       <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-        <YAxis reversed domain={[1, 'auto']} tick={{ fontSize: 12 }} allowDecimals={false} />
+        <YAxis reversed domain={[1, 100]} tick={{ fontSize: 12 }} allowDecimals={false} />
         <Tooltip
           formatter={(value: number) => [`${value}位`, '順位']}
           labelFormatter={(label) => `日付: ${label}`}
