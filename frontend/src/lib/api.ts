@@ -64,3 +64,16 @@ export async function getLatestRanking(appId: string, keywordId: string): Promis
     return null
   }
 }
+
+export async function createKeyword(appId: string, keyword: string, country: string = 'jp'): Promise<Keyword> {
+  return fetchApi<Keyword>(`/api/apps/${appId}/keywords`, {
+    method: 'POST',
+    body: JSON.stringify({ keyword, country }),
+  })
+}
+
+export async function deleteKeyword(appId: string, keywordId: string): Promise<void> {
+  await fetchApi<void>(`/api/apps/${appId}/keywords/${keywordId}`, {
+    method: 'DELETE',
+  })
+}

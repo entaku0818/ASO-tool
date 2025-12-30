@@ -7,15 +7,18 @@ import { useApp } from '@/hooks/useApp'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 import { useRankings } from '@/hooks/useRankings'
 import { RankingChart } from '@/components/RankingChart'
+import { createKeyword, deleteKeyword } from '@/lib/api'
 
 function KeywordRow({
   keyword,
   isSelected,
-  onSelect
+  onSelect,
+  onDelete,
 }: {
   keyword: KeywordWithRanking
   isSelected: boolean
   onSelect: () => void
+  onDelete: () => void
 }) {
   const rankColor = keyword.latestRank === null
     ? 'text-gray-500'
@@ -34,6 +37,17 @@ function KeywordRow({
       <td className="py-3 px-4">{keyword.country}</td>
       <td className={`py-3 px-4 font-bold ${rankColor}`}>
         {keyword.latestRank === null ? '圏外' : `${keyword.latestRank}位`}
+      </td>
+      <td className="py-3 px-4">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+          className="text-red-500 hover:text-red-700 text-sm"
+        >
+          削除
+        </button>
       </td>
     </tr>
   )
@@ -58,8 +72,37 @@ export default function AppDetailPage() {
   const params = useParams()
   const appId = params.id as string
   const { app, isLoading: appLoading, error: appError } = useApp(appId)
-  const { keywords, isLoading: keywordsLoading } = useKeywords(appId)
+  const { keywords, isLoading: keywordsLoading, refetch } = useKeywords(appId)
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordWithRanking | null>(null)
+  const [newKeyword, setNewKeyword] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+
+  const handleAddKeyword = async () => {
+    if (!newKeyword.trim()) return
+    setIsAdding(true)
+    try {
+      await createKeyword(appId, newKeyword.trim())
+      setNewKeyword('')
+      refetch()
+    } catch (e) {
+      alert('キーワードの追加に失敗しました')
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  const handleDeleteKeyword = async (keywordId: string) => {
+    if (!confirm('このキーワードを削除しますか？')) return
+    try {
+      await deleteKeyword(appId, keywordId)
+      if (selectedKeyword?.id === keywordId) {
+        setSelectedKeyword(null)
+      }
+      refetch()
+    } catch (e) {
+      alert('キーワードの削除に失敗しました')
+    }
+  }
 
   if (appLoading) {
     return (
@@ -125,9 +168,31 @@ export default function AppDetailPage() {
       )}
 
       <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b">
-          <h3 className="text-lg font-semibold">キーワード順位 ({keywords.length}件)</h3>
-          <p className="text-sm text-gray-500">クリックで順位推移を表示</p>
+        <div className="p-4 border-b flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">キーワード順位 ({keywords.length}件)</h3>
+            <p className="text-sm text-gray-500">クリックで順位推移を表示</p>
+          </div>
+        </div>
+
+        <div className="p-4 border-b bg-gray-50">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newKeyword}
+              onChange={(e) => setNewKeyword(e.target.value)}
+              placeholder="新しいキーワード"
+              className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
+            />
+            <button
+              onClick={handleAddKeyword}
+              disabled={isAdding || !newKeyword.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isAdding ? '追加中...' : '追加'}
+            </button>
+          </div>
         </div>
 
         {keywordsLoading ? (
@@ -141,6 +206,7 @@ export default function AppDetailPage() {
                 <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
                 <th className="py-3 px-4 text-left font-medium text-gray-600">国</th>
                 <th className="py-3 px-4 text-left font-medium text-gray-600">順位</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600"></th>
               </tr>
             </thead>
             <tbody>
@@ -150,6 +216,7 @@ export default function AppDetailPage() {
                   keyword={keyword}
                   isSelected={selectedKeyword?.id === keyword.id}
                   onSelect={() => setSelectedKeyword(keyword)}
+                  onDelete={() => handleDeleteKeyword(keyword.id)}
                 />
               ))}
             </tbody>
