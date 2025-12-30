@@ -1,0 +1,66 @@
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://aso-api-671942133800.asia-northeast1.run.app'
+
+export type App = {
+  id: string
+  name: string
+  bundle_id: string
+  platform: 'ios' | 'android'
+  store_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export type Keyword = {
+  id: string
+  app_id: string
+  keyword: string
+  country: string
+  created_at: string
+}
+
+export type Ranking = {
+  id: string
+  keyword_id: string
+  rank: number | null
+  recorded_at: string
+}
+
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export async function getApps(): Promise<App[]> {
+  return fetchApi<App[]>('/api/apps')
+}
+
+export async function getApp(id: string): Promise<App> {
+  return fetchApi<App>(`/api/apps/${id}`)
+}
+
+export async function getKeywords(appId: string): Promise<Keyword[]> {
+  return fetchApi<Keyword[]>(`/api/apps/${appId}/keywords`)
+}
+
+export async function getRankings(keywordId: string): Promise<Ranking[]> {
+  return fetchApi<Ranking[]>(`/api/apps/_/keywords/${keywordId}/rankings`)
+}
+
+export async function getLatestRanking(appId: string, keywordId: string): Promise<Ranking | null> {
+  try {
+    return await fetchApi<Ranking>(`/api/apps/${appId}/keywords/${keywordId}/rankings/latest`)
+  } catch {
+    return null
+  }
+}
