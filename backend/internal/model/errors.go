@@ -17,4 +17,12 @@ var (
 	// Review errors
 	ErrReviewIDRequired = errors.New("review_id is required")
 	ErrInvalidRating    = errors.New("rating must be between 1 and 5")
+
+	// Auth errors
+	ErrEmailRequired     = errors.New("email is required")
+	ErrPasswordRequired  = errors.New("password is required")
+	ErrPasswordTooShort  = errors.New("password must be at least 8 characters")
+	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrUnauthorized      = errors.New("unauthorized")
+	ErrForbidden         = errors.New("forbidden")
 )

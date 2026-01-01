@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/entaku0818/aso-tool/backend/internal/handler"
+	appMiddleware "github.com/entaku0818/aso-tool/backend/internal/middleware"
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -40,6 +41,12 @@ func main() {
 	log.Println("Connected to database")
 
 	// Initialize layers
+	// Auth
+	userRepo := repository.NewUserRepository(pool)
+	authService := service.NewAuthService(userRepo)
+	authMiddleware := appMiddleware.NewAuthMiddleware(authService)
+	authHandler := handler.NewAuthHandler(authService)
+
 	appRepo := repository.NewAppRepository(pool)
 	appService := service.NewAppService(appRepo)
 	appHandler := handler.NewAppHandler(appService)
@@ -93,57 +100,71 @@ func main() {
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {
-		r.Route("/apps", func(r chi.Router) {
-			r.Get("/", appHandler.List)
-			r.Post("/", appHandler.Create)
-			r.Get("/{id}", appHandler.Get)
-			r.Put("/{id}", appHandler.Update)
-			r.Delete("/{id}", appHandler.Delete)
+		// Public routes
+		r.Post("/auth/login", authHandler.Login)
 
-			// Nested routes for app-specific resources
-			r.Route("/{appID}/keywords", func(r chi.Router) {
-				r.Get("/", keywordHandler.ListByApp)
-				r.Post("/", keywordHandler.Create)
-				r.Get("/{keywordID}", keywordHandler.Get)
-				r.Delete("/{keywordID}", keywordHandler.Delete)
-				r.Get("/{keywordID}/rankings", rankingHandler.ListByKeyword)
-				r.Get("/{keywordID}/rankings/latest", rankingHandler.GetLatest)
+		// Protected routes (require authentication)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Verify)
+
+			// Auth routes
+			r.Get("/auth/me", authHandler.Me)
+
+			// Admin-only routes
+			r.With(authMiddleware.RequireAdmin).Post("/users", authHandler.CreateUser)
+
+			r.Route("/apps", func(r chi.Router) {
+				r.Get("/", appHandler.List)
+				r.Post("/", appHandler.Create)
+				r.Get("/{id}", appHandler.Get)
+				r.Put("/{id}", appHandler.Update)
+				r.Delete("/{id}", appHandler.Delete)
+
+				// Nested routes for app-specific resources
+				r.Route("/{appID}/keywords", func(r chi.Router) {
+					r.Get("/", keywordHandler.ListByApp)
+					r.Post("/", keywordHandler.Create)
+					r.Get("/{keywordID}", keywordHandler.Get)
+					r.Delete("/{keywordID}", keywordHandler.Delete)
+					r.Get("/{keywordID}/rankings", rankingHandler.ListByKeyword)
+					r.Get("/{keywordID}/rankings/latest", rankingHandler.GetLatest)
+				})
+
+				r.Route("/{appID}/rankings", func(r chi.Router) {
+					r.Get("/", rankingHandler.ListByApp)
+				})
+
+				r.Route("/{appID}/reviews", func(r chi.Router) {
+					r.Get("/", reviewHandler.ListByApp)
+					r.Post("/", reviewHandler.Create)
+					r.Get("/stats", reviewHandler.GetStats)
+					r.Get("/{reviewID}", reviewHandler.Get)
+					r.Delete("/{reviewID}", reviewHandler.Delete)
+				})
 			})
 
-			r.Route("/{appID}/rankings", func(r chi.Router) {
-				r.Get("/", rankingHandler.ListByApp)
+			// Rankings endpoint for creating new rankings
+			r.Post("/rankings", rankingHandler.Create)
+
+			// Scraper endpoints
+			r.Route("/scraper", func(r chi.Router) {
+				r.Get("/app-info", scraperHandler.FetchAppInfo)
+				r.Get("/search", scraperHandler.SearchApps)
+				r.Post("/trigger", scraperHandler.TriggerAllUpdates)
 			})
 
-			r.Route("/{appID}/reviews", func(r chi.Router) {
-				r.Get("/", reviewHandler.ListByApp)
-				r.Post("/", reviewHandler.Create)
-				r.Get("/stats", reviewHandler.GetStats)
-				r.Get("/{reviewID}", reviewHandler.Get)
-				r.Delete("/{reviewID}", reviewHandler.Delete)
+			// App-specific scraper actions
+			r.Post("/apps/{appID}/scrape/rankings", scraperHandler.UpdateRankings)
+			r.Post("/apps/{appID}/scrape/reviews", scraperHandler.FetchReviews)
+
+			// Tracked keywords endpoints
+			r.Route("/tracked-keywords", func(r chi.Router) {
+				r.Get("/", trackedKeywordHandler.List)
+				r.Post("/trigger", scraperHandler.UpdateTrackedKeywords)
+				r.Get("/{id}", trackedKeywordHandler.Get)
+				r.Get("/{id}/results", trackedKeywordHandler.GetSearchResults)
+				r.Post("/{id}/trigger", scraperHandler.UpdateSingleTrackedKeyword)
 			})
-		})
-
-		// Rankings endpoint for creating new rankings
-		r.Post("/rankings", rankingHandler.Create)
-
-		// Scraper endpoints
-		r.Route("/scraper", func(r chi.Router) {
-			r.Get("/app-info", scraperHandler.FetchAppInfo)
-			r.Get("/search", scraperHandler.SearchApps)
-			r.Post("/trigger", scraperHandler.TriggerAllUpdates)
-		})
-
-		// App-specific scraper actions
-		r.Post("/apps/{appID}/scrape/rankings", scraperHandler.UpdateRankings)
-		r.Post("/apps/{appID}/scrape/reviews", scraperHandler.FetchReviews)
-
-		// Tracked keywords endpoints
-		r.Route("/tracked-keywords", func(r chi.Router) {
-			r.Get("/", trackedKeywordHandler.List)
-			r.Post("/trigger", scraperHandler.UpdateTrackedKeywords)
-			r.Get("/{id}", trackedKeywordHandler.Get)
-			r.Get("/{id}/results", trackedKeywordHandler.GetSearchResults)
-			r.Post("/{id}/trigger", scraperHandler.UpdateSingleTrackedKeyword)
 		})
 	})
 
