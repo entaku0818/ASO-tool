@@ -154,7 +154,7 @@ func (r *TrackedKeywordRepository) SaveSearchResults(ctx context.Context, tracke
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	// Delete old results from today
 	_, err = tx.Exec(ctx,

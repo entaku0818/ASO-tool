@@ -27,7 +27,7 @@ func (h *TrackedKeywordHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(keywords)
+	_ = json.NewEncoder(w).Encode(keywords)
 }
 
 func (h *TrackedKeywordHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +41,7 @@ func (h *TrackedKeywordHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(keyword)
+	_ = json.NewEncoder(w).Encode(keyword)
 }
 
 func (h *TrackedKeywordHandler) GetSearchResults(w http.ResponseWriter, r *http.Request) {
@@ -57,10 +57,10 @@ func (h *TrackedKeywordHandler) GetSearchResults(w http.ResponseWriter, r *http.
 	// Return empty array if no results
 	if results == nil {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("[]"))
+		_, _ = w.Write([]byte("[]"))
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(results)
+	_ = json.NewEncoder(w).Encode(results)
 }

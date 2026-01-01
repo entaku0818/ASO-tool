@@ -39,7 +39,7 @@ func (s *KeywordService) Create(ctx context.Context, req *model.CreateKeywordReq
 	if s.trackedKeyRepo != nil && s.appRepo != nil {
 		app, err := s.appRepo.GetByID(ctx, req.AppID)
 		if err == nil {
-			s.trackedKeyRepo.Create(ctx, app.UserID, req.Keyword, req.Country, string(app.Platform))
+			_, _ = s.trackedKeyRepo.Create(ctx, app.UserID, req.Keyword, req.Country, string(app.Platform))
 		}
 	}
 
