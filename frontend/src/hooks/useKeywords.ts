@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Keyword, getKeywords, getLatestRanking } from '@/lib/api'
 
 export type KeywordWithRanking = Keyword & {
@@ -41,5 +41,14 @@ export function useKeywords(appId: string) {
     fetchKeywords()
   }, [fetchKeywords])
 
-  return { keywords, isLoading, error, refetch: fetchKeywords }
+  // Sort keywords by rank (null ranks at the end)
+  const sortedKeywords = useMemo(() => {
+    return [...keywords].sort((a, b) => {
+      if (a.latestRank === null) return 1
+      if (b.latestRank === null) return -1
+      return a.latestRank - b.latestRank
+    })
+  }, [keywords])
+
+  return { keywords: sortedKeywords, isLoading, error, refetch: fetchKeywords }
 }
