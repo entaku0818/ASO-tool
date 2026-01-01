@@ -6,6 +6,7 @@ export type App = {
   bundle_id: string
   platform: 'ios' | 'android'
   store_url?: string
+  user_id?: string
   created_at: string
   updated_at: string
 }
@@ -25,14 +26,35 @@ export type Ranking = {
   recorded_at: string
 }
 
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('token')
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
   })
+
+  if (response.status === 401) {
+    // Clear token and redirect to login
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token')
+      window.location.href = '/login'
+    }
+    throw new Error('Unauthorized')
+  }
 
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`)
