@@ -15,6 +15,7 @@ type App struct {
 	BundleID  string    `json:"bundle_id"`
 	Platform  Platform  `json:"platform"`
 	StoreURL  string    `json:"store_url,omitempty"`
+	UserID    string    `json:"user_id,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

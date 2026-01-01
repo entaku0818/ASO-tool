@@ -67,7 +67,7 @@ func (s *ScraperService) FetchAppInfo(ctx context.Context, bundleID string, plat
 
 // UpdateKeywordRankings fetches and stores rankings for all keywords of an app
 func (s *ScraperService) UpdateKeywordRankings(ctx context.Context, appID string) (int, error) {
-	app, err := s.appRepo.Get(ctx, appID)
+	app, err := s.appRepo.GetByID(ctx, appID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get app: %w", err)
 	}
@@ -108,7 +108,7 @@ func (s *ScraperService) UpdateKeywordRankings(ctx context.Context, appID string
 
 // FetchReviews fetches and stores new reviews for an app
 func (s *ScraperService) FetchReviews(ctx context.Context, appID string, itunesID string) (int, error) {
-	app, err := s.appRepo.Get(ctx, appID)
+	app, err := s.appRepo.GetByID(ctx, appID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get app: %w", err)
 	}
@@ -166,7 +166,7 @@ func (s *ScraperService) SearchApps(ctx context.Context, keyword string, platfor
 
 // TriggerAllUpdates updates rankings for all apps
 func (s *ScraperService) TriggerAllUpdates(ctx context.Context) (map[string]int, error) {
-	apps, err := s.appRepo.List(ctx)
+	apps, err := s.appRepo.ListAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list apps: %w", err)
 	}
@@ -190,7 +190,7 @@ func (s *ScraperService) UpdateTrackedKeywordResults(ctx context.Context) (map[s
 		return nil, fmt.Errorf("tracked keyword repository not configured")
 	}
 
-	trackedKeywords, err := s.trackedKeywordRepo.List(ctx)
+	trackedKeywords, err := s.trackedKeywordRepo.ListAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list tracked keywords: %w", err)
 	}
@@ -244,7 +244,7 @@ func (s *ScraperService) UpdateSingleTrackedKeyword(ctx context.Context, tracked
 		return 0, fmt.Errorf("tracked keyword repository not configured")
 	}
 
-	tk, err := s.trackedKeywordRepo.Get(ctx, trackedKeywordID)
+	tk, err := s.trackedKeywordRepo.GetByID(ctx, trackedKeywordID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get tracked keyword: %w", err)
 	}

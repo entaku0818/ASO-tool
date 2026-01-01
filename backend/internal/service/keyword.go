@@ -37,9 +37,9 @@ func (s *KeywordService) Create(ctx context.Context, req *model.CreateKeywordReq
 
 	// Auto-create tracked keyword if tracking repo is available
 	if s.trackedKeyRepo != nil && s.appRepo != nil {
-		app, err := s.appRepo.Get(ctx, req.AppID)
+		app, err := s.appRepo.GetByID(ctx, req.AppID)
 		if err == nil {
-			s.trackedKeyRepo.Create(ctx, req.Keyword, req.Country, string(app.Platform))
+			s.trackedKeyRepo.Create(ctx, app.UserID, req.Keyword, req.Country, string(app.Platform))
 		}
 	}
 

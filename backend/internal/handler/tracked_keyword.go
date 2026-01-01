@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/entaku0818/aso-tool/backend/internal/middleware"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
 )
@@ -17,7 +18,9 @@ func NewTrackedKeywordHandler(service *service.TrackedKeywordService) *TrackedKe
 }
 
 func (h *TrackedKeywordHandler) List(w http.ResponseWriter, r *http.Request) {
-	keywords, err := h.service.List(r.Context())
+	userID := middleware.GetUserID(r.Context())
+
+	keywords, err := h.service.List(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -28,9 +31,10 @@ func (h *TrackedKeywordHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TrackedKeywordHandler) Get(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
 	id := chi.URLParam(r, "id")
 
-	keyword, err := h.service.Get(r.Context(), id)
+	keyword, err := h.service.Get(r.Context(), userID, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -41,9 +45,10 @@ func (h *TrackedKeywordHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TrackedKeywordHandler) GetSearchResults(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
 	id := chi.URLParam(r, "id")
 
-	results, err := h.service.GetSearchResults(r.Context(), id)
+	results, err := h.service.GetSearchResults(r.Context(), userID, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

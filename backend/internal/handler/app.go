@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/entaku0818/aso-tool/backend/internal/middleware"
 	"github.com/entaku0818/aso-tool/backend/internal/model"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -19,13 +20,15 @@ func NewAppHandler(service *service.AppService) *AppHandler {
 }
 
 func (h *AppHandler) Create(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
 	var req model.CreateAppRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	app, err := h.service.Create(r.Context(), &req)
+	app, err := h.service.Create(r.Context(), userID, &req)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -35,9 +38,10 @@ func (h *AppHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AppHandler) Get(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
 	id := chi.URLParam(r, "id")
 
-	app, err := h.service.Get(r.Context(), id)
+	app, err := h.service.Get(r.Context(), userID, id)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -47,7 +51,9 @@ func (h *AppHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AppHandler) List(w http.ResponseWriter, r *http.Request) {
-	apps, err := h.service.List(r.Context())
+	userID := middleware.GetUserID(r.Context())
+
+	apps, err := h.service.List(r.Context(), userID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -61,6 +67,7 @@ func (h *AppHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AppHandler) Update(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
 	id := chi.URLParam(r, "id")
 
 	var req model.UpdateAppRequest
@@ -69,7 +76,7 @@ func (h *AppHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app, err := h.service.Update(r.Context(), id, &req)
+	app, err := h.service.Update(r.Context(), userID, id, &req)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -79,9 +86,10 @@ func (h *AppHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AppHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
 	id := chi.URLParam(r, "id")
 
-	if err := h.service.Delete(r.Context(), id); err != nil {
+	if err := h.service.Delete(r.Context(), userID, id); err != nil {
 		handleServiceError(w, err)
 		return
 	}

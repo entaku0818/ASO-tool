@@ -14,15 +14,20 @@ func NewTrackedKeywordService(repo *repository.TrackedKeywordRepository) *Tracke
 	return &TrackedKeywordService{repo: repo}
 }
 
-func (s *TrackedKeywordService) List(ctx context.Context) ([]*repository.TrackedKeyword, error) {
-	return s.repo.List(ctx)
+func (s *TrackedKeywordService) List(ctx context.Context, userID string) ([]*repository.TrackedKeyword, error) {
+	return s.repo.List(ctx, userID)
 }
 
-func (s *TrackedKeywordService) Get(ctx context.Context, id string) (*repository.TrackedKeyword, error) {
-	return s.repo.Get(ctx, id)
+func (s *TrackedKeywordService) Get(ctx context.Context, userID, id string) (*repository.TrackedKeyword, error) {
+	return s.repo.Get(ctx, userID, id)
 }
 
-func (s *TrackedKeywordService) GetSearchResults(ctx context.Context, id string) ([]*repository.SearchResult, error) {
+func (s *TrackedKeywordService) GetSearchResults(ctx context.Context, userID, id string) ([]*repository.SearchResult, error) {
+	// Verify ownership first
+	_, err := s.repo.Get(ctx, userID, id)
+	if err != nil {
+		return nil, err
+	}
 	return s.repo.GetLatestSearchResults(ctx, id)
 }
 

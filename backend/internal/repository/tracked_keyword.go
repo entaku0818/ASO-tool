@@ -13,6 +13,7 @@ type TrackedKeyword struct {
 	Keyword   string    `json:"keyword"`
 	Country   string    `json:"country"`
 	Platform  string    `json:"platform"`
+	UserID    string    `json:"user_id,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -34,21 +35,22 @@ func NewTrackedKeywordRepository(pool *pgxpool.Pool) *TrackedKeywordRepository {
 	return &TrackedKeywordRepository{pool: pool}
 }
 
-func (r *TrackedKeywordRepository) Create(ctx context.Context, keyword, country, platform string) (*TrackedKeyword, error) {
+func (r *TrackedKeywordRepository) Create(ctx context.Context, userID, keyword, country, platform string) (*TrackedKeyword, error) {
 	id := uuid.New().String()
 	tk := &TrackedKeyword{
 		ID:        id,
 		Keyword:   keyword,
 		Country:   country,
 		Platform:  platform,
+		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
 
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO tracked_keywords (id, keyword, country, platform, created_at)
-		 VALUES ($1, $2, $3, $4, $5)
-		 ON CONFLICT (keyword, country, platform) DO NOTHING`,
-		tk.ID, tk.Keyword, tk.Country, tk.Platform, tk.CreatedAt)
+		`INSERT INTO tracked_keywords (id, keyword, country, platform, user_id, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6)
+		 ON CONFLICT (keyword, country, platform, user_id) DO NOTHING`,
+		tk.ID, tk.Keyword, tk.Country, tk.Platform, tk.UserID, tk.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -56,22 +58,45 @@ func (r *TrackedKeywordRepository) Create(ctx context.Context, keyword, country,
 	return tk, nil
 }
 
-func (r *TrackedKeywordRepository) GetByKeyword(ctx context.Context, keyword, country, platform string) (*TrackedKeyword, error) {
+func (r *TrackedKeywordRepository) GetByKeyword(ctx context.Context, userID, keyword, country, platform string) (*TrackedKeyword, error) {
 	tk := &TrackedKeyword{}
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, keyword, country, platform, created_at
+		`SELECT id, keyword, country, platform, user_id, created_at
 		 FROM tracked_keywords
-		 WHERE keyword = $1 AND country = $2 AND platform = $3`,
-		keyword, country, platform).Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.CreatedAt)
+		 WHERE keyword = $1 AND country = $2 AND platform = $3 AND user_id = $4`,
+		keyword, country, platform, userID).Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.UserID, &tk.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
 	return tk, nil
 }
 
-func (r *TrackedKeywordRepository) List(ctx context.Context) ([]*TrackedKeyword, error) {
+func (r *TrackedKeywordRepository) List(ctx context.Context, userID string) ([]*TrackedKeyword, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, keyword, country, platform, created_at
+		`SELECT id, keyword, country, platform, user_id, created_at
+		 FROM tracked_keywords
+		 WHERE user_id = $1
+		 ORDER BY keyword`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keywords []*TrackedKeyword
+	for rows.Next() {
+		tk := &TrackedKeyword{}
+		if err := rows.Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.UserID, &tk.CreatedAt); err != nil {
+			return nil, err
+		}
+		keywords = append(keywords, tk)
+	}
+	return keywords, nil
+}
+
+// ListAll returns all tracked keywords without user filtering (for internal use like scraper)
+func (r *TrackedKeywordRepository) ListAll(ctx context.Context) ([]*TrackedKeyword, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT id, keyword, country, platform, user_id, created_at
 		 FROM tracked_keywords
 		 ORDER BY keyword`)
 	if err != nil {
@@ -82,7 +107,7 @@ func (r *TrackedKeywordRepository) List(ctx context.Context) ([]*TrackedKeyword,
 	var keywords []*TrackedKeyword
 	for rows.Next() {
 		tk := &TrackedKeyword{}
-		if err := rows.Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.CreatedAt); err != nil {
+		if err := rows.Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.UserID, &tk.CreatedAt); err != nil {
 			return nil, err
 		}
 		keywords = append(keywords, tk)
@@ -90,13 +115,27 @@ func (r *TrackedKeywordRepository) List(ctx context.Context) ([]*TrackedKeyword,
 	return keywords, nil
 }
 
-func (r *TrackedKeywordRepository) Get(ctx context.Context, id string) (*TrackedKeyword, error) {
+func (r *TrackedKeywordRepository) Get(ctx context.Context, userID, id string) (*TrackedKeyword, error) {
 	tk := &TrackedKeyword{}
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, keyword, country, platform, created_at
+		`SELECT id, keyword, country, platform, user_id, created_at
+		 FROM tracked_keywords
+		 WHERE id = $1 AND user_id = $2`,
+		id, userID).Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.UserID, &tk.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return tk, nil
+}
+
+// GetByID returns a tracked keyword without user filtering (for internal use like scraper)
+func (r *TrackedKeywordRepository) GetByID(ctx context.Context, id string) (*TrackedKeyword, error) {
+	tk := &TrackedKeyword{}
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, keyword, country, platform, user_id, created_at
 		 FROM tracked_keywords
 		 WHERE id = $1`,
-		id).Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.CreatedAt)
+		id).Scan(&tk.ID, &tk.Keyword, &tk.Country, &tk.Platform, &tk.UserID, &tk.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
