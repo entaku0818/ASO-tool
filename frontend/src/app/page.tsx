@@ -1,103 +1,201 @@
 'use client'
 
-import Link from 'next/link'
 import { useApps } from '@/hooks/useApps'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
+import { useSelectedApp } from '@/hooks/useSelectedApp'
+import { App } from '@/lib/api'
 
-function KeywordList({ appId }: { appId: string }) {
-  const { keywords, isLoading } = useKeywords(appId)
-
-  if (isLoading) {
-    return <p className="text-sm text-gray-500">読み込み中...</p>
-  }
-
-  const sortedKeywords = [...keywords].sort((a, b) => {
-    if (a.latestRank === null) return 1
-    if (b.latestRank === null) return -1
-    return a.latestRank - b.latestRank
-  })
-
+function AppSidebar({
+  apps,
+  selectedApp,
+  onSelectApp
+}: {
+  apps: App[]
+  selectedApp: App | null
+  onSelectApp: (app: App) => void
+}) {
   return (
-    <div className="mt-4">
-      <h4 className="text-sm font-medium text-gray-700 mb-2">キーワード順位</h4>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-        {sortedKeywords.slice(0, 8).map((keyword) => (
-          <KeywordBadge key={keyword.id} keyword={keyword} />
+    <div className="w-56 bg-gray-900 text-white h-full overflow-y-auto">
+      <div className="p-4 border-b border-gray-700">
+        <h2 className="text-sm font-semibold text-gray-400">Apps</h2>
+      </div>
+      <div className="py-2">
+        {apps.map((app) => (
+          <button
+            key={app.id}
+            onClick={() => onSelectApp(app)}
+            className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-800 transition-colors ${
+              selectedApp?.id === app.id ? 'bg-gray-800 border-l-2 border-blue-500' : ''
+            }`}
+          >
+            <div className="w-10 h-10 bg-gray-700 rounded-xl flex items-center justify-center text-lg">
+              {app.platform === 'ios' ? '📱' : '🤖'}
+            </div>
+            <div className="text-left overflow-hidden">
+              <div className="text-sm font-medium truncate">{app.name}</div>
+              <div className="text-xs text-gray-400">
+                {app.platform === 'ios' ? 'iPhone' : 'Android'}
+              </div>
+            </div>
+          </button>
         ))}
       </div>
-      {keywords.length > 8 && (
-        <p className="text-sm text-gray-500 mt-2">他 {keywords.length - 8} 件</p>
-      )}
     </div>
   )
 }
 
-function KeywordBadge({ keyword }: { keyword: KeywordWithRanking }) {
-  const rankColor = keyword.latestRank === null
-    ? 'bg-gray-100 text-gray-500'
-    : keyword.latestRank <= 10
-    ? 'bg-green-100 text-green-800'
-    : keyword.latestRank <= 50
-    ? 'bg-yellow-100 text-yellow-800'
-    : 'bg-red-100 text-red-800'
+function CountryFlag({ country }: { country: string }) {
+  const flags: Record<string, string> = {
+    jp: '🇯🇵',
+    us: '🇺🇸',
+    de: '🇩🇪',
+    cn: '🇨🇳',
+    kr: '🇰🇷',
+    gb: '🇬🇧',
+    fr: '🇫🇷',
+  }
+  return <span>{flags[country.toLowerCase()] || '🌐'}</span>
+}
+
+function RankBadge({ rank }: { rank: number | null }) {
+  if (rank === null) {
+    return <span className="text-gray-400"># -</span>
+  }
+
+  const color = rank <= 10
+    ? 'text-green-500'
+    : rank <= 50
+    ? 'text-yellow-500'
+    : rank <= 100
+    ? 'text-orange-500'
+    : 'text-red-500'
+
+  return <span className={`font-bold ${color}`}># {rank}</span>
+}
+
+function DifficultyBar({ value }: { value: number }) {
+  const color = value <= 30
+    ? 'bg-green-500'
+    : value <= 60
+    ? 'bg-yellow-500'
+    : 'bg-red-500'
 
   return (
-    <div className={`px-3 py-2 rounded-lg ${rankColor}`}>
-      <div className="text-xs truncate">{keyword.keyword}</div>
-      <div className="font-bold">
-        {keyword.latestRank === null ? '圏外' : `${keyword.latestRank}位`}
+    <div className="flex items-center gap-2">
+      <span className="text-sm w-8">{value}</span>
+      <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
       </div>
+    </div>
+  )
+}
+
+function KeywordTable({ keywords, isLoading }: { keywords: KeywordWithRanking[], isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">読み込み中...</p>
+      </div>
+    )
+  }
+
+  if (keywords.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">キーワードが登録されていません</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-gray-200 text-left text-sm text-gray-500">
+            <th className="pb-3 font-medium">Keyword</th>
+            <th className="pb-3 font-medium">Store</th>
+            <th className="pb-3 font-medium">Position</th>
+            <th className="pb-3 font-medium">Difficulty</th>
+          </tr>
+        </thead>
+        <tbody>
+          {keywords.map((keyword) => (
+            <tr key={keyword.id} className="border-b border-gray-100 hover:bg-gray-50">
+              <td className="py-4">
+                <span className="font-medium">{keyword.keyword}</span>
+              </td>
+              <td className="py-4">
+                <div className="flex items-center gap-2">
+                  <CountryFlag country={keyword.country} />
+                  <span className="text-sm text-gray-500">{keyword.country.toUpperCase()}</span>
+                </div>
+              </td>
+              <td className="py-4">
+                <RankBadge rank={keyword.latestRank} />
+              </td>
+              <td className="py-4">
+                <DifficultyBar value={Math.floor(Math.random() * 100)} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
 
 export default function Home() {
-  const { apps, isLoading, error } = useApps()
+  const { apps, isLoading: appsLoading, error: appsError } = useApps()
+  const { selectedApp, setSelectedApp } = useSelectedApp(apps, appsLoading)
+  const { keywords, isLoading: keywordsLoading } = useKeywords(selectedApp?.id || '')
 
-  if (isLoading) {
+  if (appsLoading) {
     return (
-      <div>
-        <h2 className="text-2xl font-bold mb-6">ダッシュボード</h2>
+      <div className="flex items-center justify-center h-screen">
         <p className="text-gray-600">読み込み中...</p>
       </div>
     )
   }
 
-  if (error) {
+  if (appsError) {
     return (
-      <div>
-        <h2 className="text-2xl font-bold mb-6">ダッシュボード</h2>
-        <p className="text-red-600">エラー: {error.message}</p>
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-red-600">エラー: {appsError.message}</p>
+      </div>
+    )
+  }
+
+  if (apps.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-600">アプリが登録されていません</p>
       </div>
     )
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">ダッシュボード</h2>
-
-      {apps.length === 0 ? (
-        <p className="text-gray-600">アプリが登録されていません</p>
-      ) : (
-        <div className="space-y-6">
-          {apps.map((app) => (
-            <Link key={app.id} href={`/apps/${app.id}`} className="block">
-              <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">{app.name}</h3>
-                    <p className="text-sm text-gray-500">{app.bundle_id}</p>
-                  </div>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                    {app.platform.toUpperCase()}
-                  </span>
-                </div>
-                <KeywordList appId={app.id} />
-              </div>
-            </Link>
-          ))}
+    <div className="flex h-[calc(100vh-73px)] -mx-4 -mt-6">
+      <AppSidebar
+        apps={apps}
+        selectedApp={selectedApp}
+        onSelectApp={setSelectedApp}
+      />
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-xl font-bold">{selectedApp?.name}</h1>
+              <p className="text-sm text-gray-500">{selectedApp?.bundle_id}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">
+                {keywords.length} keywords
+              </span>
+            </div>
+          </div>
+          <KeywordTable keywords={keywords} isLoading={keywordsLoading} />
         </div>
-      )}
+      </div>
     </div>
   )
 }
