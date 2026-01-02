@@ -13,63 +13,83 @@ on:
         options:
           - all
           - rankings
-          - reviews
-
-env:
-  API_URL: https://aso-api-671942133800.asia-northeast1.run.app
+          - tracked-keywords
 
 jobs:
-  update-rankings:
+  run-batch:
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event.inputs.job == 'all' || github.event.inputs.job == 'rankings'
+    environment: production
 
     steps:
-      - name: Trigger rankings update
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+
+      - name: Build and Push batch image
+        working-directory: backend
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          echo "Triggering rankings update..."
-          response=$(curl -s -w "\n%{http_code}" -X POST "${{ env.API_URL }}/api/scraper/trigger")
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | sed '$d')
+          docker build -f Dockerfile.batch \
+            -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
+            -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:latest \
+            .
+          docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }}
+          docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:latest
 
-          echo "Response: $body"
-          echo "HTTP Code: $http_code"
-
-          if [ "$http_code" -ge 400 ]; then
-            echo "Error: API returned $http_code"
-            exit 1
+      - name: Create or update Cloud Run Job
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          # Check if job exists
+          if gcloud run jobs describe aso-batch --region asia-northeast1 --project $PROJECT_ID 2>/dev/null; then
+            echo "Updating existing job..."
+            gcloud run jobs update aso-batch \
+              --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
+              --region asia-northeast1 \
+              --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
+              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+              --memory 512Mi \
+              --cpu 1 \
+              --task-timeout 30m \
+              --max-retries 1
+          else
+            echo "Creating new job..."
+            gcloud run jobs create aso-batch \
+              --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
+              --region asia-northeast1 \
+              --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
+              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+              --memory 512Mi \
+              --cpu 1 \
+              --task-timeout 30m \
+              --max-retries 1
           fi
 
-  fetch-reviews:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event.inputs.job == 'all' || github.event.inputs.job == 'reviews'
-    needs: update-rankings
-
-    steps:
-      - name: Get all apps and fetch reviews
+      - name: Execute batch job
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          JOB_TYPE: ${{ github.event.inputs.job || 'all' }}
         run: |
-          echo "Fetching apps..."
-          apps=$(curl -s "${{ env.API_URL }}/api/apps")
-          echo "Apps: $apps"
+          echo "Running batch job: $JOB_TYPE"
+          gcloud run jobs execute aso-batch \
+            --region asia-northeast1 \
+            --args "$JOB_TYPE" \
+            --wait
 
-          # Parse app IDs and fetch reviews for each
-          echo "$apps" | jq -r '.[].id' | while read app_id; do
-            if [ -n "$app_id" ]; then
-              echo "Fetching reviews for app: $app_id"
-              curl -s -X POST "${{ env.API_URL }}/api/apps/$app_id/scrape/reviews"
-            fi
-          done
-
-  notify-complete:
-    runs-on: ubuntu-latest
-    needs: [update-rankings, fetch-reviews]
-    if: always()
-
-    steps:
       - name: Summary
+        if: always()
         run: |
           echo "## Batch Job Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Rankings update: ${{ needs.update-rankings.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Reviews fetch: ${{ needs.fetch-reviews.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Completed at: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- Job type: ${{ github.event.inputs.job || 'all' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Completed at: $(date)" >> $GITHUB_STEP_SUMMARY
