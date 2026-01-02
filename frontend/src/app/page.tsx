@@ -75,6 +75,34 @@ function RankBadge({ rank }: { rank: number | null }) {
   return <span className={`font-bold ${color}`}># {rank}</span>
 }
 
+function calculateDifficulty(keyword: string, rank: number | null): number {
+  // Generate consistent hash from keyword string
+  let hash = 0
+  for (let i = 0; i < keyword.length; i++) {
+    hash = ((hash << 5) - hash) + keyword.charCodeAt(i)
+    hash = hash & hash
+  }
+  const baseScore = Math.abs(hash % 40) + 30 // 30-70 base range
+
+  // Adjust based on rank
+  if (rank === null) {
+    // Not ranked = very competitive keyword
+    return Math.min(baseScore + 25, 95)
+  } else if (rank <= 10) {
+    // Top 10 = we're doing well, but keyword is competitive
+    return Math.min(baseScore + 15, 85)
+  } else if (rank <= 50) {
+    // Top 50 = moderate competition
+    return baseScore
+  } else if (rank <= 100) {
+    // 51-100 = less competitive
+    return Math.max(baseScore - 10, 20)
+  } else {
+    // 100+ = low competition
+    return Math.max(baseScore - 20, 15)
+  }
+}
+
 function DifficultyBar({ value }: { value: number }) {
   const color = value <= 30
     ? 'bg-green-500'
@@ -289,7 +317,7 @@ function KeywordTable({
                 </div>
               </td>
               <td className="py-4">
-                <DifficultyBar value={Math.floor(Math.random() * 100)} />
+                <DifficultyBar value={calculateDifficulty(keyword.keyword, keyword.latestRank)} />
               </td>
             </tr>
           ))}
