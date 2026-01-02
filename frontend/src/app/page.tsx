@@ -75,51 +75,6 @@ function RankBadge({ rank }: { rank: number | null }) {
   return <span className={`font-bold ${color}`}># {rank}</span>
 }
 
-function calculateDifficulty(keyword: string, rank: number | null): number {
-  // Generate consistent hash from keyword string
-  let hash = 0
-  for (let i = 0; i < keyword.length; i++) {
-    hash = ((hash << 5) - hash) + keyword.charCodeAt(i)
-    hash = hash & hash
-  }
-  const baseScore = Math.abs(hash % 40) + 30 // 30-70 base range
-
-  // Adjust based on rank
-  if (rank === null) {
-    // Not ranked = very competitive keyword
-    return Math.min(baseScore + 25, 95)
-  } else if (rank <= 10) {
-    // Top 10 = we're doing well, but keyword is competitive
-    return Math.min(baseScore + 15, 85)
-  } else if (rank <= 50) {
-    // Top 50 = moderate competition
-    return baseScore
-  } else if (rank <= 100) {
-    // 51-100 = less competitive
-    return Math.max(baseScore - 10, 20)
-  } else {
-    // 100+ = low competition
-    return Math.max(baseScore - 20, 15)
-  }
-}
-
-function DifficultyBar({ value }: { value: number }) {
-  const color = value <= 30
-    ? 'bg-green-500'
-    : value <= 60
-    ? 'bg-yellow-500'
-    : 'bg-red-500'
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm w-8">{value}</span>
-      <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
-      </div>
-    </div>
-  )
-}
-
 function ChartIcon({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -295,7 +250,6 @@ function KeywordTable({
             <th className="pb-3 font-medium">Keyword</th>
             <th className="pb-3 font-medium">Store</th>
             <th className="pb-3 font-medium">Position</th>
-            <th className="pb-3 font-medium">Difficulty</th>
           </tr>
         </thead>
         <tbody>
@@ -315,9 +269,6 @@ function KeywordTable({
                   <RankBadge rank={keyword.latestRank} />
                   <ChartIcon onClick={() => onShowHistory(keyword)} />
                 </div>
-              </td>
-              <td className="py-4">
-                <DifficultyBar value={calculateDifficulty(keyword.keyword, keyword.latestRank)} />
               </td>
             </tr>
           ))}
