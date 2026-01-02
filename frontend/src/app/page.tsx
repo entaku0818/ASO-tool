@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useApps } from '@/hooks/useApps'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 import { useSelectedApp } from '@/hooks/useSelectedApp'
-import { App } from '@/lib/api'
+import { useRankingHistory } from '@/hooks/useRankingHistory'
+import { App, Ranking } from '@/lib/api'
 
 function AppSidebar({
   apps,
@@ -90,7 +92,157 @@ function DifficultyBar({ value }: { value: number }) {
   )
 }
 
-function KeywordTable({ keywords, isLoading }: { keywords: KeywordWithRanking[], isLoading: boolean }) {
+function ChartIcon({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="ml-2 p-1 text-gray-400 hover:text-blue-500 transition-colors"
+      title="順位履歴を表示"
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16" />
+      </svg>
+    </button>
+  )
+}
+
+function RankingChart({ rankings }: { rankings: Ranking[] }) {
+  if (rankings.length === 0) {
+    return <p className="text-gray-500 text-center py-8">データがありません</p>
+  }
+
+  const validRankings = rankings.filter(r => r.rank !== null)
+  if (validRankings.length === 0) {
+    return <p className="text-gray-500 text-center py-8">順位データがありません</p>
+  }
+
+  const maxRank = Math.max(...validRankings.map(r => r.rank!))
+  const minRank = Math.min(...validRankings.map(r => r.rank!))
+  const chartHeight = 200
+  const chartWidth = 400
+  const padding = 40
+
+  const getY = (rank: number) => {
+    const range = maxRank - minRank || 1
+    return padding + ((rank - minRank) / range) * (chartHeight - padding * 2)
+  }
+
+  const getX = (index: number) => {
+    return padding + (index / (validRankings.length - 1 || 1)) * (chartWidth - padding * 2)
+  }
+
+  const points = validRankings.map((r, i) => `${getX(i)},${getY(r.rank!)}`).join(' ')
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={chartWidth} height={chartHeight} className="mx-auto">
+        {/* Y axis labels */}
+        <text x={padding - 5} y={padding} textAnchor="end" className="text-xs fill-gray-500">{minRank}</text>
+        <text x={padding - 5} y={chartHeight - padding} textAnchor="end" className="text-xs fill-gray-500">{maxRank}</text>
+
+        {/* Grid lines */}
+        <line x1={padding} y1={padding} x2={padding} y2={chartHeight - padding} stroke="#e5e7eb" />
+        <line x1={padding} y1={chartHeight - padding} x2={chartWidth - padding} y2={chartHeight - padding} stroke="#e5e7eb" />
+
+        {/* Line chart */}
+        <polyline
+          fill="none"
+          stroke="#3b82f6"
+          strokeWidth="2"
+          points={points}
+        />
+
+        {/* Data points */}
+        {validRankings.map((r, i) => (
+          <circle
+            key={r.id}
+            cx={getX(i)}
+            cy={getY(r.rank!)}
+            r="4"
+            fill="#3b82f6"
+          />
+        ))}
+      </svg>
+
+      {/* Date labels */}
+      <div className="flex justify-between px-10 text-xs text-gray-500 mt-2">
+        <span>{new Date(validRankings[0].recorded_at).toLocaleDateString('ja-JP')}</span>
+        <span>{new Date(validRankings[validRankings.length - 1].recorded_at).toLocaleDateString('ja-JP')}</span>
+      </div>
+    </div>
+  )
+}
+
+function RankingModal({
+  isOpen,
+  onClose,
+  keyword,
+  rankings,
+  isLoading
+}: {
+  isOpen: boolean
+  onClose: () => void
+  keyword: string
+  rankings: Ranking[]
+  isLoading: boolean
+}) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">順位履歴: {keyword}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {isLoading ? (
+          <p className="text-gray-500 text-center py-8">読み込み中...</p>
+        ) : (
+          <RankingChart rankings={rankings} />
+        )}
+
+        {/* Recent rankings table */}
+        {!isLoading && rankings.length > 0 && (
+          <div className="mt-4 max-h-40 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-gray-500">
+                  <th className="text-left py-2">日付</th>
+                  <th className="text-right py-2">順位</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...rankings].reverse().slice(0, 10).map(r => (
+                  <tr key={r.id} className="border-b border-gray-100">
+                    <td className="py-2">{new Date(r.recorded_at).toLocaleDateString('ja-JP')}</td>
+                    <td className="text-right py-2">{r.rank ?? '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function KeywordTable({
+  keywords,
+  isLoading,
+  appId,
+  onShowHistory
+}: {
+  keywords: KeywordWithRanking[]
+  isLoading: boolean
+  appId: string
+  onShowHistory: (keyword: KeywordWithRanking) => void
+}) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -131,7 +283,10 @@ function KeywordTable({ keywords, isLoading }: { keywords: KeywordWithRanking[],
                 </div>
               </td>
               <td className="py-4">
-                <RankBadge rank={keyword.latestRank} />
+                <div className="flex items-center">
+                  <RankBadge rank={keyword.latestRank} />
+                  <ChartIcon onClick={() => onShowHistory(keyword)} />
+                </div>
               </td>
               <td className="py-4">
                 <DifficultyBar value={Math.floor(Math.random() * 100)} />
@@ -148,6 +303,21 @@ export default function Home() {
   const { apps, isLoading: appsLoading, error: appsError } = useApps()
   const { selectedApp, setSelectedApp } = useSelectedApp(apps, appsLoading)
   const { keywords, isLoading: keywordsLoading } = useKeywords(selectedApp?.id || '')
+  const { rankings, isLoading: rankingsLoading, fetchHistory, clearHistory } = useRankingHistory()
+
+  const [modalKeyword, setModalKeyword] = useState<KeywordWithRanking | null>(null)
+
+  const handleShowHistory = (keyword: KeywordWithRanking) => {
+    setModalKeyword(keyword)
+    if (selectedApp) {
+      fetchHistory(selectedApp.id, keyword.id)
+    }
+  }
+
+  const handleCloseModal = () => {
+    setModalKeyword(null)
+    clearHistory()
+  }
 
   if (appsLoading) {
     return (
@@ -193,9 +363,22 @@ export default function Home() {
               </span>
             </div>
           </div>
-          <KeywordTable keywords={keywords} isLoading={keywordsLoading} />
+          <KeywordTable
+            keywords={keywords}
+            isLoading={keywordsLoading}
+            appId={selectedApp?.id || ''}
+            onShowHistory={handleShowHistory}
+          />
         </div>
       </div>
+
+      <RankingModal
+        isOpen={modalKeyword !== null}
+        onClose={handleCloseModal}
+        keyword={modalKeyword?.keyword || ''}
+        rankings={rankings}
+        isLoading={rankingsLoading}
+      />
     </div>
   )
 }

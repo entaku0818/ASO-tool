@@ -54,8 +54,8 @@ function KeywordRow({
   )
 }
 
-function RankingChartSection({ keywordId, keywordName }: { keywordId: string; keywordName: string }) {
-  const { rankings, isLoading } = useRankings(keywordId)
+function RankingChartSection({ appId, keywordId, keywordName }: { appId: string; keywordId: string; keywordName: string }) {
+  const { rankings, isLoading } = useRankings(appId, keywordId)
 
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-6">
@@ -163,6 +163,7 @@ export default function AppDetailPage() {
 
       {selectedKeyword && (
         <RankingChartSection
+          appId={appId}
           keywordId={selectedKeyword.id}
           keywordName={selectedKeyword.keyword}
         />
