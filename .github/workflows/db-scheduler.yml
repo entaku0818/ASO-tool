@@ -46,8 +46,9 @@ jobs:
           gcloud sql instances patch aso-db \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --activation-policy=NEVER \
+            --async \
             --quiet
-          echo "Cloud SQL instance stopped"
+          echo "Cloud SQL instance stop initiated"
 
       - name: Start Cloud SQL
         if: steps.action.outputs.action == 'start'
@@ -55,5 +56,6 @@ jobs:
           gcloud sql instances patch aso-db \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --activation-policy=ALWAYS \
+            --async \
             --quiet
-          echo "Cloud SQL instance started"
+          echo "Cloud SQL instance start initiated"
