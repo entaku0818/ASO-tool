@@ -272,10 +272,18 @@ cd backend && go run cmd/migrate/main.go up
 - [x] ユニットテスト
 - [x] CI/CD ワークフロー (GitHub Actions)
 - [x] GCP/Firebase セットアップドキュメント
+- [x] Frontend (Next.js) 実装
+  - [x] ダッシュボード画面
+  - [x] アプリ登録・管理画面
+  - [x] キーワード追加・削除
+  - [x] 順位推移グラフ (Recharts)
+  - [x] レビュー表示
+  - [x] ユーザー認証
+- [x] Cloud Run デプロイ設定 (backend/frontend)
+- [x] バッチジョブ定期実行 (GitHub Actions スケジューラー)
 
-### 次のステップ
+### 次のステップ（本番デプロイ）
 
 - [ ] GCP プロジェクト作成・設定
 - [ ] Cloud SQL 本番環境構築
-- [ ] Frontend (Next.js) 実装
-- [ ] Cloud Scheduler 定期実行設定
+- [ ] GitHub Secrets 設定 (GCP_SA_KEY, GCP_PROJECT_ID, DATABASE_URL など)

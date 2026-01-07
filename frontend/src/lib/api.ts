@@ -71,6 +71,33 @@ export async function getApp(id: string): Promise<App> {
   return fetchApi<App>(`/api/apps/${id}`)
 }
 
+export type CreateAppRequest = {
+  name: string
+  bundle_id: string
+  platform: 'ios' | 'android'
+  store_url?: string
+}
+
+export async function createApp(data: CreateAppRequest): Promise<App> {
+  return fetchApi<App>('/api/apps', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateApp(id: string, data: Partial<CreateAppRequest>): Promise<App> {
+  return fetchApi<App>(`/api/apps/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteApp(id: string): Promise<void> {
+  await fetchApi<void>(`/api/apps/${id}`, {
+    method: 'DELETE',
+  })
+}
+
 export async function getKeywords(appId: string): Promise<Keyword[]> {
   return fetchApi<Keyword[]>(`/api/apps/${appId}/keywords`)
 }
