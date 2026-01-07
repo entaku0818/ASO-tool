@@ -5,41 +5,66 @@ import { useApps } from '@/hooks/useApps'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 import { useSelectedApp } from '@/hooks/useSelectedApp'
 import { useRankingHistory } from '@/hooks/useRankingHistory'
-import { App, Ranking } from '@/lib/api'
+import { App, Ranking, createApp, deleteApp, CreateAppRequest } from '@/lib/api'
 
 function AppSidebar({
   apps,
   selectedApp,
-  onSelectApp
+  onSelectApp,
+  onAddApp,
+  onDeleteApp
 }: {
   apps: App[]
   selectedApp: App | null
   onSelectApp: (app: App) => void
+  onAddApp: () => void
+  onDeleteApp: (app: App) => void
 }) {
   return (
     <div className="w-56 bg-gray-900 text-white h-full overflow-y-auto">
-      <div className="p-4 border-b border-gray-700">
+      <div className="p-4 border-b border-gray-700 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-400">Apps</h2>
+        <button
+          onClick={onAddApp}
+          className="text-gray-400 hover:text-white transition-colors"
+          title="アプリを追加"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
       </div>
       <div className="py-2">
         {apps.map((app) => (
-          <button
+          <div
             key={app.id}
-            onClick={() => onSelectApp(app)}
-            className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-800 transition-colors ${
+            className={`group w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-800 transition-colors cursor-pointer ${
               selectedApp?.id === app.id ? 'bg-gray-800 border-l-2 border-blue-500' : ''
             }`}
+            onClick={() => onSelectApp(app)}
           >
             <div className="w-10 h-10 bg-gray-700 rounded-xl flex items-center justify-center text-lg">
               {app.platform === 'ios' ? '📱' : '🤖'}
             </div>
-            <div className="text-left overflow-hidden">
+            <div className="text-left overflow-hidden flex-1">
               <div className="text-sm font-medium truncate">{app.name}</div>
               <div className="text-xs text-gray-400">
                 {app.platform === 'ios' ? 'iPhone' : 'Android'}
               </div>
             </div>
-          </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteApp(app)
+              }}
+              className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-opacity"
+              title="削除"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         ))}
       </div>
     </div>
@@ -215,6 +240,117 @@ function RankingModal({
   )
 }
 
+function AddAppModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isSubmitting
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (data: CreateAppRequest) => void
+  isSubmitting: boolean
+}) {
+  const [name, setName] = useState('')
+  const [bundleId, setBundleId] = useState('')
+  const [platform, setPlatform] = useState<'ios' | 'android'>('ios')
+  const [storeUrl, setStoreUrl] = useState('')
+
+  if (!isOpen) return null
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || !bundleId.trim()) return
+    onSubmit({
+      name: name.trim(),
+      bundle_id: bundleId.trim(),
+      platform,
+      store_url: storeUrl.trim() || undefined
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">アプリを追加</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">アプリ名</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="My App"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bundle ID</label>
+            <input
+              type="text"
+              value={bundleId}
+              onChange={(e) => setBundleId(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="com.example.myapp"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">プラットフォーム</label>
+            <select
+              value={platform}
+              onChange={(e) => setPlatform(e.target.value as 'ios' | 'android')}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ios">iOS</option>
+              <option value="android">Android</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">ストアURL (任意)</label>
+            <input
+              type="url"
+              value={storeUrl}
+              onChange={(e) => setStoreUrl(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://apps.apple.com/..."
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+              キャンセル
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !name.trim() || !bundleId.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isSubmitting ? '追加中...' : '追加'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function KeywordTable({
   keywords,
   isLoading,
@@ -279,12 +415,14 @@ function KeywordTable({
 }
 
 export default function Home() {
-  const { apps, isLoading: appsLoading, error: appsError } = useApps()
+  const { apps, isLoading: appsLoading, error: appsError, refetch } = useApps()
   const { selectedApp, setSelectedApp } = useSelectedApp(apps, appsLoading)
   const { keywords, isLoading: keywordsLoading } = useKeywords(selectedApp?.id || '')
   const { rankings, isLoading: rankingsLoading, fetchHistory, clearHistory } = useRankingHistory()
 
   const [modalKeyword, setModalKeyword] = useState<KeywordWithRanking | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [isAddingApp, setIsAddingApp] = useState(false)
 
   const handleShowHistory = (keyword: KeywordWithRanking) => {
     setModalKeyword(keyword)
@@ -296,6 +434,32 @@ export default function Home() {
   const handleCloseModal = () => {
     setModalKeyword(null)
     clearHistory()
+  }
+
+  const handleAddApp = async (data: CreateAppRequest) => {
+    setIsAddingApp(true)
+    try {
+      await createApp(data)
+      setShowAddModal(false)
+      refetch()
+    } catch (e) {
+      alert('アプリの追加に失敗しました')
+    } finally {
+      setIsAddingApp(false)
+    }
+  }
+
+  const handleDeleteApp = async (app: App) => {
+    if (!confirm(`「${app.name}」を削除しますか？`)) return
+    try {
+      await deleteApp(app.id)
+      if (selectedApp?.id === app.id) {
+        setSelectedApp(apps.find(a => a.id !== app.id) || null)
+      }
+      refetch()
+    } catch (e) {
+      alert('アプリの削除に失敗しました')
+    }
   }
 
   if (appsLoading) {
@@ -316,8 +480,20 @@ export default function Home() {
 
   if (apps.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
         <p className="text-gray-600">アプリが登録されていません</p>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          アプリを追加
+        </button>
+        <AddAppModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddApp}
+          isSubmitting={isAddingApp}
+        />
       </div>
     )
   }
@@ -328,6 +504,8 @@ export default function Home() {
         apps={apps}
         selectedApp={selectedApp}
         onSelectApp={setSelectedApp}
+        onAddApp={() => setShowAddModal(true)}
+        onDeleteApp={handleDeleteApp}
       />
       <div className="flex-1 overflow-y-auto">
         <div className="p-6">
@@ -357,6 +535,13 @@ export default function Home() {
         keyword={modalKeyword?.keyword || ''}
         rankings={rankings}
         isLoading={rankingsLoading}
+      />
+
+      <AddAppModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddApp}
+        isSubmitting={isAddingApp}
       />
     </div>
   )
