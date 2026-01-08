@@ -14,6 +14,9 @@ var (
 	ErrKeywordRequired   = errors.New("keyword is required")
 	ErrKeywordIDRequired = errors.New("keyword_id is required")
 
+	// Competitor errors
+	ErrCompetitorIDRequired = errors.New("competitor_id is required")
+
 	// Review errors
 	ErrReviewIDRequired = errors.New("review_id is required")
 	ErrInvalidRating    = errors.New("rating must be between 1 and 5")
