@@ -38,6 +38,7 @@ cd frontend && npm run dev
 
 ## ドキュメント
 
+- [開発計画](./docs/development-plan.md) - フェーズ別開発ロードマップ
 - [Backend README](./backend/README.md) - API 開発・起動方法
 - [Frontend README](./frontend/README.md) - UI 開発・起動方法
 - [GCP セットアップ](./docs/gcp-setup.md) - Cloud Run, Cloud SQL 設定
