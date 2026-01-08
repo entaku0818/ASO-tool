@@ -74,6 +74,10 @@ func main() {
 	competitorService := service.NewCompetitorService(competitorRepo, keywordRepo)
 	competitorHandler := handler.NewCompetitorHandler(competitorService)
 
+	screenshotRepo := repository.NewScreenshotRepository(pool)
+	screenshotService := service.NewScreenshotService(screenshotRepo)
+	screenshotHandler := handler.NewScreenshotHandler(screenshotService)
+
 	// Router setup
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -152,6 +156,15 @@ func main() {
 					r.Get("/{competitorID}", competitorHandler.Get)
 					r.Delete("/{competitorID}", competitorHandler.Delete)
 					r.Post("/update-rankings", competitorHandler.UpdateRankings)
+				})
+
+				r.Route("/{appID}/screenshots", func(r chi.Router) {
+					r.Get("/", screenshotHandler.List)
+					r.Post("/", screenshotHandler.Create)
+					r.Post("/reorder", screenshotHandler.Reorder)
+					r.Get("/{screenshotID}", screenshotHandler.Get)
+					r.Put("/{screenshotID}", screenshotHandler.Update)
+					r.Delete("/{screenshotID}", screenshotHandler.Delete)
 				})
 
 				r.Get("/{appID}/keywords/{keywordID}/comparison", competitorHandler.GetComparison)
