@@ -70,6 +70,10 @@ func main() {
 	scraperService := service.NewScraperServiceWithTracking(keywordRepo, rankingRepo, reviewRepo, appRepo, trackedKeywordRepo)
 	scraperHandler := handler.NewScraperHandler(scraperService)
 
+	competitorRepo := repository.NewCompetitorRepository(pool)
+	competitorService := service.NewCompetitorService(competitorRepo, keywordRepo)
+	competitorHandler := handler.NewCompetitorHandler(competitorService)
+
 	// Router setup
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -141,6 +145,16 @@ func main() {
 					r.Get("/{reviewID}", reviewHandler.Get)
 					r.Delete("/{reviewID}", reviewHandler.Delete)
 				})
+
+				r.Route("/{appID}/competitors", func(r chi.Router) {
+					r.Get("/", competitorHandler.List)
+					r.Post("/", competitorHandler.Create)
+					r.Get("/{competitorID}", competitorHandler.Get)
+					r.Delete("/{competitorID}", competitorHandler.Delete)
+					r.Post("/update-rankings", competitorHandler.UpdateRankings)
+				})
+
+				r.Get("/{appID}/keywords/{keywordID}/comparison", competitorHandler.GetComparison)
 			})
 
 			// Rankings endpoint for creating new rankings

@@ -192,3 +192,61 @@ export async function triggerTrackedKeywordUpdate(id: string): Promise<{ message
 export async function triggerAllTrackedKeywordUpdates(): Promise<{ message: string; keywords_processed: number; results_stored: number }> {
   return fetchApi('/api/tracked-keywords/trigger', { method: 'POST' })
 }
+
+// Competitors
+export type Competitor = {
+  id: string
+  app_id: string
+  competitor_bundle_id: string
+  competitor_name: string
+  platform: 'ios' | 'android'
+  notes?: string
+  created_at: string
+}
+
+export type CompetitorRankData = {
+  competitor_id: string
+  competitor_name: string
+  bundle_id: string
+  rank: number | null
+}
+
+export type CompetitorComparison = {
+  keyword: string
+  keyword_id: string
+  app_rank: number | null
+  competitors: CompetitorRankData[]
+  recorded_at: string
+}
+
+export type CreateCompetitorRequest = {
+  competitor_bundle_id: string
+  competitor_name: string
+  platform: 'ios' | 'android'
+  notes?: string
+}
+
+export async function getCompetitors(appId: string): Promise<Competitor[]> {
+  return fetchApi<Competitor[]>(`/api/apps/${appId}/competitors`)
+}
+
+export async function createCompetitor(appId: string, data: CreateCompetitorRequest): Promise<Competitor> {
+  return fetchApi<Competitor>(`/api/apps/${appId}/competitors`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteCompetitor(appId: string, competitorId: string): Promise<void> {
+  await fetchApi<void>(`/api/apps/${appId}/competitors/${competitorId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function updateCompetitorRankings(appId: string): Promise<{ updated: number }> {
+  return fetchApi(`/api/apps/${appId}/competitors/update-rankings`, { method: 'POST' })
+}
+
+export async function getCompetitorComparison(appId: string, keywordId: string): Promise<CompetitorComparison> {
+  return fetchApi<CompetitorComparison>(`/api/apps/${appId}/keywords/${keywordId}/comparison`)
+}
