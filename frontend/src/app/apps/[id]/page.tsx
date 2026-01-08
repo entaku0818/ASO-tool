@@ -10,6 +10,7 @@ import { RankingChart } from '@/components/RankingChart'
 import { createKeyword, deleteKeyword } from '@/lib/api'
 import { ReviewsSection } from '@/components/ReviewsSection'
 import { CompetitorSection } from '@/components/CompetitorSection'
+import { ScreenshotSection } from '@/components/ScreenshotSection'
 
 function KeywordRow({
   keyword,
@@ -237,6 +238,10 @@ export default function AppDetailPage() {
 
       <div className="mt-6">
         <ReviewsSection appId={appId} />
+      </div>
+
+      <div className="mt-6">
+        <ScreenshotSection appId={appId} platform={app.platform} />
       </div>
     </div>
   )

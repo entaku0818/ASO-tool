@@ -28,4 +28,9 @@ var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrUnauthorized      = errors.New("unauthorized")
 	ErrForbidden         = errors.New("forbidden")
+
+	// Screenshot errors
+	ErrURLRequired         = errors.New("url is required")
+	ErrInvalidDeviceType   = errors.New("invalid device type")
+	ErrInvalidDisplayOrder = errors.New("display_order must be non-negative")
 )

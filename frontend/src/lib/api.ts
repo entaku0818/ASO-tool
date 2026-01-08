@@ -250,3 +250,70 @@ export async function updateCompetitorRankings(appId: string): Promise<{ updated
 export async function getCompetitorComparison(appId: string, keywordId: string): Promise<CompetitorComparison> {
   return fetchApi<CompetitorComparison>(`/api/apps/${appId}/keywords/${keywordId}/comparison`)
 }
+
+// Screenshots
+export type DeviceType = 'iphone' | 'ipad' | 'android' | 'tablet'
+
+export type Screenshot = {
+  id: string
+  app_id: string
+  url: string
+  display_order: number
+  device_type: DeviceType
+  locale: string
+  description?: string
+  created_at: string
+  updated_at: string
+}
+
+export type CreateScreenshotRequest = {
+  url: string
+  display_order?: number
+  device_type?: DeviceType
+  locale?: string
+  description?: string
+}
+
+export type UpdateScreenshotRequest = {
+  url?: string
+  display_order?: number
+  device_type?: DeviceType
+  locale?: string
+  description?: string
+}
+
+export async function getScreenshots(appId: string, deviceType?: DeviceType): Promise<Screenshot[]> {
+  const query = deviceType ? `?device_type=${deviceType}` : ''
+  return fetchApi<Screenshot[]>(`/api/apps/${appId}/screenshots${query}`)
+}
+
+export async function getScreenshot(appId: string, screenshotId: string): Promise<Screenshot> {
+  return fetchApi<Screenshot>(`/api/apps/${appId}/screenshots/${screenshotId}`)
+}
+
+export async function createScreenshot(appId: string, data: CreateScreenshotRequest): Promise<Screenshot> {
+  return fetchApi<Screenshot>(`/api/apps/${appId}/screenshots`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateScreenshot(appId: string, screenshotId: string, data: UpdateScreenshotRequest): Promise<Screenshot> {
+  return fetchApi<Screenshot>(`/api/apps/${appId}/screenshots/${screenshotId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteScreenshot(appId: string, screenshotId: string): Promise<void> {
+  await fetchApi<void>(`/api/apps/${appId}/screenshots/${screenshotId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function reorderScreenshots(appId: string, screenshotIds: string[]): Promise<void> {
+  await fetchApi<void>(`/api/apps/${appId}/screenshots/reorder`, {
+    method: 'POST',
+    body: JSON.stringify({ screenshot_ids: screenshotIds }),
+  })
+}
