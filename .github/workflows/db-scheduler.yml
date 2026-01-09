@@ -14,9 +14,6 @@ on:
           - stop
           - status
 
-env:
-  DB_MANAGER_URL: https://asia-northeast1-${{ secrets.GCP_PROJECT_ID }}.cloudfunctions.net/db-manager
-
 jobs:
   manage-db:
     runs-on: ubuntu-latest
@@ -33,18 +30,14 @@ jobs:
 
       - name: Stop Cloud SQL (hourly)
         if: steps.action.outputs.action == 'stop'
-        env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           echo "Calling DB manager to stop instance..."
-          response=$(curl -s -X GET "https://asia-northeast1-${GCP_PROJECT_ID}.cloudfunctions.net/db-manager?action=stop")
+          response=$(curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=stop")
           echo "Response: $response"
 
       - name: Check Cloud SQL Status
         if: steps.action.outputs.action == 'status'
-        env:
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           echo "Checking DB status..."
-          response=$(curl -s -X GET "https://asia-northeast1-${GCP_PROJECT_ID}.cloudfunctions.net/db-manager?action=status")
+          response=$(curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=status")
           echo "Response: $response"
