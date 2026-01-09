@@ -75,6 +75,13 @@ jobs:
               --max-retries 1
           fi
 
+      - name: Start Cloud SQL before batch
+        run: |
+          echo "Starting Cloud SQL instance..."
+          curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=start"
+          echo "Waiting for DB to start..."
+          sleep 90
+
       - name: Execute batch job
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
