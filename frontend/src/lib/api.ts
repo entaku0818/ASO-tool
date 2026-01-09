@@ -1,4 +1,20 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://aso-api-671942133800.asia-northeast1.run.app'
+const DB_MANAGER_URL = process.env.NEXT_PUBLIC_DB_MANAGER_URL || ''
+
+// Wake up the database when accessed
+export async function wakeDatabase(): Promise<{ status: string; message: string } | null> {
+  if (!DB_MANAGER_URL) return null
+
+  try {
+    const response = await fetch(`${DB_MANAGER_URL}?action=start`, {
+      method: 'GET',
+    })
+    return response.json()
+  } catch {
+    // Silently fail - DB might already be running
+    return null
+  }
+}
 
 export type App = {
   id: string

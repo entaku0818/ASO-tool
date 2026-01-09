@@ -2,10 +2,8 @@ name: Cloud SQL Scheduler
 
 on:
   schedule:
-    # Stop at 23:00 JST (14:00 UTC)
-    - cron: '0 14 * * *'
-    # Start at 8:00 JST (23:00 UTC previous day)
-    - cron: '0 23 * * *'
+    # Run every hour to stop DB if not in use
+    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       action:
@@ -13,49 +11,40 @@ on:
         required: true
         type: choice
         options:
-          - start
           - stop
+          - status
+
+env:
+  DB_MANAGER_URL: https://asia-northeast1-${{ secrets.GCP_PROJECT_ID }}.cloudfunctions.net/db-manager
 
 jobs:
   manage-db:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
       - name: Determine action
         id: action
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.schedule }}" = "0 14 * * *" ]; then
-            echo "action=stop" >> $GITHUB_OUTPUT
           else
-            echo "action=start" >> $GITHUB_OUTPUT
+            echo "action=stop" >> $GITHUB_OUTPUT
           fi
 
-      - name: Stop Cloud SQL
+      - name: Stop Cloud SQL (hourly)
         if: steps.action.outputs.action == 'stop'
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          gcloud sql instances patch aso-db \
-            --project=${{ secrets.GCP_PROJECT_ID }} \
-            --activation-policy=NEVER \
-            --async \
-            --quiet
-          echo "Cloud SQL instance stop initiated"
+          echo "Calling DB manager to stop instance..."
+          response=$(curl -s -X GET "https://asia-northeast1-${GCP_PROJECT_ID}.cloudfunctions.net/db-manager?action=stop")
+          echo "Response: $response"
 
-      - name: Start Cloud SQL
-        if: steps.action.outputs.action == 'start'
+      - name: Check Cloud SQL Status
+        if: steps.action.outputs.action == 'status'
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          gcloud sql instances patch aso-db \
-            --project=${{ secrets.GCP_PROJECT_ID }} \
-            --activation-policy=ALWAYS \
-            --async \
-            --quiet
-          echo "Cloud SQL instance start initiated"
+          echo "Checking DB status..."
+          response=$(curl -s -X GET "https://asia-northeast1-${GCP_PROJECT_ID}.cloudfunctions.net/db-manager?action=status")
+          echo "Response: $response"

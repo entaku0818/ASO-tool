@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+import { wakeDatabase } from '@/lib/api'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://aso-api-671942133800.asia-northeast1.run.app'
 
@@ -55,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [logout])
 
   useEffect(() => {
+    // Wake up database on app load
+    wakeDatabase()
+
     const storedToken = localStorage.getItem('token')
     if (storedToken) {
       setToken(storedToken)
