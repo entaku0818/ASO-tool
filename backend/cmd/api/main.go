@@ -19,6 +19,33 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+func connectWithRetry(ctx context.Context, dbURL string, maxRetries int, retryDelay time.Duration) (*pgxpool.Pool, error) {
+	var pool *pgxpool.Pool
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		pool, err = pgxpool.New(ctx, dbURL)
+		if err != nil {
+			log.Printf("Attempt %d/%d: Failed to create pool: %v", i+1, maxRetries, err)
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		// Try to ping the database
+		if pingErr := pool.Ping(ctx); pingErr != nil {
+			log.Printf("Attempt %d/%d: Failed to ping database: %v", i+1, maxRetries, pingErr)
+			pool.Close()
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		log.Println("Connected to database")
+		return pool, nil
+	}
+
+	return nil, err
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -28,17 +55,13 @@ func main() {
 		dbURL = "postgres://aso:aso_password@localhost:5432/aso_tool?sslmode=disable"
 	}
 
-	pool, err := pgxpool.New(ctx, dbURL)
+	// Connect with retry (20 retries, 10 second delay = 200 seconds max)
+	// Allows time for Cloud SQL cold start
+	pool, err := connectWithRetry(ctx, dbURL, 20, 10*time.Second)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		log.Fatalf("Unable to connect to database after retries: %v", err)
 	}
 	defer pool.Close()
-
-	// Verify connection
-	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("Unable to ping database: %v", err)
-	}
-	log.Println("Connected to database")
 
 	// Initialize layers
 	// Auth

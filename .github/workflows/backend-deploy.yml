@@ -28,6 +28,13 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 
+      - name: Start Cloud SQL before deploy
+        run: |
+          echo "Starting Cloud SQL instance..."
+          curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=start"
+          echo "Waiting for DB to start..."
+          sleep 60
+
       - name: Build and Push Docker image
         working-directory: backend
         env:
@@ -53,4 +60,6 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 3 \
-            --concurrency 80
+            --concurrency 80 \
+            --cpu-boost \
+            --timeout 300
