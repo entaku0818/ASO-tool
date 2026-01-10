@@ -32,8 +32,10 @@ jobs:
         run: |
           echo "Starting Cloud SQL instance..."
           curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=start"
-          echo "Waiting for DB to start..."
-          sleep 60
+          echo "Waiting for DB to start (90 seconds)..."
+          sleep 90
+          echo "Checking DB status..."
+          curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=status"
 
       - name: Build and Push Docker image
         working-directory: backend

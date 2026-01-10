@@ -55,9 +55,9 @@ func main() {
 		dbURL = "postgres://aso:aso_password@localhost:5432/aso_tool?sslmode=disable"
 	}
 
-	// Connect with retry (20 retries, 10 second delay = 200 seconds max)
-	// Allows time for Cloud SQL cold start
-	pool, err := connectWithRetry(ctx, dbURL, 20, 10*time.Second)
+	// Connect with retry (10 retries, 5 second delay = 50 seconds max)
+	// Cloud SQL should be pre-started by CI/CD workflow
+	pool, err := connectWithRetry(ctx, dbURL, 10, 5*time.Second)
 	if err != nil {
 		log.Fatalf("Unable to connect to database after retries: %v", err)
 	}
