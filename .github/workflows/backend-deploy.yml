@@ -55,7 +55,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --add-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
-            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},ASC_ENCRYPTION_KEY=${{ secrets.ASC_ENCRYPTION_KEY }}" \
             --memory 256Mi \
             --cpu 1 \
             --min-instances 0 \
