@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,12 @@ import (
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+//go:embed migrations/007_create_asc_credentials.up.sql
+var migration007 string
+
+//go:embed migrations/008_create_analytics.up.sql
+var migration008 string
 
 func main() {
 	ctx := context.Background()
@@ -53,6 +60,8 @@ func main() {
 	}
 
 	switch job {
+	case "migrate":
+		runMigrations(ctx, pool)
 	case "rankings":
 		runRankingsUpdate(ctx, scraperService)
 	case "tracked-keywords":
@@ -61,7 +70,7 @@ func main() {
 		runRankingsUpdate(ctx, scraperService)
 		runTrackedKeywordsUpdate(ctx, scraperService)
 	default:
-		log.Fatalf("Unknown job: %s. Use: rankings, tracked-keywords, or all", job)
+		log.Fatalf("Unknown job: %s. Use: migrate, rankings, tracked-keywords, or all", job)
 	}
 
 	log.Println("Batch job completed successfully")
@@ -109,4 +118,29 @@ func runTrackedKeywordsUpdate(ctx context.Context, s *service.ScraperService) {
 	}
 
 	fmt.Printf("Tracked keywords update complete: %d total results across %d keywords\n", total, len(results))
+}
+
+func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
+	log.Println("Starting migrations...")
+
+	migrations := []struct {
+		name string
+		sql  string
+	}{
+		{"007_create_asc_credentials", migration007},
+		{"008_create_analytics", migration008},
+	}
+
+	for _, m := range migrations {
+		log.Printf("Running migration: %s", m.name)
+		_, err := pool.Exec(ctx, m.sql)
+		if err != nil {
+			log.Printf("Migration %s failed: %v", m.name, err)
+			// Continue with other migrations as they use IF NOT EXISTS
+		} else {
+			log.Printf("Migration %s completed", m.name)
+		}
+	}
+
+	log.Println("All migrations completed")
 }
