@@ -10,6 +10,7 @@ import { RankingChart } from '@/components/RankingChart'
 import { createKeyword, deleteKeyword } from '@/lib/api'
 import { ReviewsSection } from '@/components/ReviewsSection'
 import { CompetitorSection } from '@/components/CompetitorSection'
+import { AnalyticsSection } from '@/components/AnalyticsSection'
 
 function KeywordRow({
   keyword,
@@ -161,6 +162,12 @@ export default function AppDetailPage() {
           </a>
         )}
       </div>
+
+      {app.platform === 'ios' && (
+        <div className="mb-6">
+          <AnalyticsSection appId={appId} platform={app.platform} />
+        </div>
+      )}
 
       {selectedKeyword && (
         <RankingChartSection

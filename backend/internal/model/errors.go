@@ -33,4 +33,18 @@ var (
 	ErrURLRequired         = errors.New("url is required")
 	ErrInvalidDeviceType   = errors.New("invalid device type")
 	ErrInvalidDisplayOrder = errors.New("display_order must be non-negative")
+
+	// ASC Credentials errors
+	ErrIssuerIDRequired      = errors.New("issuer_id is required")
+	ErrKeyIDRequired         = errors.New("key_id is required")
+	ErrPrivateKeyRequired    = errors.New("private_key is required")
+	ErrInvalidPrivateKey     = errors.New("invalid private key format")
+	ErrCredentialsNotFound   = errors.New("credentials not found")
+	ErrInvalidASCCredentials = errors.New("invalid App Store Connect credentials")
+
+	// Analytics errors
+	ErrAnalyticsNotAvailable = errors.New("analytics not available for this app")
+	ErrIOSOnly               = errors.New("analytics is only available for iOS apps")
+	ErrVersionRequired       = errors.New("version is required")
+	ErrReleaseDateRequired   = errors.New("release_date is required")
 )

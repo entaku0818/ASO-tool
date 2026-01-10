@@ -101,6 +101,16 @@ func main() {
 	screenshotService := service.NewScreenshotService(screenshotRepo)
 	screenshotHandler := handler.NewScreenshotHandler(screenshotService)
 
+	// Analytics
+	ascCredentialsRepo := repository.NewASCCredentialsRepository(pool)
+	analyticsRepo := repository.NewAnalyticsRepository(pool)
+	appVersionRepo := repository.NewAppVersionRepository(pool)
+	analyticsService := service.NewAnalyticsService(
+		ascCredentialsRepo, analyticsRepo, appVersionRepo,
+		rankingRepo, reviewRepo, appRepo,
+	)
+	analyticsHandler := handler.NewAnalyticsHandler(analyticsService)
+
 	// Router setup
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -188,6 +198,22 @@ func main() {
 					r.Get("/{screenshotID}", screenshotHandler.Get)
 					r.Put("/{screenshotID}", screenshotHandler.Update)
 					r.Delete("/{screenshotID}", screenshotHandler.Delete)
+				})
+
+				// App Store Connect credentials
+				r.Route("/{appID}/asc-credentials", func(r chi.Router) {
+					r.Post("/", analyticsHandler.SetCredentials)
+					r.Get("/", analyticsHandler.GetCredentials)
+					r.Delete("/", analyticsHandler.DeleteCredentials)
+					r.Post("/validate", analyticsHandler.ValidateCredentials)
+				})
+
+				// Analytics
+				r.Route("/{appID}/analytics", func(r chi.Router) {
+					r.Get("/", analyticsHandler.GetAnalytics)
+					r.Get("/correlation", analyticsHandler.GetAnalyticsWithCorrelation)
+					r.Get("/summary", analyticsHandler.GetSummary)
+					r.Post("/fetch", analyticsHandler.TriggerFetch)
 				})
 
 				r.Get("/{appID}/keywords/{keywordID}/comparison", competitorHandler.GetComparison)

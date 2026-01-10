@@ -264,3 +264,87 @@ export async function updateCompetitorRankings(appId: string): Promise<{ updated
 export async function getCompetitorComparison(appId: string, keywordId: string): Promise<CompetitorComparison> {
   return fetchApi<CompetitorComparison>(`/api/apps/${appId}/keywords/${keywordId}/comparison`)
 }
+
+// App Store Connect Analytics
+export type ASCCredentials = {
+  id: string
+  app_id: string
+  issuer_id: string
+  key_id: string
+  is_valid: boolean
+  last_validated_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export type CreateASCCredentialsRequest = {
+  issuer_id: string
+  key_id: string
+  private_key: string // Base64 encoded
+}
+
+export type Analytics = {
+  id: string
+  app_id: string
+  date: string
+  impressions: number
+  downloads: number
+  page_views: number
+  conversion_rate?: number
+}
+
+export type AnalyticsWithCorrelation = Analytics & {
+  ranking_change?: number
+  new_version?: string
+  review_count_change?: number
+  average_rating_change?: number
+}
+
+export type AnalyticsSummary = {
+  total_impressions: number
+  total_downloads: number
+  average_conversion: number
+  impressions_change_percent: number
+  downloads_change_percent: number
+}
+
+export async function getASCCredentials(appId: string): Promise<ASCCredentials | null> {
+  try {
+    return await fetchApi<ASCCredentials>(`/api/apps/${appId}/asc-credentials`)
+  } catch {
+    return null
+  }
+}
+
+export async function setASCCredentials(appId: string, data: CreateASCCredentialsRequest): Promise<{ message: string }> {
+  return fetchApi(`/api/apps/${appId}/asc-credentials`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteASCCredentials(appId: string): Promise<void> {
+  await fetchApi<void>(`/api/apps/${appId}/asc-credentials`, {
+    method: 'DELETE',
+  })
+}
+
+export async function validateASCCredentials(appId: string): Promise<{ valid: boolean; message: string }> {
+  return fetchApi(`/api/apps/${appId}/asc-credentials/validate`, { method: 'POST' })
+}
+
+export async function getAnalytics(appId: string, days: number = 30): Promise<Analytics[]> {
+  return fetchApi<Analytics[]>(`/api/apps/${appId}/analytics?days=${days}`)
+}
+
+export async function getAnalyticsWithCorrelation(appId: string, days: number = 30): Promise<AnalyticsWithCorrelation[]> {
+  return fetchApi<AnalyticsWithCorrelation[]>(`/api/apps/${appId}/analytics/correlation?days=${days}`)
+}
+
+export async function getAnalyticsSummary(appId: string, days: number = 30): Promise<AnalyticsSummary> {
+  return fetchApi<AnalyticsSummary>(`/api/apps/${appId}/analytics/summary?days=${days}`)
+}
+
+export async function triggerAnalyticsFetch(appId: string): Promise<{ message: string; days_stored: number }> {
+  return fetchApi(`/api/apps/${appId}/analytics/fetch`, { method: 'POST' })
+}
