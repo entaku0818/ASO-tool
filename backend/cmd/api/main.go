@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -43,6 +44,9 @@ func connectWithRetry(ctx context.Context, dbURL string, maxRetries int, retryDe
 		return pool, nil
 	}
 
+	if err == nil {
+		err = fmt.Errorf("failed to connect after %d retries", maxRetries)
+	}
 	return nil, err
 }
 
