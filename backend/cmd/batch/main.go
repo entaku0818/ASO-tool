@@ -9,7 +9,9 @@ import (
 
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //go:embed migrations/007_create_asc_credentials.up.sql
@@ -62,6 +64,8 @@ func main() {
 	switch job {
 	case "migrate":
 		runMigrations(ctx, pool)
+	case "seed":
+		runSeed(ctx, pool)
 	case "rankings":
 		runRankingsUpdate(ctx, scraperService)
 	case "tracked-keywords":
@@ -70,7 +74,7 @@ func main() {
 		runRankingsUpdate(ctx, scraperService)
 		runTrackedKeywordsUpdate(ctx, scraperService)
 	default:
-		log.Fatalf("Unknown job: %s. Use: migrate, rankings, tracked-keywords, or all", job)
+		log.Fatalf("Unknown job: %s. Use: migrate, seed, rankings, tracked-keywords, or all", job)
 	}
 
 	log.Println("Batch job completed successfully")
@@ -143,4 +147,44 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
 	}
 
 	log.Println("All migrations completed")
+}
+
+func runSeed(ctx context.Context, pool *pgxpool.Pool) {
+	log.Println("Starting seed...")
+
+	// Check if admin user already exists
+	var count int
+	err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM users WHERE email = $1", "admin@example.com").Scan(&count)
+	if err != nil {
+		log.Printf("Error checking existing user: %v", err)
+		return
+	}
+
+	if count > 0 {
+		log.Println("Admin user already exists, skipping seed")
+		return
+	}
+
+	// Create admin user
+	password := "admin123" // Default password - should be changed after first login
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("Error hashing password: %v", err)
+		return
+	}
+
+	id := uuid.New().String()
+	_, err = pool.Exec(ctx,
+		"INSERT INTO users (id, email, password_hash, name, is_admin) VALUES ($1, $2, $3, $4, $5)",
+		id, "admin@example.com", string(hashedPassword), "Admin", true,
+	)
+	if err != nil {
+		log.Printf("Error creating admin user: %v", err)
+		return
+	}
+
+	log.Println("Admin user created successfully")
+	log.Println("Email: admin@example.com")
+	log.Println("Password: admin123")
+	log.Println("Please change the password after first login!")
 }
