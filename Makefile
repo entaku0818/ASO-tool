@@ -27,6 +27,15 @@ db-status:
 deploy-backend:
 	gh workflow run "Backend CI" --ref main || echo "Triggering via push..."
 
+# Import CSV data
+import-csv:
+	@if [ -z "$(FILE)" ] || [ -z "$(TOKEN)" ]; then \
+		echo "Usage: make import-csv FILE=/path/to/data.csv TOKEN=your-auth-token"; \
+		echo "  Get auth token from browser DevTools after logging in"; \
+		exit 1; \
+	fi
+	cd scripts && go run import-csv.go "$(FILE)" "$(TOKEN)"
+
 # Help
 help:
 	@echo "Available commands:"
@@ -37,3 +46,4 @@ help:
 	@echo "  make db-start        - Start Cloud SQL"
 	@echo "  make db-stop         - Stop Cloud SQL"
 	@echo "  make db-status       - Check Cloud SQL status"
+	@echo "  make import-csv FILE=path TOKEN=token - Import CSV data"
