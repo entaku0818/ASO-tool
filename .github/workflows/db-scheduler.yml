@@ -2,8 +2,8 @@ name: Cloud SQL Scheduler
 
 on:
   schedule:
-    # Run every hour to stop DB if not in use
-    - cron: '0 * * * *'
+    # Run every 3 hours to stop DB if not in use
+    - cron: '0 */3 * * *'
   workflow_dispatch:
     inputs:
       action:
@@ -32,12 +32,12 @@ jobs:
         if: steps.action.outputs.action == 'stop'
         run: |
           echo "Calling DB manager to stop instance..."
-          response=$(curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=stop")
+          response=$(curl -s -X GET "https://db-manager-671942133800.asia-northeast1.run.app?action=stop")
           echo "Response: $response"
 
       - name: Check Cloud SQL Status
         if: steps.action.outputs.action == 'status'
         run: |
           echo "Checking DB status..."
-          response=$(curl -s -X GET "https://db-manager-te5er5txcq-an.a.run.app?action=status")
+          response=$(curl -s -X GET "https://db-manager-671942133800.asia-northeast1.run.app?action=status")
           echo "Response: $response"
