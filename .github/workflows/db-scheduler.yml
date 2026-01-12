@@ -2,8 +2,10 @@ name: Cloud SQL Scheduler
 
 on:
   schedule:
-    # Run every 3 hours to stop DB if not in use
-    - cron: '0 */3 * * *'
+    # Start DB at 8:00 JST (23:00 UTC) - 1 hour before batch job
+    - cron: '0 23 * * *'
+    # Stop DB every 3 hours (except 0:00 UTC when batch is running)
+    - cron: '0 3,6,9,12,15,18,21 * * *'
   workflow_dispatch:
     inputs:
       action:
@@ -11,6 +13,7 @@ on:
         required: true
         type: choice
         options:
+          - start
           - stop
           - status
 
@@ -25,13 +28,26 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
           else
-            echo "action=stop" >> $GITHUB_OUTPUT
+            # 23:00 UTC = start (before batch), others = stop
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" = "23" ]; then
+              echo "action=start" >> $GITHUB_OUTPUT
+            else
+              echo "action=stop" >> $GITHUB_OUTPUT
+            fi
           fi
 
-      - name: Stop Cloud SQL (hourly)
+      - name: Start Cloud SQL
+        if: steps.action.outputs.action == 'start'
+        run: |
+          echo "Starting DB for batch job..."
+          response=$(curl -s -X GET "https://db-manager-671942133800.asia-northeast1.run.app?action=start")
+          echo "Response: $response"
+
+      - name: Stop Cloud SQL
         if: steps.action.outputs.action == 'stop'
         run: |
-          echo "Calling DB manager to stop instance..."
+          echo "Stopping DB to save costs..."
           response=$(curl -s -X GET "https://db-manager-671942133800.asia-northeast1.run.app?action=stop")
           echo "Response: $response"
 
