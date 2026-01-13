@@ -59,7 +59,7 @@ jobs:
               --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
               --region asia-northeast1 \
               --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
-              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" \
               --memory 512Mi \
               --cpu 1 \
               --task-timeout 30m \
@@ -70,7 +70,7 @@ jobs:
               --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
               --region asia-northeast1 \
               --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
-              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" \
               --memory 512Mi \
               --cpu 1 \
               --task-timeout 30m \
