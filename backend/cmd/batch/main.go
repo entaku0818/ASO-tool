@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"github.com/entaku0818/aso-tool/backend/internal/notification"
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/google/uuid"
@@ -22,11 +24,19 @@ var migration008 string
 
 func main() {
 	ctx := context.Background()
+	startTime := time.Now()
 
 	// Database connection
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL is required")
+	}
+
+	// Initialize Slack notifier
+	slackWebhookURL := os.Getenv("SLACK_WEBHOOK_URL")
+	slackNotifier := notification.NewSlackNotifier(slackWebhookURL)
+	if slackNotifier.IsConfigured() {
+		log.Println("Slack notifications enabled")
 	}
 
 	pool, err := pgxpool.New(ctx, dbURL)
@@ -40,7 +50,7 @@ func main() {
 	}
 	log.Println("Connected to database")
 
-	// Initialize repositories and service
+	// Initialize repositories and services
 	keywordRepo := repository.NewKeywordRepository(pool)
 	rankingRepo := repository.NewRankingRepository(pool)
 	reviewRepo := repository.NewReviewRepository(pool)
@@ -55,11 +65,25 @@ func main() {
 		trackedKeywordRepo,
 	)
 
+	rankingChangeService := service.NewRankingChangeService(
+		rankingRepo,
+		keywordRepo,
+		appRepo,
+	)
+
+	// Initialize batch result for notification
+	result := &notification.BatchResult{
+		StartTime: startTime,
+		Success:   true,
+		Errors:    []string{},
+	}
+
 	// Determine which job to run
 	job := "all"
 	if len(os.Args) > 1 {
 		job = os.Args[1]
 	}
+	result.JobType = job
 
 	switch job {
 	case "migrate":
@@ -67,48 +91,87 @@ func main() {
 	case "seed":
 		runSeed(ctx, pool)
 	case "rankings":
-		runRankingsUpdate(ctx, scraperService)
+		apps, keywords, errs := runRankingsUpdate(ctx, scraperService)
+		result.AppsProcessed = apps
+		result.KeywordsUpdated = keywords
+		result.Errors = append(result.Errors, errs...)
+		// Detect ranking changes after update
+		changes, _ := rankingChangeService.DetectChanges(ctx)
+		result.RankingChanges = changes
 	case "tracked-keywords":
-		runTrackedKeywordsUpdate(ctx, scraperService)
+		tracked, errs := runTrackedKeywordsUpdate(ctx, scraperService)
+		result.TrackedKeywords = tracked
+		result.Errors = append(result.Errors, errs...)
 	case "all":
-		runRankingsUpdate(ctx, scraperService)
-		runTrackedKeywordsUpdate(ctx, scraperService)
+		apps, keywords, errs := runRankingsUpdate(ctx, scraperService)
+		result.AppsProcessed = apps
+		result.KeywordsUpdated = keywords
+		result.Errors = append(result.Errors, errs...)
+		// Detect ranking changes after update
+		changes, _ := rankingChangeService.DetectChanges(ctx)
+		result.RankingChanges = changes
+
+		tracked, trackedErrs := runTrackedKeywordsUpdate(ctx, scraperService)
+		result.TrackedKeywords = tracked
+		result.Errors = append(result.Errors, trackedErrs...)
 	default:
 		log.Fatalf("Unknown job: %s. Use: migrate, seed, rankings, tracked-keywords, or all", job)
+	}
+
+	result.EndTime = time.Now()
+	if len(result.Errors) > 0 {
+		result.Success = false
+	}
+
+	// Send Slack notification
+	if slackNotifier.IsConfigured() && (job == "all" || job == "rankings" || job == "tracked-keywords") {
+		if err := slackNotifier.SendBatchResult(result); err != nil {
+			log.Printf("Failed to send Slack notification: %v", err)
+		} else {
+			log.Println("Slack notification sent successfully")
+		}
 	}
 
 	log.Println("Batch job completed successfully")
 }
 
-func runRankingsUpdate(ctx context.Context, s *service.ScraperService) {
+func runRankingsUpdate(ctx context.Context, s *service.ScraperService) (int, int, []string) {
 	log.Println("Starting rankings update...")
+	var errors []string
 
 	results, err := s.TriggerAllUpdates(ctx)
 	if err != nil {
 		log.Printf("Error updating rankings: %v", err)
-		return
+		errors = append(errors, fmt.Sprintf("Rankings update error: %v", err))
+		return 0, 0, errors
 	}
 
 	total := 0
+	failedApps := 0
 	for appID, count := range results {
 		if count >= 0 {
 			total += count
 			log.Printf("App %s: %d keywords updated", appID, count)
 		} else {
 			log.Printf("App %s: failed", appID)
+			errors = append(errors, fmt.Sprintf("App %s: failed to update", appID))
+			failedApps++
 		}
 	}
 
 	fmt.Printf("Rankings update complete: %d total keywords updated across %d apps\n", total, len(results))
+	return len(results) - failedApps, total, errors
 }
 
-func runTrackedKeywordsUpdate(ctx context.Context, s *service.ScraperService) {
+func runTrackedKeywordsUpdate(ctx context.Context, s *service.ScraperService) (int, []string) {
 	log.Println("Starting tracked keywords update...")
+	var errors []string
 
 	results, err := s.UpdateTrackedKeywordResults(ctx)
 	if err != nil {
 		log.Printf("Error updating tracked keywords: %v", err)
-		return
+		errors = append(errors, fmt.Sprintf("Tracked keywords error: %v", err))
+		return 0, errors
 	}
 
 	total := 0
@@ -118,10 +181,12 @@ func runTrackedKeywordsUpdate(ctx context.Context, s *service.ScraperService) {
 			log.Printf("Tracked keyword %s: %d results", keywordID, count)
 		} else {
 			log.Printf("Tracked keyword %s: failed", keywordID)
+			errors = append(errors, fmt.Sprintf("Tracked keyword %s: failed", keywordID))
 		}
 	}
 
 	fmt.Printf("Tracked keywords update complete: %d total results across %d keywords\n", total, len(results))
+	return total, errors
 }
 
 func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
