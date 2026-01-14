@@ -26,27 +26,53 @@ func main() {
 	ctx := context.Background()
 	startTime := time.Now()
 
-	// Database connection
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatal("DATABASE_URL is required")
-	}
-
-	// Initialize Slack notifier
+	// Initialize Slack notifier early so we can send failure notifications
 	slackWebhookURL := os.Getenv("SLACK_WEBHOOK_URL")
 	slackNotifier := notification.NewSlackNotifier(slackWebhookURL)
 	if slackNotifier.IsConfigured() {
 		log.Println("Slack notifications enabled")
 	}
 
+	// Determine job type early for error notifications
+	job := "all"
+	if len(os.Args) > 1 {
+		job = os.Args[1]
+	}
+
+	// Helper function to send failure notification and exit
+	sendFailureAndExit := func(errorMsg string) {
+		log.Printf("FATAL: %s", errorMsg)
+		if slackNotifier.IsConfigured() {
+			result := &notification.BatchResult{
+				StartTime: startTime,
+				EndTime:   time.Now(),
+				JobType:   job,
+				Success:   false,
+				Errors:    []string{errorMsg},
+			}
+			if err := slackNotifier.SendBatchResult(result); err != nil {
+				log.Printf("Failed to send Slack notification: %v", err)
+			} else {
+				log.Println("Slack failure notification sent")
+			}
+		}
+		os.Exit(1)
+	}
+
+	// Database connection
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		sendFailureAndExit("DATABASE_URL is required")
+	}
+
 	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		sendFailureAndExit(fmt.Sprintf("Unable to connect to database: %v", err))
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("Unable to ping database: %v", err)
+		sendFailureAndExit(fmt.Sprintf("Unable to ping database: %v", err))
 	}
 	log.Println("Connected to database")
 
@@ -78,11 +104,6 @@ func main() {
 		Errors:    []string{},
 	}
 
-	// Determine which job to run
-	job := "all"
-	if len(os.Args) > 1 {
-		job = os.Args[1]
-	}
 	result.JobType = job
 
 	switch job {
@@ -115,7 +136,7 @@ func main() {
 		result.TrackedKeywords = tracked
 		result.Errors = append(result.Errors, trackedErrs...)
 	default:
-		log.Fatalf("Unknown job: %s. Use: migrate, seed, rankings, tracked-keywords, or all", job)
+		sendFailureAndExit(fmt.Sprintf("Unknown job: %s. Use: migrate, seed, rankings, tracked-keywords, or all", job))
 	}
 
 	result.EndTime = time.Now()
