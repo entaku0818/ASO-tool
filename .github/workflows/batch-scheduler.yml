@@ -95,3 +95,67 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Job type: ${{ github.event.inputs.job || 'all' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Completed at: $(date)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify Slack on Success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text": "✅ ASO Tool バッチジョブ完了",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ バッチジョブ成功"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*ジョブタイプ:*\n${{ github.event.inputs.job || '\''all'\'' }}"},
+                    {"type": "mrkdwn", "text": "*ブランチ:*\n${{ github.ref_name }}"}
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*実行時刻:*\n'"$(date '+%Y-%m-%d %H:%M:%S JST')"'"},
+                    {"type": "mrkdwn", "text": "*ワークフロー:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|詳細を見る>"}
+                  ]
+                }
+              ]
+            }' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack on Failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text": "❌ ASO Tool バッチジョブ失敗",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "❌ バッチジョブ失敗"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*ジョブタイプ:*\n${{ github.event.inputs.job || '\''all'\'' }}"},
+                    {"type": "mrkdwn", "text": "*ブランチ:*\n${{ github.ref_name }}"}
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*実行時刻:*\n'"$(date '+%Y-%m-%d %H:%M:%S JST')"'"},
+                    {"type": "mrkdwn", "text": "*ワークフロー:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|詳細を見る>"}
+                  ]
+                }
+              ]
+            }' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
