@@ -98,64 +98,76 @@ jobs:
 
       - name: Notify Slack on Success
         if: success()
+        env:
+          JOB_TYPE: ${{ github.event.inputs.job || 'all' }}
+          BRANCH_NAME: ${{ github.ref_name }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          CURRENT_TIME=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S JST')
           curl -X POST -H 'Content-type: application/json' \
-            --data '{
-              "text": "✅ ASO Tool バッチジョブ完了",
-              "blocks": [
+            --data "{
+              \"text\": \"✅ ASO Tool バッチジョブ完了\",
+              \"blocks\": [
                 {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "✅ バッチジョブ成功"
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"✅ バッチジョブ成功\"
                   }
                 },
                 {
-                  "type": "section",
-                  "fields": [
-                    {"type": "mrkdwn", "text": "*ジョブタイプ:*\n${{ github.event.inputs.job || '\''all'\'' }}"},
-                    {"type": "mrkdwn", "text": "*ブランチ:*\n${{ github.ref_name }}"}
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*ジョブタイプ:*\n${JOB_TYPE}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*ブランチ:*\n${BRANCH_NAME}\"}
                   ]
                 },
                 {
-                  "type": "section",
-                  "fields": [
-                    {"type": "mrkdwn", "text": "*実行時刻:*\n'"$(date '+%Y-%m-%d %H:%M:%S JST')"'"},
-                    {"type": "mrkdwn", "text": "*ワークフロー:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|詳細を見る>"}
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*実行時刻:*\n${CURRENT_TIME}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*ワークフロー:*\n<${WORKFLOW_URL}|詳細を見る>\"}
                   ]
                 }
               ]
-            }' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+            }" \
+            "$SLACK_WEBHOOK_URL"
 
       - name: Notify Slack on Failure
         if: failure()
+        env:
+          JOB_TYPE: ${{ github.event.inputs.job || 'all' }}
+          BRANCH_NAME: ${{ github.ref_name }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          CURRENT_TIME=$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S JST')
           curl -X POST -H 'Content-type: application/json' \
-            --data '{
-              "text": "❌ ASO Tool バッチジョブ失敗",
-              "blocks": [
+            --data "{
+              \"text\": \"❌ ASO Tool バッチジョブ失敗\",
+              \"blocks\": [
                 {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "❌ バッチジョブ失敗"
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"❌ バッチジョブ失敗\"
                   }
                 },
                 {
-                  "type": "section",
-                  "fields": [
-                    {"type": "mrkdwn", "text": "*ジョブタイプ:*\n${{ github.event.inputs.job || '\''all'\'' }}"},
-                    {"type": "mrkdwn", "text": "*ブランチ:*\n${{ github.ref_name }}"}
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*ジョブタイプ:*\n${JOB_TYPE}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*ブランチ:*\n${BRANCH_NAME}\"}
                   ]
                 },
                 {
-                  "type": "section",
-                  "fields": [
-                    {"type": "mrkdwn", "text": "*実行時刻:*\n'"$(date '+%Y-%m-%d %H:%M:%S JST')"'"},
-                    {"type": "mrkdwn", "text": "*ワークフロー:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|詳細を見る>"}
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*実行時刻:*\n${CURRENT_TIME}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*ワークフロー:*\n<${WORKFLOW_URL}|詳細を見る>\"}
                   ]
                 }
               ]
-            }' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+            }" \
+            "$SLACK_WEBHOOK_URL"
