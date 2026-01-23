@@ -348,3 +348,20 @@ export async function getAnalyticsSummary(appId: string, days: number = 30): Pro
 export async function triggerAnalyticsFetch(appId: string): Promise<{ message: string; days_stored: number }> {
   return fetchApi(`/api/apps/${appId}/analytics/fetch`, { method: 'POST' })
 }
+
+// Public API (no authentication required)
+export type PopularKeyword = {
+  keyword: string
+  country: string
+  platform: string
+  results_count: number
+  tracking_count: number
+}
+
+export async function getPopularKeywords(country: string = 'jp', platform: string = 'ios', limit: number = 100): Promise<PopularKeyword[]> {
+  const response = await fetch(`${API_BASE_URL}/api/public/popular-keywords?country=${country}&platform=${platform}&limit=${limit}`)
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  return response.json()
+}

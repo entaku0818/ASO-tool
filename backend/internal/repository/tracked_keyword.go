@@ -203,3 +203,51 @@ func (r *TrackedKeywordRepository) GetLatestSearchResults(ctx context.Context, t
 	}
 	return results, nil
 }
+
+// KeywordStats represents aggregated keyword statistics
+type KeywordStats struct {
+	Keyword       string `json:"keyword"`
+	Country       string `json:"country"`
+	Platform      string `json:"platform"`
+	ResultsCount  int    `json:"results_count"`
+	TrackingCount int    `json:"tracking_count"`
+}
+
+// ListByCountryAndPlatform returns tracked keywords grouped by keyword with stats
+func (r *TrackedKeywordRepository) ListByCountryAndPlatform(ctx context.Context, country, platform string, limit int) ([]*KeywordStats, error) {
+	query := `
+		SELECT
+			keyword,
+			country,
+			platform,
+			COUNT(DISTINCT id) as tracking_count,
+			COALESCE(
+				(SELECT COUNT(*)
+				 FROM search_results sr
+				 WHERE sr.tracked_keyword_id = ANY(array_agg(tracked_keywords.id))
+				 AND sr.recorded_at >= NOW() - INTERVAL '7 days'),
+				0
+			) as results_count
+		FROM tracked_keywords
+		WHERE country = $1 AND platform = $2
+		GROUP BY keyword, country, platform
+		ORDER BY tracking_count DESC, results_count DESC
+		LIMIT $3
+	`
+
+	rows, err := r.pool.Query(ctx, query, country, platform, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []*KeywordStats
+	for rows.Next() {
+		ks := &KeywordStats{}
+		if err := rows.Scan(&ks.Keyword, &ks.Country, &ks.Platform, &ks.TrackingCount, &ks.ResultsCount); err != nil {
+			return nil, err
+		}
+		stats = append(stats, ks)
+	}
+	return stats, nil
+}

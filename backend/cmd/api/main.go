@@ -115,6 +115,10 @@ func main() {
 	)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsService)
 
+	// Public service
+	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
+	publicHandler := handler.NewPublicHandler(popularKeywordsService)
+
 	// Router setup
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -147,6 +151,11 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		// Public routes
 		r.Post("/auth/login", authHandler.Login)
+
+		// Public API - no authentication required
+		r.Route("/public", func(r chi.Router) {
+			r.Get("/popular-keywords", publicHandler.GetPopularKeywords)
+		})
 
 		// Protected routes (require authentication)
 		r.Group(func(r chi.Router) {
