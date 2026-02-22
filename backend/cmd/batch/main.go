@@ -22,6 +22,9 @@ var migration007 string
 //go:embed migrations/008_create_analytics.up.sql
 var migration008 string
 
+//go:embed migrations/009_create_store_rankings.up.sql
+var migration009 string
+
 func main() {
 	ctx := context.Background()
 	startTime := time.Now()
@@ -91,6 +94,9 @@ func main() {
 		trackedKeywordRepo,
 	)
 
+	storeRankingRepo := repository.NewStoreRankingRepository(pool)
+	appRankingService := service.NewAppRankingService(storeRankingRepo)
+
 	rankingChangeService := service.NewRankingChangeService(
 		rankingRepo,
 		keywordRepo,
@@ -119,6 +125,12 @@ func main() {
 		// Detect ranking changes after update
 		changes, _ := rankingChangeService.DetectChanges(ctx)
 		result.RankingChanges = changes
+	case "store-rankings":
+		saved, errs := runStoreRankingsFetch(ctx, appRankingService)
+		result.KeywordsUpdated = saved
+		for _, e := range errs {
+			result.Errors = append(result.Errors, e.Error())
+		}
 	case "tracked-keywords":
 		tracked, errs := runTrackedKeywordsUpdate(ctx, scraperService)
 		result.TrackedKeywords = tracked
@@ -135,8 +147,14 @@ func main() {
 		tracked, trackedErrs := runTrackedKeywordsUpdate(ctx, scraperService)
 		result.TrackedKeywords = tracked
 		result.Errors = append(result.Errors, trackedErrs...)
+
+		saved, storeErrs := runStoreRankingsFetch(ctx, appRankingService)
+		result.KeywordsUpdated += saved
+		for _, e := range storeErrs {
+			result.Errors = append(result.Errors, e.Error())
+		}
 	default:
-		sendFailureAndExit(fmt.Sprintf("Unknown job: %s. Use: migrate, seed, rankings, tracked-keywords, or all", job))
+		sendFailureAndExit(fmt.Sprintf("Unknown job: %s. Use: migrate, seed, rankings, store-rankings, tracked-keywords, or all", job))
 	}
 
 	result.EndTime = time.Now()
@@ -210,6 +228,16 @@ func runTrackedKeywordsUpdate(ctx context.Context, s *service.ScraperService) (i
 	return total, errors
 }
 
+func runStoreRankingsFetch(ctx context.Context, svc *service.AppRankingService) (int, []error) {
+	log.Println("Starting store rankings fetch...")
+	saved, errs := svc.FetchAndSaveAll(ctx)
+	for _, e := range errs {
+		log.Printf("Store rankings error: %v", e)
+	}
+	log.Printf("Store rankings fetch complete: %d entries saved", saved)
+	return saved, errs
+}
+
 func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
 	log.Println("Starting migrations...")
 
@@ -219,6 +247,7 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
 	}{
 		{"007_create_asc_credentials", migration007},
 		{"008_create_analytics", migration008},
+		{"009_create_store_rankings", migration009},
 	}
 
 	for _, m := range migrations {

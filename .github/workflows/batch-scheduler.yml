@@ -13,6 +13,7 @@ on:
         options:
           - all
           - rankings
+          - store-rankings
           - tracked-keywords
           - migrate
           - seed
