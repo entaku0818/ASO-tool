@@ -117,7 +117,9 @@ func main() {
 
 	// Public service
 	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
-	publicHandler := handler.NewPublicHandler(popularKeywordsService)
+	storeRankingRepo := repository.NewStoreRankingRepository(pool)
+	appRankingService := service.NewAppRankingService(storeRankingRepo)
+	publicHandler := handler.NewPublicHandler(popularKeywordsService, appRankingService)
 
 	// Router setup
 	r := chi.NewRouter()
@@ -155,6 +157,7 @@ func main() {
 		// Public API - no authentication required
 		r.Route("/public", func(r chi.Router) {
 			r.Get("/popular-keywords", publicHandler.GetPopularKeywords)
+			r.Get("/app-rankings", publicHandler.GetAppRanking)
 		})
 
 		// Protected routes (require authentication)
