@@ -350,6 +350,33 @@ export async function triggerAnalyticsFetch(appId: string): Promise<{ message: s
 }
 
 // Public API (no authentication required)
+export type AppRankingEntry = {
+  rank: number
+  name: string
+  developer: string
+  icon_url: string
+  category: string
+  store_url: string
+  app_id: string
+  price: string
+  release_date: string
+}
+
+export async function getAppRankings(
+  country: string = 'jp',
+  rankingType: string = 'topfreeapplications',
+  genreID: string = '',
+  limit: number = 100,
+): Promise<AppRankingEntry[]> {
+  const params = new URLSearchParams({ country, ranking_type: rankingType, limit: String(limit) })
+  if (genreID) params.set('genre_id', genreID)
+  const response = await fetch(`${API_BASE_URL}/api/public/app-rankings?${params}`)
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  return response.json()
+}
+
 export type PopularKeyword = {
   keyword: string
   country: string
