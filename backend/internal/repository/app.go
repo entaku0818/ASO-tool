@@ -156,14 +156,15 @@ func (r *AppRepository) Update(ctx context.Context, userID, id string, req *mode
 	query := `
 		UPDATE apps
 		SET name = COALESCE(NULLIF($3, ''), name),
-		    store_url = COALESCE(NULLIF($4, ''), store_url),
+		    bundle_id = COALESCE(NULLIF($4, ''), bundle_id),
+		    store_url = COALESCE(NULLIF($5, ''), store_url),
 		    updated_at = NOW()
 		WHERE id = $1 AND user_id = $2
 		RETURNING id, name, bundle_id, platform, store_url, user_id, created_at, updated_at
 	`
 
 	app := &model.App{}
-	err := r.pool.QueryRow(ctx, query, id, userID, req.Name, req.StoreURL).Scan(
+	err := r.pool.QueryRow(ctx, query, id, userID, req.Name, req.BundleID, req.StoreURL).Scan(
 		&app.ID, &app.Name, &app.BundleID, &app.Platform, &app.StoreURL, &app.UserID,
 		&app.CreatedAt, &app.UpdatedAt,
 	)

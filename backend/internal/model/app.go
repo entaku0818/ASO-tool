@@ -29,6 +29,7 @@ type CreateAppRequest struct {
 
 type UpdateAppRequest struct {
 	Name     string `json:"name,omitempty"`
+	BundleID string `json:"bundle_id,omitempty"`
 	StoreURL string `json:"store_url,omitempty"`
 }
 
