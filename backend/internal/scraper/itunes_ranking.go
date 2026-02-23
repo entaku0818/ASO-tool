@@ -45,8 +45,9 @@ type iTunesRSSEntry struct {
 			Currency string `json:"currency"`
 		} `json:"attributes"`
 	} `json:"im:price"`
-	Link struct {
+	Link []struct {
 		Attributes struct {
+			Rel  string `json:"rel"`
 			Href string `json:"href"`
 		} `json:"attributes"`
 	} `json:"link"`
@@ -145,13 +146,21 @@ func (s *ITunesRankingScraper) FetchRanking(ctx context.Context, country, rankin
 			price = entry.ImPrice.Attributes.Amount
 		}
 
+		storeURL := ""
+		for _, l := range entry.Link {
+			if l.Attributes.Rel == "alternate" {
+				storeURL = l.Attributes.Href
+				break
+			}
+		}
+
 		entries = append(entries, AppRankingEntry{
 			Rank:        i + 1,
 			Name:        entry.ImName.Label,
 			Developer:   entry.ImArtist.Label,
 			IconURL:     iconURL,
 			Category:    entry.Category.Attributes.Term,
-			StoreURL:    entry.Link.Attributes.Href,
+			StoreURL:    storeURL,
 			AppID:       entry.ID.Attributes.ImID,
 			Price:       price,
 			ReleaseDate: entry.ImReleaseDate.Label,
