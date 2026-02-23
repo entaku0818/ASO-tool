@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,15 +22,15 @@ type AppRankingEntry struct {
 	ReleaseDate string `json:"release_date"`
 }
 
-// iTunesRSSResponse represents the iTunes RSS feed response
+// iTunesRSSResponse — entry is RawMessage because iTunes returns object when 1 result, array otherwise
 type iTunesRSSResponse struct {
 	Feed struct {
-		Entry []iTunesRSSEntry `json:"entry"`
+		Entry json.RawMessage `json:"entry"`
 	} `json:"feed"`
 }
 
 type iTunesRSSEntry struct {
-	ImName  struct {
+	ImName struct {
 		Label string `json:"label"`
 	} `json:"im:name"`
 	ImImage []struct {
@@ -45,13 +46,9 @@ type iTunesRSSEntry struct {
 			Currency string `json:"currency"`
 		} `json:"attributes"`
 	} `json:"im:price"`
-	Link []struct {
-		Attributes struct {
-			Rel  string `json:"rel"`
-			Href string `json:"href"`
-		} `json:"attributes"`
-	} `json:"link"`
-	ID struct {
+	// link is also object or array depending on count
+	Link json.RawMessage `json:"link"`
+	ID   struct {
 		Label      string `json:"label"`
 		Attributes struct {
 			ImID       string `json:"im:id"`
@@ -69,6 +66,63 @@ type iTunesRSSEntry struct {
 	ImReleaseDate struct {
 		Label string `json:"label"`
 	} `json:"im:releaseDate"`
+}
+
+type itunesLink struct {
+	Attributes struct {
+		Rel  string `json:"rel"`
+		Href string `json:"href"`
+	} `json:"attributes"`
+}
+
+// extractStoreURL handles link as either object or array
+func extractStoreURL(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		return ""
+	}
+
+	if trimmed[0] == '[' {
+		var links []itunesLink
+		if err := json.Unmarshal(trimmed, &links); err == nil {
+			for _, l := range links {
+				if l.Attributes.Rel == "alternate" {
+					return l.Attributes.Href
+				}
+			}
+		}
+	} else {
+		var link itunesLink
+		if err := json.Unmarshal(trimmed, &link); err == nil {
+			if link.Attributes.Rel == "alternate" {
+				return link.Attributes.Href
+			}
+		}
+	}
+	return ""
+}
+
+// parseEntries handles entry as either single object or array
+func parseEntries(raw json.RawMessage) ([]iTunesRSSEntry, error) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	trimmed := bytes.TrimSpace(raw)
+	if trimmed[0] == '[' {
+		var entries []iTunesRSSEntry
+		if err := json.Unmarshal(trimmed, &entries); err != nil {
+			return nil, err
+		}
+		return entries, nil
+	}
+	var entry iTunesRSSEntry
+	if err := json.Unmarshal(trimmed, &entry); err != nil {
+		return nil, err
+	}
+	return []iTunesRSSEntry{entry}, nil
 }
 
 // ITunesRankingScraper fetches app rankings from the iTunes RSS Feed API
@@ -134,8 +188,13 @@ func (s *ITunesRankingScraper) FetchRanking(ctx context.Context, country, rankin
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	entries := make([]AppRankingEntry, 0, len(rssResp.Feed.Entry))
-	for i, entry := range rssResp.Feed.Entry {
+	rawEntries, err := parseEntries(rssResp.Feed.Entry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse entries: %w", err)
+	}
+
+	entries := make([]AppRankingEntry, 0, len(rawEntries))
+	for i, entry := range rawEntries {
 		iconURL := ""
 		for _, img := range entry.ImImage {
 			iconURL = img.Label
@@ -146,21 +205,13 @@ func (s *ITunesRankingScraper) FetchRanking(ctx context.Context, country, rankin
 			price = entry.ImPrice.Attributes.Amount
 		}
 
-		storeURL := ""
-		for _, l := range entry.Link {
-			if l.Attributes.Rel == "alternate" {
-				storeURL = l.Attributes.Href
-				break
-			}
-		}
-
 		entries = append(entries, AppRankingEntry{
 			Rank:        i + 1,
 			Name:        entry.ImName.Label,
 			Developer:   entry.ImArtist.Label,
 			IconURL:     iconURL,
 			Category:    entry.Category.Attributes.Term,
-			StoreURL:    storeURL,
+			StoreURL:    extractStoreURL(entry.Link),
 			AppID:       entry.ID.Attributes.ImID,
 			Price:       price,
 			ReleaseDate: entry.ImReleaseDate.Label,
