@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
 )
@@ -90,4 +91,27 @@ func (h *RankingHandler) GetLatest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, ranking)
+}
+
+func (h *RankingHandler) GetRisingKeywords(w http.ResponseWriter, r *http.Request) {
+	appID := chi.URLParam(r, "appID")
+
+	days := 7
+	if d := r.URL.Query().Get("days"); d != "" {
+		if parsed, err := strconv.Atoi(d); err == nil && parsed > 0 {
+			days = parsed
+		}
+	}
+
+	keywords, err := h.service.GetRisingKeywords(r.Context(), appID, days)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if keywords == nil {
+		keywords = []repository.RisingKeyword{}
+	}
+
+	respondJSON(w, http.StatusOK, keywords)
 }

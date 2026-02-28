@@ -103,6 +103,70 @@ func (r *RankingRepository) ListByAppWithKeyword(ctx context.Context, appID stri
 	return rankings, nil
 }
 
+// RisingKeyword holds a keyword whose rank improved compared to N days ago.
+type RisingKeyword struct {
+	KeywordID    string `json:"keyword_id"`
+	Keyword      string `json:"keyword"`
+	Country      string `json:"country"`
+	CurrentRank  int    `json:"current_rank"`
+	PreviousRank int    `json:"previous_rank"`
+	Improvement  int    `json:"improvement"`
+}
+
+// GetRisingKeywords returns keywords whose rank improved compared to `days` days ago, sorted by improvement desc.
+func (r *RankingRepository) GetRisingKeywords(ctx context.Context, appID string, days int) ([]RisingKeyword, error) {
+	since := time.Now().AddDate(0, 0, -days)
+	rows, err := r.pool.Query(ctx, `
+		WITH
+		current_rankings AS (
+			SELECT DISTINCT ON (k.id)
+				k.id AS keyword_id,
+				k.keyword,
+				k.country,
+				rh.rank
+			FROM keywords k
+			JOIN ranking_history rh ON k.id = rh.keyword_id
+			WHERE k.app_id = $1
+			ORDER BY k.id, rh.recorded_at DESC
+		),
+		previous_rankings AS (
+			SELECT DISTINCT ON (k.id)
+				k.id AS keyword_id,
+				rh.rank
+			FROM keywords k
+			JOIN ranking_history rh ON k.id = rh.keyword_id
+			WHERE k.app_id = $1
+			  AND rh.recorded_at <= $2
+			ORDER BY k.id, rh.recorded_at DESC
+		)
+		SELECT
+			cr.keyword_id,
+			cr.keyword,
+			cr.country,
+			cr.rank AS current_rank,
+			pr.rank AS previous_rank,
+			(pr.rank - cr.rank) AS improvement
+		FROM current_rankings cr
+		JOIN previous_rankings pr ON cr.keyword_id = pr.keyword_id
+		WHERE pr.rank - cr.rank > 0
+		ORDER BY improvement DESC
+	`, appID, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keywords []RisingKeyword
+	for rows.Next() {
+		var k RisingKeyword
+		if err := rows.Scan(&k.KeywordID, &k.Keyword, &k.Country, &k.CurrentRank, &k.PreviousRank, &k.Improvement); err != nil {
+			return nil, err
+		}
+		keywords = append(keywords, k)
+	}
+	return keywords, nil
+}
+
 func (r *RankingRepository) GetLatestByKeyword(ctx context.Context, keywordID string) (*model.RankingHistory, error) {
 	query := `
 		SELECT id, keyword_id, rank, recorded_at

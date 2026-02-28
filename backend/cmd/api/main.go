@@ -158,6 +158,8 @@ func main() {
 		r.Route("/public", func(r chi.Router) {
 			r.Get("/popular-keywords", publicHandler.GetPopularKeywords)
 			r.Get("/app-rankings", publicHandler.GetAppRanking)
+			r.Get("/app-ranking-trend", publicHandler.GetAppRankingTrend)
+			r.Get("/app-ranking-countries", publicHandler.GetAppRankingCountries)
 		})
 
 		// Protected routes (require authentication)
@@ -181,6 +183,7 @@ func main() {
 				r.Route("/{appID}/keywords", func(r chi.Router) {
 					r.Get("/", keywordHandler.ListByApp)
 					r.Post("/", keywordHandler.Create)
+					r.Get("/rising", rankingHandler.GetRisingKeywords)
 					r.Get("/{keywordID}", keywordHandler.Get)
 					r.Delete("/{keywordID}", keywordHandler.Delete)
 					r.Get("/{keywordID}/rankings", rankingHandler.ListByKeyword)

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 )
 
@@ -83,6 +84,77 @@ func (h *PublicHandler) GetAppRanking(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(entries); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// GetAppRankingTrend returns daily rank history for a specific app.
+// Query params: app_id (required), country (default: jp), ranking_type (default: topfreeapplications), days (default: 30)
+func (h *PublicHandler) GetAppRankingTrend(w http.ResponseWriter, r *http.Request) {
+	appID := r.URL.Query().Get("app_id")
+	country := r.URL.Query().Get("country")
+	rankingType := r.URL.Query().Get("ranking_type")
+	daysStr := r.URL.Query().Get("days")
+
+	if appID == "" {
+		http.Error(w, "app_id is required", http.StatusBadRequest)
+		return
+	}
+	if country == "" {
+		country = "jp"
+	}
+	if rankingType == "" {
+		rankingType = "topfreeapplications"
+	}
+	days := 30
+	if daysStr != "" {
+		if parsed, err := strconv.Atoi(daysStr); err == nil && parsed > 0 {
+			days = parsed
+		}
+	}
+
+	points, err := h.appRankingService.GetRankingTrend(r.Context(), appID, country, rankingType, days)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if points == nil {
+		points = []repository.RankingTrendPoint{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(points); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// GetAppRankingCountries returns the latest rank for a specific app across multiple countries.
+// Query params: app_id (required), ranking_type (default: topfreeapplications)
+func (h *PublicHandler) GetAppRankingCountries(w http.ResponseWriter, r *http.Request) {
+	appID := r.URL.Query().Get("app_id")
+	rankingType := r.URL.Query().Get("ranking_type")
+
+	if appID == "" {
+		http.Error(w, "app_id is required", http.StatusBadRequest)
+		return
+	}
+	if rankingType == "" {
+		rankingType = "topfreeapplications"
+	}
+
+	points, err := h.appRankingService.GetCountryComparison(r.Context(), appID, rankingType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if points == nil {
+		points = []repository.CountryRankPoint{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(points); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

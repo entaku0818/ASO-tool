@@ -2,7 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { getPopularKeywords, PopularKeyword, getAppRankings, AppRankingEntry } from '@/lib/api'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import {
+  getPopularKeywords,
+  PopularKeyword,
+  getAppRankings,
+  AppRankingEntry,
+  getAppRankingTrend,
+  RankingTrendPoint,
+  getAppRankingCountries,
+  CountryRankPoint,
+} from '@/lib/api'
 
 const COUNTRIES = [
   { code: 'jp', name: '日本', flag: '🇯🇵' },
@@ -43,6 +61,26 @@ const GENRES = [
   { id: '6003', name: '旅行' },
   { id: '6023', name: 'フード&ドリンク' },
 ]
+
+const TREND_RANKING_TYPES = [
+  { value: 'topfreeapplications', label: '無料トップ' },
+  { value: 'toppaidapplications', label: '有料トップ' },
+  { value: 'topgrossingapplications', label: '売上トップ' },
+]
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  jp: '🇯🇵',
+  us: '🇺🇸',
+  kr: '🇰🇷',
+  gb: '🇬🇧',
+}
+
+const COUNTRY_NAMES: Record<string, string> = {
+  jp: '日本',
+  us: 'アメリカ',
+  kr: '韓国',
+  gb: 'イギリス',
+}
 
 function KeywordsSection() {
   const [keywords, setKeywords] = useState<PopularKeyword[]>([])
@@ -344,8 +382,280 @@ function AppRankingSection() {
   )
 }
 
+function RankingTrendSection() {
+  const [appId, setAppId] = useState('')
+  const [country, setCountry] = useState('jp')
+  const [rankingType, setRankingType] = useState('topfreeapplications')
+  const [days, setDays] = useState(30)
+  const [trendData, setTrendData] = useState<RankingTrendPoint[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searched, setSearched] = useState(false)
+
+  const handleSearch = async () => {
+    if (!appId.trim()) return
+    setIsLoading(true)
+    setError(null)
+    setSearched(true)
+    try {
+      const data = await getAppRankingTrend(appId.trim(), country, rankingType, days)
+      setTrendData(data)
+    } catch (err) {
+      setError('トレンドデータの取得に失敗しました')
+      console.error('Error fetching ranking trend:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const countryData = COUNTRIES.find(c => c.code === country)
+  const rankingTypeData = TREND_RANKING_TYPES.find(r => r.value === rankingType)
+
+  return (
+    <>
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">App ID</label>
+            <input
+              type="text"
+              value={appId}
+              onChange={(e) => setAppId(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="例: 389801252"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">国</label>
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {[
+                { code: 'jp', name: '日本', flag: '🇯🇵' },
+                { code: 'us', name: 'アメリカ', flag: '🇺🇸' },
+                { code: 'kr', name: '韓国', flag: '🇰🇷' },
+                { code: 'gb', name: 'イギリス', flag: '🇬🇧' },
+              ].map(c => (
+                <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">ランキングタイプ</label>
+            <select
+              value={rankingType}
+              onChange={(e) => setRankingType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {TREND_RANKING_TYPES.map(r => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">期間</label>
+            <select
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={7}>7日間</option>
+              <option value={14}>14日間</option>
+              <option value={30}>30日間</option>
+            </select>
+          </div>
+        </div>
+        <button
+          onClick={handleSearch}
+          disabled={!appId.trim() || isLoading}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+        >
+          {isLoading ? '検索中...' : '検索'}
+        </button>
+      </div>
+
+      {searched && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {countryData?.flag} {countryData?.name} — {rankingTypeData?.label} — 過去{days}日間
+            </h2>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-500">読み込み中...</div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-red-500">{error}</div>
+            </div>
+          ) : trendData.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-500">データが見つかりませんでした</div>
+            </div>
+          ) : (
+            <div className="p-6">
+              <div className="h-64 mb-6">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis reversed={true} domain={['auto', 'auto']} tick={{ fontSize: 12 }} label={{ value: '順位', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip formatter={(value: number) => [`${value}位`, '順位']} />
+                    <Line type="monotone" dataKey="rank" stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b text-left font-medium text-gray-500">
+                      <th className="px-4 py-2">日付</th>
+                      <th className="px-4 py-2 text-right">順位</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...trendData].reverse().map((point) => (
+                      <tr key={point.date} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-2 text-gray-700">{point.date}</td>
+                        <td className="px-4 py-2 text-right font-bold text-blue-600">{point.rank}位</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+function CountryComparisonSection() {
+  const [appId, setAppId] = useState('')
+  const [rankingType, setRankingType] = useState('topfreeapplications')
+  const [countryData, setCountryData] = useState<CountryRankPoint[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searched, setSearched] = useState(false)
+
+  const handleSearch = async () => {
+    if (!appId.trim()) return
+    setIsLoading(true)
+    setError(null)
+    setSearched(true)
+    try {
+      const data = await getAppRankingCountries(appId.trim(), rankingType)
+      setCountryData(data)
+    } catch (err) {
+      setError('国別ランキングの取得に失敗しました')
+      console.error('Error fetching country rankings:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const rankingTypeData = TREND_RANKING_TYPES.find(r => r.value === rankingType)
+
+  return (
+    <>
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">App ID</label>
+            <input
+              type="text"
+              value={appId}
+              onChange={(e) => setAppId(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="例: 389801252"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">ランキングタイプ</label>
+            <select
+              value={rankingType}
+              onChange={(e) => setRankingType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {TREND_RANKING_TYPES.map(r => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          onClick={handleSearch}
+          disabled={!appId.trim() || isLoading}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+        >
+          {isLoading ? '検索中...' : '検索'}
+        </button>
+      </div>
+
+      {searched && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h2 className="text-lg font-semibold text-gray-900">
+              国別ランキング — {rankingTypeData?.label}
+            </h2>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-500">読み込み中...</div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-red-500">{error}</div>
+            </div>
+          ) : countryData.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-500">データが見つかりませんでした</div>
+            </div>
+          ) : (
+            <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {countryData.map((point) => (
+                <div
+                  key={point.country}
+                  className="bg-gray-50 rounded-lg p-4 text-center border hover:shadow-md transition-shadow"
+                >
+                  <div className="text-3xl mb-1">{COUNTRY_FLAGS[point.country] ?? '🌐'}</div>
+                  <div className="text-sm font-medium text-gray-600 mb-2">
+                    {COUNTRY_NAMES[point.country] ?? point.country.toUpperCase()}
+                  </div>
+                  <div className="text-2xl font-bold text-blue-600">{point.rank}位</div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {new Date(point.fetched_at).toLocaleDateString('ja-JP')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+type Tab = 'keywords' | 'rankings' | 'trend' | 'countries'
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'keywords', label: '人気キーワード' },
+  { id: 'rankings', label: 'App Store ランキング' },
+  { id: 'trend', label: 'ランキングトレンド' },
+  { id: 'countries', label: '国別比較' },
+]
+
 export default function PopularKeywordsPage() {
-  const [activeTab, setActiveTab] = useState<'keywords' | 'rankings'>('keywords')
+  const [activeTab, setActiveTab] = useState<Tab>('keywords')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -362,34 +672,30 @@ export default function PopularKeywordsPage() {
       {/* Main tabs */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-0">
-            <button
-              onClick={() => setActiveTab('keywords')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'keywords'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              人気キーワード
-            </button>
-            <button
-              onClick={() => setActiveTab('rankings')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'rankings'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              App Store ランキング
-            </button>
+          <div className="flex gap-0 overflow-x-auto">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-4 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12">
-        {activeTab === 'keywords' ? <KeywordsSection /> : <AppRankingSection />}
+        {activeTab === 'keywords' && <KeywordsSection />}
+        {activeTab === 'rankings' && <AppRankingSection />}
+        {activeTab === 'trend' && <RankingTrendSection />}
+        {activeTab === 'countries' && <CountryComparisonSection />}
       </div>
     </div>
   )

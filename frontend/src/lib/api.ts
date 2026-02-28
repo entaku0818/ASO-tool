@@ -392,3 +392,53 @@ export async function getPopularKeywords(country: string = 'jp', platform: strin
   }
   return response.json()
 }
+
+export type RankingTrendPoint = {
+  date: string
+  rank: number
+}
+
+export type CountryRankPoint = {
+  country: string
+  rank: number
+  fetched_at: string
+}
+
+export type RisingKeyword = {
+  keyword_id: string
+  keyword: string
+  country: string
+  current_rank: number
+  previous_rank: number
+  improvement: number
+}
+
+export async function getAppRankingTrend(
+  appId: string,
+  country: string = 'jp',
+  rankingType: string = 'topfreeapplications',
+  days: number = 30,
+): Promise<RankingTrendPoint[]> {
+  const params = new URLSearchParams({ app_id: appId, country, ranking_type: rankingType, days: String(days) })
+  const response = await fetch(`${API_BASE_URL}/api/public/app-ranking-trend?${params}`)
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function getAppRankingCountries(
+  appId: string,
+  rankingType: string = 'topfreeapplications',
+): Promise<CountryRankPoint[]> {
+  const params = new URLSearchParams({ app_id: appId, ranking_type: rankingType })
+  const response = await fetch(`${API_BASE_URL}/api/public/app-ranking-countries?${params}`)
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function getRisingKeywords(appId: string): Promise<RisingKeyword[]> {
+  return fetchApi<RisingKeyword[]>(`/api/apps/${appId}/keywords/rising`)
+}

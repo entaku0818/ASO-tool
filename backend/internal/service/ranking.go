@@ -42,3 +42,10 @@ func (s *RankingService) ListByApp(ctx context.Context, appID string, days int) 
 func (s *RankingService) GetLatestByKeyword(ctx context.Context, keywordID string) (*model.RankingHistory, error) {
 	return s.repo.GetLatestByKeyword(ctx, keywordID)
 }
+
+func (s *RankingService) GetRisingKeywords(ctx context.Context, appID string, days int) ([]repository.RisingKeyword, error) {
+	if days <= 0 {
+		days = 7
+	}
+	return s.repo.GetRisingKeywords(ctx, appID, days)
+}

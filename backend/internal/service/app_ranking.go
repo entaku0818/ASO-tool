@@ -23,6 +23,15 @@ var defaultStoreRankingConfigs = []struct{ country, rankingType, genreID string 
 	{"jp", "topgrossingapplications", ""},
 	{"jp", "newfreeapplications", ""},
 	{"jp", "newpaidapplications", ""},
+	{"us", "topfreeapplications", ""},
+	{"us", "toppaidapplications", ""},
+	{"us", "topgrossingapplications", ""},
+	{"kr", "topfreeapplications", ""},
+	{"kr", "toppaidapplications", ""},
+	{"kr", "topgrossingapplications", ""},
+	{"gb", "topfreeapplications", ""},
+	{"gb", "toppaidapplications", ""},
+	{"gb", "topgrossingapplications", ""},
 }
 
 // AppRankingService fetches and caches App Store rankings with optional DB persistence
@@ -86,6 +95,21 @@ func (s *AppRankingService) GetRanking(ctx context.Context, country, rankingType
 	s.mu.Unlock()
 
 	return entries, nil
+}
+
+// GetRankingTrend returns the rank trend for a specific app over the last N days.
+func (s *AppRankingService) GetRankingTrend(
+	ctx context.Context, appID, country, rankingType string, days int,
+) ([]repository.RankingTrendPoint, error) {
+	return s.repo.GetRankingTrendForApp(ctx, appID, country, rankingType, days)
+}
+
+// GetCountryComparison returns the latest rank for an app across JP/US/KR/GB.
+func (s *AppRankingService) GetCountryComparison(
+	ctx context.Context, appID, rankingType string,
+) ([]repository.CountryRankPoint, error) {
+	countries := []string{"jp", "us", "kr", "gb"}
+	return s.repo.GetRankingsAcrossCountries(ctx, appID, rankingType, countries)
 }
 
 // FetchAndSaveAll fetches the default set of rankings and persists them to the DB.
