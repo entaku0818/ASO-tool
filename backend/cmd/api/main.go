@@ -115,6 +115,11 @@ func main() {
 	)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsService)
 
+	// Search Ads / keyword popularity
+	searchAdsCredRepo := repository.NewSearchAdsCredentialsRepository(pool)
+	keywordPopularityService := service.NewKeywordPopularityService(searchAdsCredRepo, keywordRepo, appRepo)
+	keywordPopularityHandler := handler.NewKeywordPopularityHandler(keywordPopularityService)
+
 	// Public service
 	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
 	storeRankingRepo := repository.NewStoreRankingRepository(pool)
@@ -226,6 +231,17 @@ func main() {
 					r.Delete("/", analyticsHandler.DeleteCredentials)
 					r.Post("/validate", analyticsHandler.ValidateCredentials)
 				})
+
+				// Search Ads credentials
+				r.Route("/{appID}/search-ads-credentials", func(r chi.Router) {
+					r.Post("/", keywordPopularityHandler.SetCredentials)
+					r.Get("/", keywordPopularityHandler.GetCredentials)
+					r.Delete("/", keywordPopularityHandler.DeleteCredentials)
+				})
+
+				// Keyword popularity
+				r.Post("/{appID}/keywords/refresh-popularity", keywordPopularityHandler.RefreshScores)
+				r.Get("/{appID}/keywords/suggestions", keywordPopularityHandler.GetSuggestions)
 
 				// Analytics
 				r.Route("/{appID}/analytics", func(r chi.Router) {

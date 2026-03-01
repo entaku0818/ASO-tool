@@ -30,6 +30,8 @@ export type Keyword = {
   app_id: string
   keyword: string
   country: string
+  popularity_score?: number
+  popularity_fetched_at?: string
   created_at: string
 }
 
@@ -441,4 +443,61 @@ export async function getAppRankingCountries(
 
 export async function getRisingKeywords(appId: string): Promise<RisingKeyword[]> {
   return fetchApi<RisingKeyword[]>(`/api/apps/${appId}/keywords/rising`)
+}
+
+// Search Ads / Keyword Popularity
+export type SearchAdsCredentials = {
+  id: string
+  app_id: string
+  client_id: string
+  team_id: string
+  key_id: string
+  org_id?: string
+  adam_id: number
+  is_valid: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type CreateSearchAdsCredentialsRequest = {
+  client_id: string
+  team_id: string
+  key_id: string
+  private_key: string // Base64 encoded .p8 content
+  org_id?: string
+  adam_id: number
+}
+
+export type KeywordPopularitySuggestion = {
+  text: string
+  popularityScore: number
+}
+
+export async function getSearchAdsCredentials(appId: string): Promise<SearchAdsCredentials | null> {
+  try {
+    return await fetchApi<SearchAdsCredentials>(`/api/apps/${appId}/search-ads-credentials`)
+  } catch {
+    return null
+  }
+}
+
+export async function setSearchAdsCredentials(appId: string, data: CreateSearchAdsCredentialsRequest): Promise<{ message: string }> {
+  return fetchApi(`/api/apps/${appId}/search-ads-credentials`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteSearchAdsCredentials(appId: string): Promise<void> {
+  await fetchApi<void>(`/api/apps/${appId}/search-ads-credentials`, {
+    method: 'DELETE',
+  })
+}
+
+export async function refreshKeywordPopularity(appId: string): Promise<{ updated: number }> {
+  return fetchApi(`/api/apps/${appId}/keywords/refresh-popularity`, { method: 'POST' })
+}
+
+export async function getKeywordSuggestions(appId: string, limit: number = 25): Promise<KeywordPopularitySuggestion[]> {
+  return fetchApi<KeywordPopularitySuggestion[]>(`/api/apps/${appId}/keywords/suggestions?limit=${limit}`)
 }

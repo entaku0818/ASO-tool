@@ -3,11 +3,13 @@ package model
 import "time"
 
 type Keyword struct {
-	ID        string    `json:"id"`
-	AppID     string    `json:"app_id"`
-	Keyword   string    `json:"keyword"`
-	Country   string    `json:"country"`
-	CreatedAt time.Time `json:"created_at"`
+	ID                  string     `json:"id"`
+	AppID               string     `json:"app_id"`
+	Keyword             string     `json:"keyword"`
+	Country             string     `json:"country"`
+	PopularityScore     *int       `json:"popularity_score,omitempty"`
+	PopularityFetchedAt *time.Time `json:"popularity_fetched_at,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
 }
 
 type CreateKeywordRequest struct {

@@ -47,4 +47,11 @@ var (
 	ErrIOSOnly               = errors.New("analytics is only available for iOS apps")
 	ErrVersionRequired       = errors.New("version is required")
 	ErrReleaseDateRequired   = errors.New("release_date is required")
+
+	// Search Ads errors
+	ErrClientIDRequired              = errors.New("client_id is required")
+	ErrTeamIDRequired                = errors.New("team_id is required")
+	ErrAdamIDRequired                = errors.New("adam_id is required")
+	ErrSearchAdsCredentialsNotFound  = errors.New("search ads credentials not found")
+	ErrInvalidSearchAdsCredentials   = errors.New("invalid Search Ads credentials")
 )
