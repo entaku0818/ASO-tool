@@ -25,6 +25,9 @@ var migration008 string
 //go:embed migrations/009_create_store_rankings.up.sql
 var migration009 string
 
+//go:embed migrations/010_search_ads.up.sql
+var migration010 string
+
 func main() {
 	ctx := context.Background()
 	startTime := time.Now()
@@ -248,6 +251,7 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
 		{"007_create_asc_credentials", migration007},
 		{"008_create_analytics", migration008},
 		{"009_create_store_rankings", migration009},
+		{"010_search_ads", migration010},
 	}
 
 	for _, m := range migrations {
