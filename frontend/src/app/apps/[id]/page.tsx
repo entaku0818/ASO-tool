@@ -42,6 +42,19 @@ function PopularityBar({ score }: { score?: number }) {
   )
 }
 
+function DifficultyBadge({ popularityScore }: { popularityScore?: number }) {
+  if (popularityScore === undefined || popularityScore === null) {
+    return <span className="text-gray-400">−</span>
+  }
+  if (popularityScore <= 1) {
+    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">低</span>
+  }
+  if (popularityScore <= 3) {
+    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">中</span>
+  }
+  return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">高</span>
+}
+
 function KeywordRow({
   keyword,
   isSelected,
@@ -73,6 +86,9 @@ function KeywordRow({
       </td>
       <td className="py-3 px-4">
         <PopularityBar score={keyword.popularity_score} />
+      </td>
+      <td className="py-3 px-4">
+        <DifficultyBadge popularityScore={keyword.popularity_score} />
       </td>
       <td className="py-3 px-4">
         <button
@@ -592,6 +608,7 @@ export default function AppDetailPage() {
                 <th className="py-3 px-4 text-left font-medium text-gray-600">国</th>
                 <th className="py-3 px-4 text-left font-medium text-gray-600">順位</th>
                 <th className="py-3 px-4 text-left font-medium text-gray-600">人気</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600">難易度</th>
                 <th className="py-3 px-4 text-left font-medium text-gray-600"></th>
               </tr>
             </thead>
