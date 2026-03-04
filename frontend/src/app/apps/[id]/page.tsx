@@ -24,6 +24,7 @@ import {
 import { ReviewsSection } from '@/components/ReviewsSection'
 import { CompetitorSection } from '@/components/CompetitorSection'
 import { AnalyticsSection } from '@/components/AnalyticsSection'
+import { ScreenshotGenerator } from '@/components/ScreenshotGenerator'
 
 function PopularityBar({ score }: { score?: number }) {
   if (score === undefined || score === null) {
@@ -732,6 +733,18 @@ export default function AppDetailPage() {
           platform={app.platform}
           selectedKeywordId={selectedKeyword?.id}
         />
+      </div>
+
+      <div className="mt-6">
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-4 border-b">
+            <h3 className="text-lg font-semibold">スクリーンショット生成</h3>
+            <p className="text-sm text-gray-500">デバイスフレーム合成・多言語一括生成</p>
+          </div>
+          <div className="p-4">
+            <ScreenshotGenerator appName={app.name} />
+          </div>
+        </div>
       </div>
 
       <div className="mt-6">
