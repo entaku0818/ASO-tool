@@ -111,6 +111,42 @@ func (h *KeywordPopularityHandler) GetSuggestions(w http.ResponseWriter, r *http
 	respondJSON(w, http.StatusOK, suggestions)
 }
 
+// GetCompetitorSuggestions handles GET /apps/{appID}/keywords/competitor-suggestions?adam_id=xxx
+func (h *KeywordPopularityHandler) GetCompetitorSuggestions(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	appID := chi.URLParam(r, "appID")
+
+	adamIDStr := r.URL.Query().Get("adam_id")
+	if adamIDStr == "" {
+		respondError(w, http.StatusBadRequest, "adam_id is required")
+		return
+	}
+	adamID, err := strconv.ParseInt(adamIDStr, 10, 64)
+	if err != nil || adamID <= 0 {
+		respondError(w, http.StatusBadRequest, "invalid adam_id")
+		return
+	}
+
+	limit := 25
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
+	suggestions, err := h.service.GetCompetitorSuggestions(r.Context(), userID, appID, adamID, limit)
+	if err != nil {
+		handleSearchAdsError(w, err)
+		return
+	}
+
+	if suggestions == nil {
+		suggestions = []scraper.KeywordPopularity{}
+	}
+
+	respondJSON(w, http.StatusOK, suggestions)
+}
+
 func handleSearchAdsError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, model.ErrNotFound):

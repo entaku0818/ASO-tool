@@ -164,6 +164,28 @@ func (s *KeywordPopularityService) GetSuggestions(ctx context.Context, userID, a
 	return results, nil
 }
 
+// GetCompetitorSuggestions returns keyword suggestions for a competitor app by Adam ID
+func (s *KeywordPopularityService) GetCompetitorSuggestions(ctx context.Context, userID, appID string, competitorAdamID int64, limit int) ([]scraper.KeywordPopularity, error) {
+	// Verify app belongs to user (credentials are stored under this app)
+	_, err := s.appRepo.Get(ctx, userID, appID)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := s.buildClient(ctx, appID)
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := client.GetKeywordPopularity(ctx, competitorAdamID, nil, limit)
+	if err != nil {
+		_ = s.credRepo.UpdateValidity(ctx, appID, false)
+		return nil, err
+	}
+
+	return results, nil
+}
+
 // buildClient creates a SearchAdsClient from stored credentials
 func (s *KeywordPopularityService) buildClient(ctx context.Context, appID string) (*scraper.SearchAdsClient, error) {
 	creds, err := s.credRepo.GetByAppID(ctx, appID)

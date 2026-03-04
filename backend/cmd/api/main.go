@@ -242,6 +242,7 @@ func main() {
 				// Keyword popularity
 				r.Post("/{appID}/keywords/refresh-popularity", keywordPopularityHandler.RefreshScores)
 				r.Get("/{appID}/keywords/suggestions", keywordPopularityHandler.GetSuggestions)
+				r.Get("/{appID}/keywords/competitor-suggestions", keywordPopularityHandler.GetCompetitorSuggestions)
 
 				// Analytics
 				r.Route("/{appID}/analytics", func(r chi.Router) {

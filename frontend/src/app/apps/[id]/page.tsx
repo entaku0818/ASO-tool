@@ -17,6 +17,7 @@ import {
   deleteSearchAdsCredentials,
   refreshKeywordPopularity,
   getKeywordSuggestions,
+  getCompetitorKeywordSuggestions,
   SearchAdsCredentials,
   KeywordPopularitySuggestion,
 } from '@/lib/api'
@@ -457,6 +458,94 @@ function KeywordSuggestionsSection({ appId, onAddKeyword }: { appId: string; onA
   )
 }
 
+function CompetitorKeywordsSection({ appId, onAddKeyword }: { appId: string; onAddKeyword: (keyword: string) => void }) {
+  const [adamId, setAdamId] = useState('')
+  const [suggestions, setSuggestions] = useState<KeywordPopularitySuggestion[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
+
+  const handleFetch = async () => {
+    const id = parseInt(adamId, 10)
+    if (!id || id <= 0) {
+      alert('有効なAdam IDを入力してください')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const result = await getCompetitorKeywordSuggestions(appId, id, 25)
+      setSuggestions(result)
+      setHasLoaded(true)
+    } catch {
+      alert('競合キーワードの取得に失敗しました。Search Ads認証情報を確認してください。')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow mt-6">
+      <div className="p-4 border-b">
+        <h3 className="text-lg font-semibold">競合キーワード逆引き</h3>
+        <p className="text-sm text-gray-500">競合アプリのAdam IDを入力して、そのアプリが上位表示されているキーワードを取得</p>
+      </div>
+      <div className="p-4 border-b bg-gray-50">
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={adamId}
+            onChange={(e) => setAdamId(e.target.value)}
+            placeholder="競合アプリのAdam ID（例: 123456789）"
+            className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
+          />
+          <button
+            onClick={handleFetch}
+            disabled={isLoading || !adamId}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isLoading ? '取得中...' : '取得'}
+          </button>
+        </div>
+      </div>
+      {hasLoaded && (
+        suggestions.length === 0 ? (
+          <p className="p-4 text-gray-500">キーワードが見つかりませんでした</p>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600">人気</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600">難易度</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {suggestions
+                .sort((a, b) => b.popularityScore - a.popularityScore)
+                .map((s) => (
+                  <tr key={s.text} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-4 font-medium text-gray-900">{s.text}</td>
+                    <td className="py-3 px-4"><PopularityBar score={s.popularityScore} /></td>
+                    <td className="py-3 px-4"><DifficultyBadge popularityScore={s.popularityScore} /></td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => onAddKeyword(s.text)}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        追加
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        )
+      )}
+    </div>
+  )
+}
+
 export default function AppDetailPage() {
   const params = useParams()
   const appId = params.id as string
@@ -631,6 +720,10 @@ export default function AppDetailPage() {
 
       {app.platform === 'ios' && (
         <KeywordSuggestionsSection appId={appId} onAddKeyword={(kw) => handleAddKeyword(kw)} />
+      )}
+
+      {app.platform === 'ios' && (
+        <CompetitorKeywordsSection appId={appId} onAddKeyword={(kw) => handleAddKeyword(kw)} />
       )}
 
       <div className="mt-6">

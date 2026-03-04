@@ -501,3 +501,7 @@ export async function refreshKeywordPopularity(appId: string): Promise<{ updated
 export async function getKeywordSuggestions(appId: string, limit: number = 25): Promise<KeywordPopularitySuggestion[]> {
   return fetchApi<KeywordPopularitySuggestion[]>(`/api/apps/${appId}/keywords/suggestions?limit=${limit}`)
 }
+
+export async function getCompetitorKeywordSuggestions(appId: string, adamId: number, limit: number = 25): Promise<KeywordPopularitySuggestion[]> {
+  return fetchApi<KeywordPopularitySuggestion[]>(`/api/apps/${appId}/keywords/competitor-suggestions?adam_id=${adamId}&limit=${limit}`)
+}
