@@ -219,6 +219,7 @@ func main() {
 					r.Get("/", screenshotHandler.List)
 					r.Post("/", screenshotHandler.Create)
 					r.Post("/reorder", screenshotHandler.Reorder)
+					r.Post("/generate", screenshotHandler.Generate)
 					r.Get("/{screenshotID}", screenshotHandler.Get)
 					r.Put("/{screenshotID}", screenshotHandler.Update)
 					r.Delete("/{screenshotID}", screenshotHandler.Delete)

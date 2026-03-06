@@ -1,9 +1,14 @@
 package handler
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"net/http"
 
+	"github.com/entaku0818/aso-tool/backend/internal/imgproc"
 	"github.com/entaku0818/aso-tool/backend/internal/model"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -100,6 +105,68 @@ func (h *ScreenshotHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// Generate renders a framed screenshot image for each provided caption language
+// and returns the results as base64-encoded PNG data URLs.
+func (h *ScreenshotHandler) Generate(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		respondError(w, http.StatusBadRequest, "failed to parse form: "+err.Error())
+		return
+	}
+
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "image field is required")
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "failed to decode image: "+err.Error())
+		return
+	}
+
+	device := r.FormValue("device")
+	if device == "" {
+		device = "iphone67"
+	}
+	bgColor := r.FormValue("bg_color")
+	if bgColor == "" {
+		bgColor = "#4F46E5"
+	}
+	textColor := r.FormValue("text_color")
+	if textColor == "" {
+		textColor = "#FFFFFF"
+	}
+
+	var captions map[string]string
+	if raw := r.FormValue("captions"); raw != "" {
+		if err := json.Unmarshal([]byte(raw), &captions); err != nil {
+			respondError(w, http.StatusBadRequest, "invalid captions JSON: "+err.Error())
+			return
+		}
+	}
+
+	result, err := imgproc.Generate(&imgproc.GenerateRequest{
+		Image:     img,
+		Device:    device,
+		BGColor:   bgColor,
+		TextColor: textColor,
+		Captions:  captions,
+	})
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "image generation failed: "+err.Error())
+		return
+	}
+
+	images := make(map[string]string, len(result.Images))
+	for lang, pngBytes := range result.Images {
+		images[lang] = "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes)
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{"images": images})
 }
 
 func (h *ScreenshotHandler) Reorder(w http.ResponseWriter, r *http.Request) {

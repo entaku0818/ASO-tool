@@ -505,3 +505,53 @@ export async function getKeywordSuggestions(appId: string, limit: number = 25): 
 export async function getCompetitorKeywordSuggestions(appId: string, adamId: number, limit: number = 25): Promise<KeywordPopularitySuggestion[]> {
   return fetchApi<KeywordPopularitySuggestion[]>(`/api/apps/${appId}/keywords/competitor-suggestions?adam_id=${adamId}&limit=${limit}`)
 }
+
+export type GenerateScreenshotsRequest = {
+  image: File
+  device: 'iphone67' | 'iphone65' | 'ipad'
+  bgColor: string
+  textColor: string
+  captions: Record<string, string>
+}
+
+export type GenerateScreenshotsResponse = {
+  images: Record<string, string> // langCode → data:image/png;base64,...
+}
+
+export async function generateScreenshots(
+  appId: string,
+  req: GenerateScreenshotsRequest
+): Promise<GenerateScreenshotsResponse> {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const form = new FormData()
+  form.append('image', req.image)
+  form.append('device', req.device)
+  form.append('bg_color', req.bgColor)
+  form.append('text_color', req.textColor)
+  form.append('captions', JSON.stringify(req.captions))
+
+  const response = await fetch(`${API_BASE_URL}/api/apps/${appId}/screenshots/generate`, {
+    method: 'POST',
+    headers,
+    body: form,
+  })
+
+  if (response.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token')
+      window.location.href = '/login'
+    }
+    throw new Error('Unauthorized')
+  }
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+
+  return response.json()
+}

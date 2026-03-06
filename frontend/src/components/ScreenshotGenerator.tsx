@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import { generateScreenshots } from '@/lib/api'
 
 const LANGUAGES = [
   { code: 'ja', label: '日本語' },
@@ -21,10 +22,12 @@ type Captions = Record<string, string>
 
 interface ScreenshotGeneratorProps {
   appName?: string
+  appId?: string
 }
 
-export function ScreenshotGenerator({ appName }: ScreenshotGeneratorProps) {
+export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps) {
   const [imageURL, setImageURL] = useState<string>('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [captions, setCaptions] = useState<Captions>({ ja: '', en: '', 'zh-Hans': '', ko: '', fr: '', de: '' })
   const [selectedLang, setSelectedLang] = useState('ja')
   const [bgColor, setBgColor] = useState('#4F46E5')
@@ -37,6 +40,7 @@ export function ScreenshotGenerator({ appName }: ScreenshotGeneratorProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setImageFile(file)
     const reader = new FileReader()
     reader.onload = (ev) => setImageURL(ev.target?.result as string)
     reader.readAsDataURL(file)
@@ -169,6 +173,35 @@ export function ScreenshotGenerator({ appName }: ScreenshotGeneratorProps) {
 
   const downloadAll = async () => {
     setIsGenerating(true)
+
+    // Use server-side generation when appId and imageFile are available
+    if (appId && imageFile) {
+      try {
+        const activeCaptions = Object.fromEntries(
+          Object.entries(captions).filter(([, v]) => v.trim() !== '')
+        )
+        const result = await generateScreenshots(appId, {
+          image: imageFile,
+          device: device.id as 'iphone67' | 'iphone65' | 'ipad',
+          bgColor: bgColor,
+          textColor: textColor,
+          captions: activeCaptions,
+        })
+        for (const [lang, dataURL] of Object.entries(result.images)) {
+          const a = document.createElement('a')
+          a.download = `screenshot_${lang}_${device.id}.png`
+          a.href = dataURL
+          a.click()
+          await new Promise(r => setTimeout(r, 200))
+        }
+        setIsGenerating(false)
+        return
+      } catch (err) {
+        console.error('Server-side generation failed, falling back to canvas:', err)
+      }
+    }
+
+    // Fallback: local canvas rendering
     const canvas = canvasRef.current
     if (!canvas) { setIsGenerating(false); return }
     for (const lang of LANGUAGES) {

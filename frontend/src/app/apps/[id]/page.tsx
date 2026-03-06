@@ -742,7 +742,7 @@ export default function AppDetailPage() {
             <p className="text-sm text-gray-500">デバイスフレーム合成・多言語一括生成</p>
           </div>
           <div className="p-4">
-            <ScreenshotGenerator appName={app.name} />
+            <ScreenshotGenerator appName={app.name} appId={appId} />
           </div>
         </div>
       </div>
