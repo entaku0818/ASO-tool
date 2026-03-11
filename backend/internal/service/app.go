@@ -37,3 +37,7 @@ func (s *AppService) Update(ctx context.Context, userID, id string, req *model.U
 func (s *AppService) Delete(ctx context.Context, userID, id string) error {
 	return s.repo.Delete(ctx, userID, id)
 }
+
+func (s *AppService) FindByName(ctx context.Context, userID, name string) ([]*model.App, error) {
+	return s.repo.FindByName(ctx, userID, name)
+}

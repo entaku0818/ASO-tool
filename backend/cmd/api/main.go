@@ -88,7 +88,7 @@ func main() {
 
 	rankingRepo := repository.NewRankingRepository(pool)
 	rankingService := service.NewRankingService(rankingRepo)
-	rankingHandler := handler.NewRankingHandler(rankingService)
+	rankingHandler := handler.NewRankingHandler(rankingService, appService)
 
 	reviewRepo := repository.NewReviewRepository(pool)
 	reviewService := service.NewReviewService(reviewRepo)
@@ -258,6 +258,9 @@ func main() {
 
 			// Rankings endpoint for creating new rankings
 			r.Post("/rankings", rankingHandler.Create)
+
+			// Daily ranking comparison by app name
+			r.Get("/rankings/compare", rankingHandler.CompareWithYesterday)
 
 			// Scraper endpoints
 			r.Route("/scraper", func(r chi.Router) {

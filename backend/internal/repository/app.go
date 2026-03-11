@@ -193,3 +193,33 @@ func (r *AppRepository) Delete(ctx context.Context, userID, id string) error {
 
 	return nil
 }
+
+func (r *AppRepository) FindByName(ctx context.Context, userID, name string) ([]*model.App, error) {
+	query := `
+		SELECT id, name, bundle_id, platform, store_url, user_id, created_at, updated_at
+		FROM apps
+		WHERE user_id = $1 AND LOWER(name) LIKE LOWER($2)
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.pool.Query(ctx, query, userID, "%"+name+"%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var apps []*model.App
+	for rows.Next() {
+		app := &model.App{}
+		err := rows.Scan(
+			&app.ID, &app.Name, &app.BundleID, &app.Platform, &app.StoreURL, &app.UserID,
+			&app.CreatedAt, &app.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		apps = append(apps, app)
+	}
+
+	return apps, nil
+}

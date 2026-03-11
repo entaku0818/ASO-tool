@@ -167,6 +167,85 @@ func (r *RankingRepository) GetRisingKeywords(ctx context.Context, appID string,
 	return keywords, nil
 }
 
+// DailyRankingComparison holds a keyword's ranking for today vs yesterday.
+type DailyRankingComparison struct {
+	Keyword       string `json:"keyword"`
+	Country       string `json:"country"`
+	TodayRank     *int   `json:"today_rank"`
+	YesterdayRank *int   `json:"yesterday_rank"`
+	Change        *int   `json:"change"` // positive = improved (lower rank number is better)
+}
+
+// CompareWithYesterday returns keyword rankings for today and yesterday for the given app.
+func (r *RankingRepository) CompareWithYesterday(ctx context.Context, appID string, today time.Time) ([]DailyRankingComparison, error) {
+	todayStart := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+	yesterdayStart := todayStart.AddDate(0, 0, -1)
+
+	rows, err := r.pool.Query(ctx, `
+		WITH
+		today_rankings AS (
+			SELECT DISTINCT ON (k.id)
+				k.id AS keyword_id,
+				k.keyword,
+				k.country,
+				rh.rank
+			FROM keywords k
+			JOIN ranking_history rh ON k.id = rh.keyword_id
+			WHERE k.app_id = $1
+			  AND rh.recorded_at >= $2
+			ORDER BY k.id, rh.recorded_at DESC
+		),
+		yesterday_rankings AS (
+			SELECT DISTINCT ON (k.id)
+				k.id AS keyword_id,
+				rh.rank
+			FROM keywords k
+			JOIN ranking_history rh ON k.id = rh.keyword_id
+			WHERE k.app_id = $1
+			  AND rh.recorded_at >= $3
+			  AND rh.recorded_at < $2
+			ORDER BY k.id, rh.recorded_at DESC
+		),
+		all_keywords AS (
+			SELECT DISTINCT k.id AS keyword_id, k.keyword, k.country
+			FROM keywords k
+			WHERE k.app_id = $1
+			  AND EXISTS (
+				SELECT 1 FROM ranking_history rh
+				WHERE rh.keyword_id = k.id
+				  AND rh.recorded_at >= $3
+			)
+		)
+		SELECT
+			ak.keyword,
+			ak.country,
+			t.rank AS today_rank,
+			y.rank AS yesterday_rank
+		FROM all_keywords ak
+		LEFT JOIN today_rankings t ON ak.keyword_id = t.keyword_id
+		LEFT JOIN yesterday_rankings y ON ak.keyword_id = y.keyword_id
+		ORDER BY ak.keyword
+	`, appID, todayStart, yesterdayStart)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comparisons []DailyRankingComparison
+	for rows.Next() {
+		var c DailyRankingComparison
+		if err := rows.Scan(&c.Keyword, &c.Country, &c.TodayRank, &c.YesterdayRank); err != nil {
+			return nil, err
+		}
+		if c.TodayRank != nil && c.YesterdayRank != nil {
+			change := *c.YesterdayRank - *c.TodayRank
+			c.Change = &change
+		}
+		comparisons = append(comparisons, c)
+	}
+	return comparisons, nil
+}
+
 func (r *RankingRepository) GetLatestByKeyword(ctx context.Context, keywordID string) (*model.RankingHistory, error) {
 	query := `
 		SELECT id, keyword_id, rank, recorded_at

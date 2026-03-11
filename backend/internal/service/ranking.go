@@ -49,3 +49,7 @@ func (s *RankingService) GetRisingKeywords(ctx context.Context, appID string, da
 	}
 	return s.repo.GetRisingKeywords(ctx, appID, days)
 }
+
+func (s *RankingService) CompareWithYesterday(ctx context.Context, appID string) ([]repository.DailyRankingComparison, error) {
+	return s.repo.CompareWithYesterday(ctx, appID, time.Now())
+}

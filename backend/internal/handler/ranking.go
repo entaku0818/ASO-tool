@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/entaku0818/aso-tool/backend/internal/middleware"
 	"github.com/entaku0818/aso-tool/backend/internal/model"
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
@@ -12,11 +13,12 @@ import (
 )
 
 type RankingHandler struct {
-	service *service.RankingService
+	service    *service.RankingService
+	appService *service.AppService
 }
 
-func NewRankingHandler(service *service.RankingService) *RankingHandler {
-	return &RankingHandler{service: service}
+func NewRankingHandler(service *service.RankingService, appService *service.AppService) *RankingHandler {
+	return &RankingHandler{service: service, appService: appService}
 }
 
 func (h *RankingHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +93,42 @@ func (h *RankingHandler) GetLatest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, ranking)
+}
+
+// CompareWithYesterday returns keyword rankings for today vs yesterday for an app specified by name.
+// Query param: name (app name, partial match supported)
+func (h *RankingHandler) CompareWithYesterday(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		respondError(w, http.StatusBadRequest, "name query parameter is required")
+		return
+	}
+
+	apps, err := h.appService.FindByName(r.Context(), userID, name)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	if len(apps) == 0 {
+		respondError(w, http.StatusNotFound, "no app found with given name")
+		return
+	}
+
+	comparisons, err := h.service.CompareWithYesterday(r.Context(), apps[0].ID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if comparisons == nil {
+		comparisons = []repository.DailyRankingComparison{}
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"app":         apps[0],
+		"comparisons": comparisons,
+	})
 }
 
 func (h *RankingHandler) GetRisingKeywords(w http.ResponseWriter, r *http.Request) {
