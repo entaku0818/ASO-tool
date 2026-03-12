@@ -70,19 +70,34 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
         ctx.font = `bold ${Math.round(W / 18)}px -apple-system, sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        // Word wrap
-        const words = caption.split(' ')
         const lineH = Math.round(W / 14)
         const maxW = W - PADDING * 2
-        let line = ''
         const lines: string[] = []
-        for (const word of words) {
-          const test = line ? `${line} ${word}` : word
-          if (ctx.measureText(test).width > maxW) {
-            if (line) lines.push(line)
-            line = word
+        // CJK-aware word wrap: split by spaces first, then by character for CJK
+        const isCJK = (ch: string) => /[\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch)
+        const segments = caption.split(' ')
+        let line = ''
+        for (const seg of segments) {
+          // If segment contains CJK characters, wrap char-by-char
+          if (Array.from(seg).some(isCJK)) {
+            if (line) { lines.push(line); line = '' }
+            for (const ch of Array.from(seg)) {
+              const test = line + ch
+              if (ctx.measureText(test).width > maxW) {
+                if (line) lines.push(line)
+                line = ch
+              } else {
+                line = test
+              }
+            }
           } else {
-            line = test
+            const test = line ? `${line} ${seg}` : seg
+            if (ctx.measureText(test).width > maxW) {
+              if (line) lines.push(line)
+              line = seg
+            } else {
+              line = test
+            }
           }
         }
         if (line) lines.push(line)

@@ -18,22 +18,27 @@ import {
   refreshKeywordPopularity,
   getKeywordSuggestions,
   getCompetitorKeywordSuggestions,
+  translateKeyword,
   SearchAdsCredentials,
   KeywordPopularitySuggestion,
 } from '@/lib/api'
+import { useToast } from '@/components/Toast'
 import { ReviewsSection } from '@/components/ReviewsSection'
 import { CompetitorSection } from '@/components/CompetitorSection'
 import { AnalyticsSection } from '@/components/AnalyticsSection'
 import { ScreenshotGenerator } from '@/components/ScreenshotGenerator'
 
-function PopularityBar({ score }: { score?: number }) {
+function PopularityBar({ score, fetchedAt }: { score?: number; fetchedAt?: string }) {
   if (score === undefined || score === null) {
     return <span className="text-gray-400">−</span>
   }
   const filled = score
   const empty = 5 - score
+  const title = fetchedAt
+    ? `人気スコア: ${score}/5\n最終更新: ${new Date(fetchedAt).toLocaleDateString('ja-JP')}`
+    : `人気スコア: ${score}/5`
   return (
-    <span className="inline-flex items-center gap-0.5" title={`人気スコア: ${score}/5`}>
+    <span className="inline-flex items-center gap-0.5 cursor-help" title={title}>
       {Array.from({ length: filled }).map((_, i) => (
         <span key={`f${i}`} className="text-orange-400">●</span>
       ))}
@@ -62,11 +67,13 @@ function KeywordRow({
   isSelected,
   onSelect,
   onDelete,
+  onTranslate,
 }: {
   keyword: KeywordWithRanking
   isSelected: boolean
   onSelect: () => void
   onDelete: () => void
+  onTranslate: (text: string) => void
 }) {
   const rankColor = keyword.latestRank === null
     ? 'text-gray-500'
@@ -87,21 +94,33 @@ function KeywordRow({
         {keyword.latestRank === null ? '圏外' : `${keyword.latestRank}位`}
       </td>
       <td className="py-3 px-4">
-        <PopularityBar score={keyword.popularity_score} />
+        <PopularityBar score={keyword.popularity_score} fetchedAt={keyword.popularity_fetched_at} />
       </td>
       <td className="py-3 px-4">
         <DifficultyBadge popularityScore={keyword.popularity_score} />
       </td>
       <td className="py-3 px-4">
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete()
-          }}
-          className="text-red-500 hover:text-red-700 text-sm"
-        >
-          削除
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onTranslate(keyword.keyword)
+            }}
+            className="text-blue-500 hover:text-blue-700 text-xs"
+            title="英語に翻訳"
+          >
+            翻訳
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            className="text-red-500 hover:text-red-700 text-sm"
+          >
+            削除
+          </button>
+        </div>
       </td>
     </tr>
   )
@@ -172,6 +191,7 @@ function RankingChartSection({ appId, keywordId, keywordName }: { appId: string;
 }
 
 function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onPopularityRefreshed: () => void }) {
+  const { showToast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [credentials, setCredentials] = useState<SearchAdsCredentials | null>(null)
   const [isLoadingCreds, setIsLoadingCreds] = useState(false)
@@ -218,9 +238,9 @@ function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onP
       const updated = await getSearchAdsCredentials(appId)
       setCredentials(updated)
       setPrivateKey('')
-      alert('認証情報を保存しました')
+      showToast('認証情報を保存しました', 'success')
     } catch {
-      alert('保存に失敗しました')
+      showToast('保存に失敗しました', 'error')
     } finally {
       setIsSaving(false)
     }
@@ -238,8 +258,9 @@ function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onP
       setPrivateKey('')
       setOrgId('')
       setAdamId('')
+      showToast('認証情報を削除しました', 'success')
     } catch {
-      alert('削除に失敗しました')
+      showToast('削除に失敗しました', 'error')
     } finally {
       setIsDeleting(false)
     }
@@ -249,10 +270,10 @@ function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onP
     setIsRefreshing(true)
     try {
       const result = await refreshKeywordPopularity(appId)
-      alert(`${result.updated}件のキーワードのスコアを更新しました`)
+      showToast(`${result.updated}件のキーワードのスコアを更新しました`, 'success')
       onPopularityRefreshed()
     } catch {
-      alert('人気スコアの更新に失敗しました')
+      showToast('人気スコアの更新に失敗しました', 'error')
     } finally {
       setIsRefreshing(false)
     }
@@ -387,6 +408,7 @@ function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onP
 }
 
 function KeywordSuggestionsSection({ appId, onAddKeyword }: { appId: string; onAddKeyword: (keyword: string) => void }) {
+  const { showToast } = useToast()
   const [suggestions, setSuggestions] = useState<KeywordPopularitySuggestion[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
@@ -398,7 +420,7 @@ function KeywordSuggestionsSection({ appId, onAddKeyword }: { appId: string; onA
       setSuggestions(result)
       setHasLoaded(true)
     } catch {
-      alert('キーワード提案の取得に失敗しました。Search Ads認証情報を確認してください。')
+      showToast('キーワード提案の取得に失敗しました。Search Ads認証情報を確認してください。', 'error')
     } finally {
       setIsLoading(false)
     }
@@ -460,6 +482,7 @@ function KeywordSuggestionsSection({ appId, onAddKeyword }: { appId: string; onA
 }
 
 function CompetitorKeywordsSection({ appId, onAddKeyword }: { appId: string; onAddKeyword: (keyword: string) => void }) {
+  const { showToast } = useToast()
   const [adamId, setAdamId] = useState('')
   const [suggestions, setSuggestions] = useState<KeywordPopularitySuggestion[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -468,7 +491,7 @@ function CompetitorKeywordsSection({ appId, onAddKeyword }: { appId: string; onA
   const handleFetch = async () => {
     const id = parseInt(adamId, 10)
     if (!id || id <= 0) {
-      alert('有効なAdam IDを入力してください')
+      showToast('有効なAdam IDを入力してください', 'error')
       return
     }
     setIsLoading(true)
@@ -477,7 +500,7 @@ function CompetitorKeywordsSection({ appId, onAddKeyword }: { appId: string; onA
       setSuggestions(result)
       setHasLoaded(true)
     } catch {
-      alert('競合キーワードの取得に失敗しました。Search Ads認証情報を確認してください。')
+      showToast('競合キーワードの取得に失敗しました。Search Ads認証情報を確認してください。', 'error')
     } finally {
       setIsLoading(false)
     }
@@ -552,9 +575,12 @@ export default function AppDetailPage() {
   const appId = params.id as string
   const { app, isLoading: appLoading, error: appError } = useApp(appId)
   const { keywords, isLoading: keywordsLoading, refetch } = useKeywords(appId)
+  const { showToast } = useToast()
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordWithRanking | null>(null)
   const [newKeyword, setNewKeyword] = useState('')
   const [isAdding, setIsAdding] = useState(false)
+  const [translateModal, setTranslateModal] = useState<{ text: string; result: string; sourceLang: string } | null>(null)
+  const [isTranslating, setIsTranslating] = useState(false)
 
   const handleAddKeyword = async (kw?: string) => {
     const text = kw ?? newKeyword.trim()
@@ -565,7 +591,7 @@ export default function AppDetailPage() {
       if (!kw) setNewKeyword('')
       refetch()
     } catch {
-      alert('キーワードの追加に失敗しました')
+      showToast('キーワードの追加に失敗しました', 'error')
     } finally {
       setIsAdding(false)
     }
@@ -580,8 +606,46 @@ export default function AppDetailPage() {
       }
       refetch()
     } catch {
-      alert('キーワードの削除に失敗しました')
+      showToast('キーワードの削除に失敗しました', 'error')
     }
+  }
+
+  const handleTranslate = async (text: string) => {
+    setIsTranslating(true)
+    setTranslateModal({ text, result: '', sourceLang: '' })
+    try {
+      const res = await translateKeyword({ text, target_lang: 'EN' })
+      setTranslateModal({ text, result: res.translated_text, sourceLang: res.source_lang })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.includes('503')) {
+        showToast('DeepL APIキーが未設定です', 'error')
+      } else {
+        showToast('翻訳に失敗しました', 'error')
+      }
+      setTranslateModal(null)
+    } finally {
+      setIsTranslating(false)
+    }
+  }
+
+  const exportCSV = () => {
+    const header = 'キーワード,国,順位,人気スコア,最終更新'
+    const rows = keywords.map(k =>
+      [
+        `"${k.keyword}"`,
+        k.country,
+        k.latestRank ?? '圏外',
+        k.popularity_score ?? '',
+        k.popularity_fetched_at ? new Date(k.popularity_fetched_at).toLocaleDateString('ja-JP') : '',
+      ].join(',')
+    )
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `keywords_${appId}.csv`
+    a.click()
   }
 
   if (appLoading) {
@@ -662,8 +726,16 @@ export default function AppDetailPage() {
         <div className="p-4 border-b flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">キーワード順位 ({keywords.length}件)</h3>
-            <p className="text-sm text-gray-500">クリックで順位推移を表示</p>
+            <p className="text-sm text-gray-500">クリックで順位推移を表示 / 翻訳ボタンで英語翻訳</p>
           </div>
+          {keywords.length > 0 && (
+            <button
+              onClick={exportCSV}
+              className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1"
+            >
+              ↓ CSV
+            </button>
+          )}
         </div>
 
         <div className="p-4 border-b bg-gray-50">
@@ -710,6 +782,7 @@ export default function AppDetailPage() {
                   isSelected={selectedKeyword?.id === keyword.id}
                   onSelect={() => setSelectedKeyword(keyword)}
                   onDelete={() => handleDeleteKeyword(keyword.id)}
+                  onTranslate={handleTranslate}
                 />
               ))}
             </tbody>
@@ -750,6 +823,51 @@ export default function AppDetailPage() {
       <div className="mt-6">
         <ReviewsSection appId={appId} />
       </div>
+
+      {/* Translate modal */}
+      {translateModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40" onClick={() => setTranslateModal(null)}>
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">キーワード翻訳（英語）</h3>
+            <div className="mb-3">
+              <p className="text-sm text-gray-500">元のキーワード</p>
+              <p className="font-medium text-gray-900">{translateModal.text}</p>
+            </div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">翻訳結果</p>
+              {isTranslating ? (
+                <p className="text-gray-400">翻訳中...</p>
+              ) : (
+                <p className="font-medium text-blue-700 text-lg">{translateModal.result}</p>
+              )}
+            </div>
+            {!isTranslating && translateModal.result && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    handleAddKeyword(translateModal.result)
+                    setTranslateModal(null)
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                >
+                  キーワードとして追加
+                </button>
+                <button
+                  onClick={() => setTranslateModal(null)}
+                  className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50"
+                >
+                  閉じる
+                </button>
+              </div>
+            )}
+            {!isTranslating && !translateModal.result && (
+              <button onClick={() => setTranslateModal(null)} className="w-full px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">
+                閉じる
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

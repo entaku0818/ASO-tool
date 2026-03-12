@@ -120,6 +120,10 @@ func main() {
 	keywordPopularityService := service.NewKeywordPopularityService(searchAdsCredRepo, keywordRepo, appRepo)
 	keywordPopularityHandler := handler.NewKeywordPopularityHandler(keywordPopularityService)
 
+	// Translation
+	translationService := service.NewTranslationService()
+	translationHandler := handler.NewTranslationHandler(translationService)
+
 	// Public service
 	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
 	storeRankingRepo := repository.NewStoreRankingRepository(pool)
@@ -255,6 +259,9 @@ func main() {
 
 				r.Get("/{appID}/keywords/{keywordID}/comparison", competitorHandler.GetComparison)
 			})
+
+			// Translation
+			r.Post("/keywords/translate", translationHandler.Translate)
 
 			// Rankings endpoint for creating new rankings
 			r.Post("/rankings", rankingHandler.Create)

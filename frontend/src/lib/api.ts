@@ -506,6 +506,25 @@ export async function getCompetitorKeywordSuggestions(appId: string, adamId: num
   return fetchApi<KeywordPopularitySuggestion[]>(`/api/apps/${appId}/keywords/competitor-suggestions?adam_id=${adamId}&limit=${limit}`)
 }
 
+export type TranslateRequest = {
+  text: string
+  source_lang?: string
+  target_lang: string
+}
+
+export type TranslateResponse = {
+  translated_text: string
+  source_lang: string
+  target_lang: string
+}
+
+export async function translateKeyword(req: TranslateRequest): Promise<TranslateResponse> {
+  return fetchApi<TranslateResponse>('/api/keywords/translate', {
+    method: 'POST',
+    body: JSON.stringify(req),
+  })
+}
+
 export type GenerateScreenshotsRequest = {
   image: File
   device: 'iphone67' | 'iphone65' | 'ipad'

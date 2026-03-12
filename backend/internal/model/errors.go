@@ -54,4 +54,9 @@ var (
 	ErrAdamIDRequired                = errors.New("adam_id is required")
 	ErrSearchAdsCredentialsNotFound  = errors.New("search ads credentials not found")
 	ErrInvalidSearchAdsCredentials   = errors.New("invalid Search Ads credentials")
+
+	// Translation errors
+	ErrTranslationTextRequired   = errors.New("text is required")
+	ErrTranslationTargetRequired = errors.New("target_lang is required")
+	ErrTranslationFailed         = errors.New("translation failed")
 )
