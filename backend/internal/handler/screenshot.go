@@ -111,7 +111,7 @@ func (h *ScreenshotHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // and returns the results as base64-encoded PNG data URLs.
 func (h *ScreenshotHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		respondError(w, http.StatusBadRequest, "failed to parse form: "+err.Error())
+		respondError(w, http.StatusBadRequest, "failed to parse form")
 		return
 	}
 
@@ -124,7 +124,7 @@ func (h *ScreenshotHandler) Generate(w http.ResponseWriter, r *http.Request) {
 
 	img, _, err := image.Decode(file)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "failed to decode image: "+err.Error())
+		respondError(w, http.StatusBadRequest, "unsupported image format")
 		return
 	}
 
@@ -144,7 +144,7 @@ func (h *ScreenshotHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	var captions map[string]string
 	if raw := r.FormValue("captions"); raw != "" {
 		if err := json.Unmarshal([]byte(raw), &captions); err != nil {
-			respondError(w, http.StatusBadRequest, "invalid captions JSON: "+err.Error())
+			respondError(w, http.StatusBadRequest, "invalid captions JSON")
 			return
 		}
 	}
@@ -157,7 +157,7 @@ func (h *ScreenshotHandler) Generate(w http.ResponseWriter, r *http.Request) {
 		Captions:  captions,
 	})
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "image generation failed: "+err.Error())
+		respondError(w, http.StatusInternalServerError, "image generation failed")
 		return
 	}
 
