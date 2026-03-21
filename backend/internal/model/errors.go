@@ -61,6 +61,7 @@ var (
 	ErrTranslationFailed         = errors.New("translation failed")
 
 	// Billing / plan errors
-	ErrPlanLimitExceeded = errors.New("keyword limit reached for free plan")
-	ErrStripeKeyRequired = errors.New("stripe secret key is not configured")
+	ErrPlanLimitExceeded    = errors.New("keyword limit reached for free plan")
+	ErrAppLimitExceeded     = errors.New("app limit reached for free plan")
+	ErrStripeKeyRequired    = errors.New("stripe secret key is not configured")
 )

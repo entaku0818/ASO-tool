@@ -75,7 +75,7 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 
 	appRepo := repository.NewAppRepository(pool)
-	appService := service.NewAppService(appRepo)
+	appService := service.NewAppServiceWithBilling(appRepo, userRepo)
 	appHandler := handler.NewAppHandler(appService)
 
 	trackedKeywordRepo := repository.NewTrackedKeywordRepository(pool)

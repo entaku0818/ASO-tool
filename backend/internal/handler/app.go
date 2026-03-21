@@ -30,6 +30,10 @@ func (h *AppHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	app, err := h.service.Create(r.Context(), userID, &req)
 	if err != nil {
+		if errors.Is(err, model.ErrAppLimitExceeded) {
+			respondError(w, http.StatusPaymentRequired, err.Error())
+			return
+		}
 		handleServiceError(w, err)
 		return
 	}

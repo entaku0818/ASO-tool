@@ -7,18 +7,40 @@ import (
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
 )
 
+const freePlanAppLimit = 1
+
 type AppService struct {
-	repo *repository.AppRepository
+	repo     *repository.AppRepository
+	userRepo *repository.UserRepository
 }
 
 func NewAppService(repo *repository.AppRepository) *AppService {
 	return &AppService{repo: repo}
 }
 
+func NewAppServiceWithBilling(repo *repository.AppRepository, userRepo *repository.UserRepository) *AppService {
+	return &AppService{repo: repo, userRepo: userRepo}
+}
+
 func (s *AppService) Create(ctx context.Context, userID string, req *model.CreateAppRequest) (*model.App, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+
+	// Enforce free plan app limit
+	if s.userRepo != nil && userID != "" {
+		user, err := s.userRepo.GetByID(ctx, userID)
+		if err == nil && !user.IsPro() {
+			count, err := s.repo.CountByUser(ctx, userID)
+			if err != nil {
+				return nil, err
+			}
+			if count >= freePlanAppLimit {
+				return nil, model.ErrAppLimitExceeded
+			}
+		}
+	}
+
 	return s.repo.Create(ctx, userID, req)
 }
 

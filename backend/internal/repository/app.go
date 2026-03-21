@@ -45,6 +45,14 @@ func (r *AppRepository) Create(ctx context.Context, userID string, req *model.Cr
 	return app, nil
 }
 
+func (r *AppRepository) CountByUser(ctx context.Context, userID string) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM apps WHERE user_id = $1`, userID,
+	).Scan(&count)
+	return count, err
+}
+
 func (r *AppRepository) Get(ctx context.Context, userID, id string) (*model.App, error) {
 	query := `
 		SELECT id, name, bundle_id, platform, store_url, user_id, created_at, updated_at
