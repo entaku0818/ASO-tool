@@ -529,8 +529,12 @@ export type GenerateScreenshotsRequest = {
   image: File
   device: 'iphone67' | 'iphone65' | 'ipad'
   bgColor: string
+  bgGradientFrom?: string
+  bgGradientTo?: string
+  bgGradientDir?: 'tb' | 'lr' | 'tlbr'
   textColor: string
   captions: Record<string, string>
+  imageAlign?: 'center' | 'bottom'
 }
 
 export type GenerateScreenshotsResponse = {
@@ -551,8 +555,12 @@ export async function generateScreenshots(
   form.append('image', req.image)
   form.append('device', req.device)
   form.append('bg_color', req.bgColor)
+  if (req.bgGradientFrom) form.append('bg_gradient_from', req.bgGradientFrom)
+  if (req.bgGradientTo) form.append('bg_gradient_to', req.bgGradientTo)
+  if (req.bgGradientDir) form.append('bg_gradient_dir', req.bgGradientDir)
   form.append('text_color', req.textColor)
   form.append('captions', JSON.stringify(req.captions))
+  if (req.imageAlign) form.append('image_align', req.imageAlign)
 
   const response = await fetch(`${API_BASE_URL}/api/apps/${appId}/screenshots/generate`, {
     method: 'POST',

@@ -18,7 +18,21 @@ const DEVICE_PRESETS = [
   { id: 'ipad', label: 'iPad 12.9"', width: 1024, height: 1366, frameColor: '#1a1a1a', cornerRadius: 20 },
 ]
 
+const BG_PRESETS = [
+  { id: 'ocean',    label: 'Ocean',    from: '#667eea', to: '#764ba2', dir: 'tb' as const },
+  { id: 'midnight', label: 'Midnight', from: '#0f0c29', to: '#302b63', dir: 'tb' as const },
+  { id: 'sunset',   label: 'Sunset',   from: '#f093fb', to: '#f5576c', dir: 'tb' as const },
+  { id: 'forest',   label: 'Forest',   from: '#134e5e', to: '#71b280', dir: 'tb' as const },
+  { id: 'gold',     label: 'Gold',     from: '#f7971e', to: '#ffd200', dir: 'tb' as const },
+  { id: 'rose',     label: 'Rose',     from: '#ee0979', to: '#ff6a00', dir: 'tb' as const },
+  { id: 'sky',      label: 'Sky',      from: '#4facfe', to: '#00f2fe', dir: 'tb' as const },
+  { id: 'dark',     label: 'Dark',     from: '#1a1a2e', to: '#16213e', dir: 'tb' as const },
+]
+
 type Captions = Record<string, string>
+type BgType = 'solid' | 'gradient' | 'preset'
+type GradDir = 'tb' | 'lr' | 'tlbr'
+type ImageAlign = 'center' | 'bottom'
 
 interface ScreenshotGeneratorProps {
   appName?: string
@@ -31,8 +45,14 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
   const [captions, setCaptions] = useState<Captions>({ ja: '', en: '', 'zh-Hans': '', ko: '', fr: '', de: '' })
   const [selectedLang, setSelectedLang] = useState('ja')
   const [bgColor, setBgColor] = useState('#4F46E5')
+  const [bgType, setBgType] = useState<BgType>('solid')
+  const [bgGradFrom, setBgGradFrom] = useState('#667eea')
+  const [bgGradTo, setBgGradTo] = useState('#764ba2')
+  const [bgGradDir, setBgGradDir] = useState<GradDir>('tb')
+  const [bgPresetId, setBgPresetId] = useState('ocean')
   const [textColor, setTextColor] = useState('#FFFFFF')
   const [device, setDevice] = useState(DEVICE_PRESETS[0])
+  const [imageAlign, setImageAlign] = useState<ImageAlign>('bottom')
   const [isGenerating, setIsGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -46,13 +66,24 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
     reader.readAsDataURL(file)
   }
 
+  // Resolves the effective gradient colors (from/to) based on current bg settings
+  const getEffectiveBg = useCallback((): { from: string; to: string; dir: GradDir } | null => {
+    if (bgType === 'gradient') return { from: bgGradFrom, to: bgGradTo, dir: bgGradDir }
+    if (bgType === 'preset') {
+      const p = BG_PRESETS.find(p => p.id === bgPresetId) ?? BG_PRESETS[0]
+      return { from: p.from, to: p.to, dir: p.dir }
+    }
+    return null
+  }, [bgType, bgGradFrom, bgGradTo, bgGradDir, bgPresetId])
+
   const drawFrame = useCallback((canvas: HTMLCanvasElement, lang: string): Promise<void> => {
     return new Promise((resolve) => {
       const ctx = canvas.getContext('2d')
       if (!ctx) return resolve()
 
       const PADDING = 40
-      const CAPTION_H = 120
+      // bottom-align uses a taller caption area so the device clearly "sits at the bottom"
+      const CAPTION_H = imageAlign === 'bottom' ? 220 : 120
       const W = device.width + PADDING * 2
       const H = device.height + PADDING * 2 + CAPTION_H
 
@@ -60,25 +91,39 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       canvas.height = H
 
       // Background
-      ctx.fillStyle = bgColor
+      const grad = getEffectiveBg()
+      if (grad) {
+        let canvasGrad: CanvasGradient
+        if (grad.dir === 'lr') {
+          canvasGrad = ctx.createLinearGradient(0, 0, W, 0)
+        } else if (grad.dir === 'tlbr') {
+          canvasGrad = ctx.createLinearGradient(0, 0, W, H)
+        } else {
+          canvasGrad = ctx.createLinearGradient(0, 0, 0, H)
+        }
+        canvasGrad.addColorStop(0, grad.from)
+        canvasGrad.addColorStop(1, grad.to)
+        ctx.fillStyle = canvasGrad
+      } else {
+        ctx.fillStyle = bgColor
+      }
       ctx.fillRect(0, 0, W, H)
 
       // Caption text
       const caption = captions[lang] || ''
       if (caption) {
         ctx.fillStyle = textColor
-        ctx.font = `bold ${Math.round(W / 18)}px -apple-system, sans-serif`
+        // 900 weight + W/13 size for strong visual impact (vs previous bold/W*18)
+        ctx.font = `900 ${Math.round(W / 13)}px -apple-system, sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         const lineH = Math.round(W / 14)
         const maxW = W - PADDING * 2
         const lines: string[] = []
-        // CJK-aware word wrap: split by spaces first, then by character for CJK
         const isCJK = (ch: string) => /[\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch)
         const segments = caption.split(' ')
         let line = ''
         for (const seg of segments) {
-          // If segment contains CJK characters, wrap char-by-char
           if (Array.from(seg).some(isCJK)) {
             if (line) { lines.push(line); line = '' }
             for (const ch of Array.from(seg)) {
@@ -106,11 +151,13 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
         lines.forEach((l, i) => ctx.fillText(l, W / 2, startY + i * lineH))
       }
 
-      // Device frame
+      // Device frame — Y position based on alignment
       const fx = PADDING
-      const fy = CAPTION_H
       const fw = device.width
       const fh = device.height
+      const fy = imageAlign === 'bottom'
+        ? H - PADDING - fh  // bottom-align: device sits near the bottom
+        : CAPTION_H         // center (current): device starts right after caption
       const r = device.cornerRadius
 
       ctx.fillStyle = device.frameColor
@@ -152,7 +199,6 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       if (imageURL) {
         const img = new Image()
         img.onload = () => {
-          // Cover fit
           const scale = Math.max(sw / img.width, sh / img.height)
           const dw = img.width * scale
           const dh = img.height * scale
@@ -174,7 +220,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
         resolve()
       }
     })
-  }, [bgColor, textColor, captions, device, imageURL])
+  }, [bgColor, bgType, getEffectiveBg, textColor, captions, device, imageURL, imageAlign])
 
   const downloadSingle = async (lang: string) => {
     const canvas = canvasRef.current
@@ -189,18 +235,22 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
   const downloadAll = async () => {
     setIsGenerating(true)
 
-    // Use server-side generation when appId and imageFile are available
     if (appId && imageFile) {
       try {
         const activeCaptions = Object.fromEntries(
           Object.entries(captions).filter(([, v]) => v.trim() !== '')
         )
+        const effectiveBg = getEffectiveBg()
         const result = await generateScreenshots(appId, {
           image: imageFile,
           device: device.id as 'iphone67' | 'iphone65' | 'ipad',
           bgColor: bgColor,
+          bgGradientFrom: effectiveBg?.from,
+          bgGradientTo: effectiveBg?.to,
+          bgGradientDir: effectiveBg?.dir,
           textColor: textColor,
           captions: activeCaptions,
+          imageAlign: imageAlign,
         })
         for (const [lang, dataURL] of Object.entries(result.images)) {
           const a = document.createElement('a')
@@ -216,7 +266,6 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       }
     }
 
-    // Fallback: local canvas rendering
     const canvas = canvasRef.current
     if (!canvas) { setIsGenerating(false); return }
     for (const lang of LANGUAGES) {
@@ -233,9 +282,17 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
 
   const previewLangs = LANGUAGES.filter(l => captions[l.code] || l.code === selectedLang)
 
+  // Build preview background style
+  const previewBg = (() => {
+    const g = getEffectiveBg()
+    if (!g) return { backgroundColor: bgColor }
+    const dir = g.dir === 'lr' ? 'to right' : g.dir === 'tlbr' ? 'to bottom right' : 'to bottom'
+    return { background: `linear-gradient(${dir}, ${g.from}, ${g.to})` }
+  })()
+
   return (
     <div className="space-y-4">
-      {/* Device + image settings */}
+      {/* Device + alignment */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">デバイス</label>
@@ -250,15 +307,136 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">背景色</label>
-          <div className="flex gap-2">
-            <input type="color" value={bgColor} onChange={e => setBgColor(e.target.value)}
-              className="h-10 w-16 border rounded cursor-pointer" />
-            <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
-              className="h-10 w-16 border rounded cursor-pointer" title="テキスト色" />
-            <span className="text-xs text-gray-500 self-center">背景 / テキスト</span>
+          <label className="block text-sm font-medium text-gray-700 mb-1">画像位置</label>
+          <div className="flex rounded-lg border overflow-hidden">
+            {(['center', 'bottom'] as ImageAlign[]).map((align) => (
+              <button
+                key={align}
+                onClick={() => setImageAlign(align)}
+                className={`flex-1 py-2 text-sm transition-colors ${
+                  imageAlign === align
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {align === 'center' ? '中央' : '下寄せ'}
+              </button>
+            ))}
           </div>
         </div>
+      </div>
+
+      {/* Background */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">背景</label>
+
+        {/* Type selector */}
+        <div className="flex rounded-lg border overflow-hidden mb-3">
+          {([
+            { id: 'solid',    label: '単色' },
+            { id: 'gradient', label: 'グラデーション' },
+            { id: 'preset',   label: 'プリセット' },
+          ] as { id: BgType; label: string }[]).map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setBgType(id)}
+              className={`flex-1 py-2 text-sm transition-colors ${
+                bgType === id
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Solid */}
+        {bgType === 'solid' && (
+          <div className="flex gap-3 items-center">
+            <div className="flex items-center gap-2">
+              <input type="color" value={bgColor} onChange={e => setBgColor(e.target.value)}
+                className="h-9 w-14 border rounded cursor-pointer" />
+              <span className="text-xs text-gray-500">背景色</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
+                className="h-9 w-14 border rounded cursor-pointer" />
+              <span className="text-xs text-gray-500">テキスト色</span>
+            </div>
+          </div>
+        )}
+
+        {/* Gradient */}
+        {bgType === 'gradient' && (
+          <div className="space-y-3">
+            <div className="flex gap-3 items-center">
+              <div className="flex items-center gap-2">
+                <input type="color" value={bgGradFrom} onChange={e => setBgGradFrom(e.target.value)}
+                  className="h-9 w-14 border rounded cursor-pointer" />
+                <span className="text-xs text-gray-500">開始色</span>
+              </div>
+              <span className="text-gray-400">→</span>
+              <div className="flex items-center gap-2">
+                <input type="color" value={bgGradTo} onChange={e => setBgGradTo(e.target.value)}
+                  className="h-9 w-14 border rounded cursor-pointer" />
+                <span className="text-xs text-gray-500">終了色</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
+                  className="h-9 w-14 border rounded cursor-pointer" />
+                <span className="text-xs text-gray-500">テキスト色</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {([
+                { id: 'tb', label: '↓ 縦' },
+                { id: 'lr', label: '→ 横' },
+                { id: 'tlbr', label: '↘ 斜め' },
+              ] as { id: GradDir; label: string }[]).map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setBgGradDir(id)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    bgGradDir === id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Preset */}
+        {bgType === 'preset' && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-8 gap-2">
+              {BG_PRESETS.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setBgPresetId(p.id)}
+                  title={p.label}
+                  className={`relative h-10 rounded-lg overflow-hidden transition-all ${
+                    bgPresetId === p.id ? 'ring-2 ring-blue-600 ring-offset-1 scale-105' : 'hover:scale-105'
+                  }`}
+                  style={{ background: `linear-gradient(to bottom, ${p.from}, ${p.to})` }}
+                >
+                  {bgPresetId === p.id && (
+                    <span className="absolute inset-0 flex items-center justify-center text-white text-xs">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
+                className="h-9 w-14 border rounded cursor-pointer" />
+              <span className="text-xs text-gray-500">テキスト色</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Image upload */}
@@ -315,15 +493,15 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
         </div>
         <div
           className="rounded-xl p-4 flex flex-col items-center"
-          style={{ backgroundColor: bgColor, minHeight: 200 }}
+          style={{ ...previewBg, minHeight: 200 }}
         >
           {captions[selectedLang] && (
-            <p className="font-bold text-center mb-3 text-sm" style={{ color: textColor }}>
+            <p className="text-center mb-3 text-base" style={{ color: textColor, fontWeight: 900 }}>
               {captions[selectedLang]}
             </p>
           )}
           <div
-            className="relative overflow-hidden"
+            className={`relative overflow-hidden ${imageAlign === 'bottom' ? 'mt-auto' : ''}`}
             style={{
               width: Math.min(device.width * 0.3, 180),
               height: Math.min(device.height * 0.3, 380),
