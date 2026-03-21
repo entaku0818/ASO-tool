@@ -140,6 +140,10 @@ func (h *ScreenshotHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	if textColor == "" {
 		textColor = "#FFFFFF"
 	}
+	bgGradientFrom := r.FormValue("bg_gradient_from")
+	bgGradientTo := r.FormValue("bg_gradient_to")
+	bgGradientDir := r.FormValue("bg_gradient_dir")
+	imageAlign := r.FormValue("image_align")
 
 	var captions map[string]string
 	if raw := r.FormValue("captions"); raw != "" {
@@ -150,11 +154,15 @@ func (h *ScreenshotHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := imgproc.Generate(&imgproc.GenerateRequest{
-		Image:     img,
-		Device:    device,
-		BGColor:   bgColor,
-		TextColor: textColor,
-		Captions:  captions,
+		Image:          img,
+		Device:         device,
+		BGColor:        bgColor,
+		BGGradientFrom: bgGradientFrom,
+		BGGradientTo:   bgGradientTo,
+		BGGradientDir:  bgGradientDir,
+		TextColor:      textColor,
+		Captions:       captions,
+		ImageAlign:     imageAlign,
 	})
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "image generation failed")
