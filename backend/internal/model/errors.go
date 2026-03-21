@@ -59,4 +59,8 @@ var (
 	ErrTranslationTextRequired   = errors.New("text is required")
 	ErrTranslationTargetRequired = errors.New("target_lang is required")
 	ErrTranslationFailed         = errors.New("translation failed")
+
+	// Billing / plan errors
+	ErrPlanLimitExceeded = errors.New("keyword limit reached for free plan")
+	ErrStripeKeyRequired = errors.New("stripe secret key is not configured")
 )

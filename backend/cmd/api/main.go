@@ -83,7 +83,7 @@ func main() {
 	trackedKeywordHandler := handler.NewTrackedKeywordHandler(trackedKeywordService)
 
 	keywordRepo := repository.NewKeywordRepository(pool)
-	keywordService := service.NewKeywordServiceWithTracking(keywordRepo, appRepo, trackedKeywordRepo)
+	keywordService := service.NewKeywordServiceWithBilling(keywordRepo, appRepo, trackedKeywordRepo, userRepo)
 	keywordHandler := handler.NewKeywordHandler(keywordService)
 
 	rankingRepo := repository.NewRankingRepository(pool)
@@ -119,6 +119,10 @@ func main() {
 	searchAdsCredRepo := repository.NewSearchAdsCredentialsRepository(pool)
 	keywordPopularityService := service.NewKeywordPopularityService(searchAdsCredRepo, keywordRepo, appRepo)
 	keywordPopularityHandler := handler.NewKeywordPopularityHandler(keywordPopularityService)
+
+	// Billing
+	billingService := service.NewBillingService(userRepo)
+	billingHandler := handler.NewBillingHandler(billingService)
 
 	// Translation
 	translationService := service.NewTranslationService()
@@ -163,6 +167,9 @@ func main() {
 		// Public routes
 		r.Post("/auth/login", authHandler.Login)
 
+		// Stripe webhook — public but signature-verified
+		r.Post("/billing/webhook", billingHandler.Webhook)
+
 		// Public API - no authentication required
 		r.Route("/public", func(r chi.Router) {
 			r.Get("/popular-keywords", publicHandler.GetPopularKeywords)
@@ -177,6 +184,9 @@ func main() {
 
 			// Auth routes
 			r.Get("/auth/me", authHandler.Me)
+
+			// Billing
+			r.Post("/billing/checkout", billingHandler.CreateCheckout)
 
 			// Admin-only routes
 			r.With(authMiddleware.RequireAdmin).Post("/users", authHandler.CreateUser)

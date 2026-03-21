@@ -3,12 +3,26 @@ package model
 import "time"
 
 type User struct {
-	ID           string    `json:"id"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
-	Name         string    `json:"name"`
-	IsAdmin      bool      `json:"is_admin"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID                   string     `json:"id"`
+	Email                string     `json:"email"`
+	PasswordHash         string     `json:"-"`
+	Name                 string     `json:"name"`
+	IsAdmin              bool       `json:"is_admin"`
+	Plan                 string     `json:"plan"` // "free" or "pro"
+	StripeCustomerID     string     `json:"-"`
+	StripeSubscriptionID string     `json:"-"`
+	PlanExpiresAt        *time.Time `json:"plan_expires_at,omitempty"`
+	CreatedAt            time.Time  `json:"created_at"`
+}
+
+func (u *User) IsPro() bool {
+	if u.Plan != "pro" {
+		return false
+	}
+	if u.PlanExpiresAt != nil && u.PlanExpiresAt.Before(time.Now()) {
+		return false
+	}
+	return true
 }
 
 type CreateUserRequest struct {

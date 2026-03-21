@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/entaku0818/aso-tool/backend/internal/middleware"
 	"github.com/entaku0818/aso-tool/backend/internal/model"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -19,6 +21,7 @@ func NewKeywordHandler(service *service.KeywordService) *KeywordHandler {
 
 func (h *KeywordHandler) Create(w http.ResponseWriter, r *http.Request) {
 	appID := chi.URLParam(r, "appID")
+	userID := middleware.GetUserID(r.Context())
 
 	var req model.CreateKeywordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -27,8 +30,12 @@ func (h *KeywordHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	req.AppID = appID
 
-	keyword, err := h.service.Create(r.Context(), &req)
+	keyword, err := h.service.Create(r.Context(), userID, &req)
 	if err != nil {
+		if errors.Is(err, model.ErrPlanLimitExceeded) {
+			respondError(w, http.StatusPaymentRequired, err.Error())
+			return
+		}
 		handleServiceError(w, err)
 		return
 	}

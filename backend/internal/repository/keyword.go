@@ -115,6 +115,14 @@ func (r *KeywordRepository) UpdatePopularity(ctx context.Context, id string, sco
 	return nil
 }
 
+func (r *KeywordRepository) CountByApp(ctx context.Context, appID string) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM keywords WHERE app_id = $1`, appID,
+	).Scan(&count)
+	return count, err
+}
+
 func (r *KeywordRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM keywords WHERE id = $1`
 
