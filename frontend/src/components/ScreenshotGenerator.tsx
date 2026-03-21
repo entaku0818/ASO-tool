@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import JSZip from 'jszip'
 import { generateScreenshots } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
+import { UpgradeModal } from '@/components/UpgradeModal'
+import { useUpgradeModal } from '@/hooks/useUpgradeModal'
 
 const LANGUAGES = [
   { code: 'ja', label: '日本語' },
@@ -40,6 +44,9 @@ interface ScreenshotGeneratorProps {
 }
 
 export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps) {
+  const { user } = useAuth()
+  const isPro = user?.plan === 'pro'
+  const upgradeModal = useUpgradeModal()
   const [imageURL, setImageURL] = useState<string>('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [captions, setCaptions] = useState<Captions>({ ja: '', en: '', 'zh-Hans': '', ko: '', fr: '', de: '' })
@@ -233,6 +240,12 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
   }
 
   const downloadAll = async () => {
+    // Free plan: single language only
+    if (!isPro) {
+      await downloadSingle(selectedLang)
+      return
+    }
+
     setIsGenerating(true)
 
     if (appId && imageFile) {
@@ -252,13 +265,18 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
           captions: activeCaptions,
           imageAlign: imageAlign,
         })
+        // Pro: bundle all languages into a ZIP
+        const zip = new JSZip()
         for (const [lang, dataURL] of Object.entries(result.images)) {
-          const a = document.createElement('a')
-          a.download = `screenshot_${lang}_${device.id}.png`
-          a.href = dataURL
-          a.click()
-          await new Promise(r => setTimeout(r, 200))
+          const base64 = dataURL.split(',')[1]
+          zip.file(`screenshot_${lang}_${device.id}.png`, base64, { base64: true })
         }
+        const blob = await zip.generateAsync({ type: 'blob' })
+        const a = document.createElement('a')
+        a.download = `screenshots_${device.id}.zip`
+        a.href = URL.createObjectURL(blob)
+        a.click()
+        URL.revokeObjectURL(a.href)
         setIsGenerating(false)
         return
       } catch (err) {
@@ -266,17 +284,22 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       }
     }
 
+    // Canvas fallback (Pro): ZIP from canvas renders
     const canvas = canvasRef.current
     if (!canvas) { setIsGenerating(false); return }
+    const zip = new JSZip()
     for (const lang of LANGUAGES) {
       if (!captions[lang.code] && lang.code !== 'ja') continue
       await drawFrame(canvas, lang.code)
-      const a = document.createElement('a')
-      a.download = `screenshot_${lang.code}_${device.id}.png`
-      a.href = canvas.toDataURL('image/png')
-      a.click()
-      await new Promise(r => setTimeout(r, 300))
+      const base64 = canvas.toDataURL('image/png').split(',')[1]
+      zip.file(`screenshot_${lang.code}_${device.id}.png`, base64, { base64: true })
     }
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const a = document.createElement('a')
+    a.download = `screenshots_${device.id}.zip`
+    a.href = URL.createObjectURL(blob)
+    a.click()
+    URL.revokeObjectURL(a.href)
     setIsGenerating(false)
   }
 
@@ -524,7 +547,8 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       </div>
 
       {/* Download buttons */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
+        {/* Individual language DL — available to all plans */}
         {previewLangs.map(l => (
           <button
             key={l.code}
@@ -534,17 +558,35 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
             ↓ {l.label}
           </button>
         ))}
-        <button
-          onClick={downloadAll}
-          disabled={isGenerating}
-          className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 ml-auto"
-        >
-          {isGenerating ? '生成中...' : '全言語を一括ダウンロード'}
-        </button>
+
+        {/* ZIP bulk DL — Pro only */}
+        {isPro ? (
+          <button
+            onClick={downloadAll}
+            disabled={isGenerating}
+            className="ml-auto px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+          >
+            {isGenerating ? '生成中...' : '↓ ZIP一括DL'}
+          </button>
+        ) : (
+          <button
+            onClick={() => upgradeModal.open('多言語スクリーンショット一括生成')}
+            className="ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+          >
+            🔒 ZIP一括DL
+            <span className="text-blue-500 text-xs">Proで解除 →</span>
+          </button>
+        )}
       </div>
 
       {/* Hidden canvas for rendering */}
       <canvas ref={canvasRef} className="hidden" />
+
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={upgradeModal.close}
+        triggerFeature={upgradeModal.triggerFeature}
+      />
     </div>
   )
 }
