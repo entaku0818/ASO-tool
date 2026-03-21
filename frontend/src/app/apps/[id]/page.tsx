@@ -27,6 +27,9 @@ import { ReviewsSection } from '@/components/ReviewsSection'
 import { CompetitorSection } from '@/components/CompetitorSection'
 import { AnalyticsSection } from '@/components/AnalyticsSection'
 import { ScreenshotGenerator } from '@/components/ScreenshotGenerator'
+import { useAuth } from '@/contexts/AuthContext'
+import { UpgradeModal } from '@/components/UpgradeModal'
+import { useUpgradeModal } from '@/hooks/useUpgradeModal'
 
 function PopularityBar({ score, fetchedAt }: { score?: number; fetchedAt?: string }) {
   if (score === undefined || score === null) {
@@ -576,6 +579,9 @@ export default function AppDetailPage() {
   const { app, isLoading: appLoading, error: appError } = useApp(appId)
   const { keywords, isLoading: keywordsLoading, refetch } = useKeywords(appId)
   const { showToast } = useToast()
+  const { user } = useAuth()
+  const isPro = user?.plan === 'pro'
+  const upgradeModal = useUpgradeModal()
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordWithRanking | null>(null)
   const [newKeyword, setNewKeyword] = useState('')
   const [isAdding, setIsAdding] = useState(false)
@@ -590,8 +596,12 @@ export default function AppDetailPage() {
       await createKeyword(appId, text)
       if (!kw) setNewKeyword('')
       refetch()
-    } catch {
-      showToast('キーワードの追加に失敗しました', 'error')
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('402')) {
+        upgradeModal.open('キーワード追加')
+      } else {
+        showToast('キーワードの追加に失敗しました', 'error')
+      }
     } finally {
       setIsAdding(false)
     }
@@ -729,12 +739,22 @@ export default function AppDetailPage() {
             <p className="text-sm text-gray-500">クリックで順位推移を表示 / 翻訳ボタンで英語翻訳</p>
           </div>
           {keywords.length > 0 && (
-            <button
-              onClick={exportCSV}
-              className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1"
-            >
-              ↓ CSV
-            </button>
+            isPro ? (
+              <button
+                onClick={exportCSV}
+                className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1"
+              >
+                ↓ CSVエクスポート
+              </button>
+            ) : (
+              <button
+                onClick={() => upgradeModal.open('CSVエクスポート')}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+              >
+                🔒 CSVエクスポート
+                <span className="text-blue-500 text-xs">Proで解除 →</span>
+              </button>
+            )
           )}
         </div>
 
@@ -797,7 +817,28 @@ export default function AppDetailPage() {
       )}
 
       {app.platform === 'ios' && (
-        <CompetitorKeywordsSection appId={appId} onAddKeyword={(kw) => handleAddKeyword(kw)} />
+        isPro ? (
+          <CompetitorKeywordsSection appId={appId} onAddKeyword={(kw) => handleAddKeyword(kw)} />
+        ) : (
+          <div className="relative mt-6">
+            {/* Blurred preview of the section */}
+            <div className="pointer-events-none select-none opacity-40 blur-sm">
+              <CompetitorKeywordsSection appId={appId} onAddKeyword={() => {}} />
+            </div>
+            {/* Lock overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 rounded-lg">
+              <span className="text-3xl mb-2">🔒</span>
+              <p className="font-semibold text-gray-800 mb-1">競合キーワード逆引き</p>
+              <p className="text-sm text-gray-500 mb-4">Proプランで利用できます</p>
+              <button
+                onClick={() => upgradeModal.open('競合キーワード逆引き')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Proで解除 →
+              </button>
+            </div>
+          </div>
+        )
       )}
 
       <div className="mt-6">
@@ -868,6 +909,12 @@ export default function AppDetailPage() {
           </div>
         </div>
       )}
+
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={upgradeModal.close}
+        triggerFeature={upgradeModal.triggerFeature}
+      />
     </div>
   )
 }

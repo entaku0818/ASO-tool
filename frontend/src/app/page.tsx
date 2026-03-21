@@ -6,6 +6,9 @@ import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 import { useSelectedApp } from '@/hooks/useSelectedApp'
 import { useRankingHistory } from '@/hooks/useRankingHistory'
 import { App, Ranking, createApp, deleteApp, CreateAppRequest } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
+import { UpgradeModal } from '@/components/UpgradeModal'
+import { useUpgradeModal } from '@/hooks/useUpgradeModal'
 
 function AppSidebar({
   apps,
@@ -419,6 +422,9 @@ export default function Home() {
   const { selectedApp, setSelectedApp } = useSelectedApp(apps, appsLoading)
   const { keywords, isLoading: keywordsLoading } = useKeywords(selectedApp?.id || '')
   const { rankings, isLoading: rankingsLoading, fetchHistory, clearHistory } = useRankingHistory()
+  const { user } = useAuth()
+  const isPro = user?.plan === 'pro'
+  const upgradeModal = useUpgradeModal()
 
   const [modalKeyword, setModalKeyword] = useState<KeywordWithRanking | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -504,7 +510,14 @@ export default function Home() {
         apps={apps}
         selectedApp={selectedApp}
         onSelectApp={setSelectedApp}
-        onAddApp={() => setShowAddModal(true)}
+        onAddApp={() => {
+          // Pattern D: Free users can register only 1 app
+          if (!isPro && apps.length >= 1) {
+            upgradeModal.open('app_limit')
+            return
+          }
+          setShowAddModal(true)
+        }}
         onDeleteApp={handleDeleteApp}
       />
       <div className="flex-1 overflow-y-auto">
@@ -542,6 +555,13 @@ export default function Home() {
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddApp}
         isSubmitting={isAddingApp}
+      />
+
+      {/* Pattern D: triggered when Free user tries to register 2nd app */}
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={upgradeModal.close}
+        subhead="複数のアプリをまとめて管理する / Proプランならアプリを無制限に登録できます"
       />
     </div>
   )

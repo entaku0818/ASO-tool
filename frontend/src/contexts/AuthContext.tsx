@@ -10,6 +10,8 @@ export type User = {
   email: string
   name: string
   is_admin: boolean
+  plan: 'free' | 'pro'
+  plan_expires_at?: string
   created_at: string
 }
 
