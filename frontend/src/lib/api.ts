@@ -582,3 +582,11 @@ export async function generateScreenshots(
 
   return response.json()
 }
+
+
+export async function createCheckoutSession(planType: 'monthly' | 'yearly'): Promise<{ url: string }> {
+  return fetchApi<{ url: string }>('/api/billing/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ plan_type: planType }),
+  })
+}

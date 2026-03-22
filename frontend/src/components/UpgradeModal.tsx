@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { createCheckoutSession } from '@/lib/api'
 
 const PRO_FEATURES = [
   'キーワード 無制限',
@@ -20,12 +21,25 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: UpgradeModalProps) {
+  const [isLoading, setIsLoading] = useState(false)
+
   useEffect(() => {
     if (!isOpen) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
+
+  const handleUpgrade = async (planType: 'monthly' | 'yearly') => {
+    setIsLoading(true)
+    try {
+      const { url } = await createCheckoutSession(planType)
+      window.location.href = url
+    } catch (err) {
+      console.error('Failed to create checkout session:', err)
+      setIsLoading(false)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -69,8 +83,12 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
         </div>
 
         {/* CTA */}
-        <button className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors mb-3">
-          7日間無料で試す
+        <button
+          onClick={() => handleUpgrade('monthly')}
+          disabled={isLoading}
+          className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {isLoading ? '処理中...' : '7日間無料で試す'}
         </button>
         <button
           onClick={onClose}

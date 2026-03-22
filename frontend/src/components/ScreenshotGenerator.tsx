@@ -248,59 +248,61 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
 
     setIsGenerating(true)
 
-    if (appId && imageFile) {
-      try {
-        const activeCaptions = Object.fromEntries(
-          Object.entries(captions).filter(([, v]) => v.trim() !== '')
-        )
-        const effectiveBg = getEffectiveBg()
-        const result = await generateScreenshots(appId, {
-          image: imageFile,
-          device: device.id as 'iphone67' | 'iphone65' | 'ipad',
-          bgColor: bgColor,
-          bgGradientFrom: effectiveBg?.from,
-          bgGradientTo: effectiveBg?.to,
-          bgGradientDir: effectiveBg?.dir,
-          textColor: textColor,
-          captions: activeCaptions,
-          imageAlign: imageAlign,
-        })
-        // Pro: bundle all languages into a ZIP
-        const zip = new JSZip()
-        for (const [lang, dataURL] of Object.entries(result.images)) {
-          const base64 = dataURL.split(',')[1]
-          zip.file(`screenshot_${lang}_${device.id}.png`, base64, { base64: true })
+    try {
+      if (appId && imageFile) {
+        try {
+          const activeCaptions = Object.fromEntries(
+            Object.entries(captions).filter(([, v]) => v.trim() !== '')
+          )
+          const effectiveBg = getEffectiveBg()
+          const result = await generateScreenshots(appId, {
+            image: imageFile,
+            device: device.id as 'iphone67' | 'iphone65' | 'ipad',
+            bgColor: bgColor,
+            bgGradientFrom: effectiveBg?.from,
+            bgGradientTo: effectiveBg?.to,
+            bgGradientDir: effectiveBg?.dir,
+            textColor: textColor,
+            captions: activeCaptions,
+            imageAlign: imageAlign,
+          })
+          // Pro: bundle all languages into a ZIP
+          const zip = new JSZip()
+          for (const [lang, dataURL] of Object.entries(result.images)) {
+            const base64 = dataURL.split(',')[1]
+            zip.file(`screenshot_${lang}_${device.id}.png`, base64, { base64: true })
+          }
+          const blob = await zip.generateAsync({ type: 'blob' })
+          const a = document.createElement('a')
+          a.download = `screenshots_${device.id}.zip`
+          a.href = URL.createObjectURL(blob)
+          a.click()
+          URL.revokeObjectURL(a.href)
+          return
+        } catch (err) {
+          console.error('Server-side generation failed, falling back to canvas:', err)
         }
-        const blob = await zip.generateAsync({ type: 'blob' })
-        const a = document.createElement('a')
-        a.download = `screenshots_${device.id}.zip`
-        a.href = URL.createObjectURL(blob)
-        a.click()
-        URL.revokeObjectURL(a.href)
-        setIsGenerating(false)
-        return
-      } catch (err) {
-        console.error('Server-side generation failed, falling back to canvas:', err)
       }
-    }
 
-    // Canvas fallback (Pro): ZIP from canvas renders
-    const canvas = canvasRef.current
-    if (!canvas) { setIsGenerating(false); return }
-    const zip = new JSZip()
-    for (const lang of LANGUAGES) {
-      if (!captions[lang.code] && lang.code !== 'ja') continue
-      await drawFrame(canvas, lang.code)
-      const base64 = canvas.toDataURL('image/png').split(',')[1]
-      zip.file(`screenshot_${lang.code}_${device.id}.png`, base64, { base64: true })
+      // Canvas fallback (Pro): ZIP from canvas renders
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const zip = new JSZip()
+      for (const lang of LANGUAGES) {
+        if (!captions[lang.code] && lang.code !== 'ja') continue
+        await drawFrame(canvas, lang.code)
+        const base64 = canvas.toDataURL('image/png').split(',')[1]
+        zip.file(`screenshot_${lang.code}_${device.id}.png`, base64, { base64: true })
+      }
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const a = document.createElement('a')
+      a.download = `screenshots_${device.id}.zip`
+      a.href = URL.createObjectURL(blob)
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } finally {
+      setIsGenerating(false)
     }
-    const blob = await zip.generateAsync({ type: 'blob' })
-    const a = document.createElement('a')
-    a.download = `screenshots_${device.id}.zip`
-    a.href = URL.createObjectURL(blob)
-    a.click()
-    URL.revokeObjectURL(a.href)
-    setIsGenerating(false)
   }
 
   const previewLangs = LANGUAGES.filter(l => captions[l.code] || l.code === selectedLang)
