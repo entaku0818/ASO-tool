@@ -12,6 +12,7 @@ export type User = {
   is_admin: boolean
   plan: 'free' | 'pro'
   plan_expires_at?: string
+  is_pro: boolean
   created_at: string
 }
 

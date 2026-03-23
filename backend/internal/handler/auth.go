@@ -30,7 +30,19 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, resp)
+	respondJSON(w, http.StatusOK, struct {
+		Token string `json:"token"`
+		User  struct {
+			*model.User
+			IsPro bool `json:"is_pro"`
+		} `json:"user"`
+	}{
+		Token: resp.Token,
+		User: struct {
+			*model.User
+			IsPro bool `json:"is_pro"`
+		}{User: resp.User, IsPro: resp.User.IsPro()},
+	})
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +58,10 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, user)
+	respondJSON(w, http.StatusOK, struct {
+		*model.User
+		IsPro bool `json:"is_pro"`
+	}{User: user, IsPro: user.IsPro()})
 }
 
 func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {

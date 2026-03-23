@@ -45,7 +45,7 @@ interface ScreenshotGeneratorProps {
 
 export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps) {
   const { user } = useAuth()
-  const isPro = user?.plan === 'pro'
+  const isPro = user?.is_pro ?? false
   const upgradeModal = useUpgradeModal()
   const [imageURL, setImageURL] = useState<string>('')
   const [imageFile, setImageFile] = useState<File | null>(null)

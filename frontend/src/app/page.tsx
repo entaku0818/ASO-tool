@@ -423,7 +423,7 @@ export default function Home() {
   const { keywords, isLoading: keywordsLoading } = useKeywords(selectedApp?.id || '')
   const { rankings, isLoading: rankingsLoading, fetchHistory, clearHistory } = useRankingHistory()
   const { user } = useAuth()
-  const isPro = user?.plan === 'pro'
+  const isPro = user?.is_pro ?? false
   const upgradeModal = useUpgradeModal()
 
   const [modalKeyword, setModalKeyword] = useState<KeywordWithRanking | null>(null)

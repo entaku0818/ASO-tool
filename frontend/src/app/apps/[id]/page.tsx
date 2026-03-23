@@ -580,7 +580,7 @@ export default function AppDetailPage() {
   const { keywords, isLoading: keywordsLoading, refetch } = useKeywords(appId)
   const { showToast } = useToast()
   const { user } = useAuth()
-  const isPro = user?.plan === 'pro'
+  const isPro = user?.is_pro ?? false
   const upgradeModal = useUpgradeModal()
   const [selectedKeyword, setSelectedKeyword] = useState<KeywordWithRanking | null>(null)
   const [newKeyword, setNewKeyword] = useState('')
