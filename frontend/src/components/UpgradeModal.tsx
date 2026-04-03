@@ -23,21 +23,31 @@ interface UpgradeModalProps {
 export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: UpgradeModalProps) {
   const [planType, setPlanType] = useState<'monthly' | 'yearly'>('yearly')
   const [isLoading, setIsLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) {
+      setCheckoutError(null)
+      return
+    }
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
 
   const handleUpgrade = async () => {
+    setCheckoutError(null)
     setIsLoading(true)
     try {
       const { url } = await createCheckoutSession(planType)
       window.location.href = url
     } catch (err) {
-      console.error('Failed to create checkout session:', err)
+      const msg = err instanceof Error && err.message.includes('401')
+        ? 'セッションが切れました。再ログインしてからお試しください'
+        : err instanceof Error && err.message.includes('Failed to fetch')
+        ? 'インターネット接続を確認してから再度お試しください'
+        : '決済ページへの接続に失敗しました。しばらくしてから再度お試しください'
+      setCheckoutError(msg)
       setIsLoading(false)
     }
   }
@@ -148,13 +158,20 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
             </label>
           </div>
 
+          {/* Checkout error banner */}
+          {checkoutError && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 text-sm">
+              <p className="text-red-700"><span className="font-bold">✗</span> {checkoutError}</p>
+            </div>
+          )}
+
           {/* CTA */}
           <button
             onClick={handleUpgrade}
             disabled={isLoading}
             className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isLoading ? '処理中...' : '7日間 無料トライアルを開始'}
+            {isLoading ? '処理中...' : checkoutError ? 'もう一度試す' : '7日間 無料トライアルを開始'}
           </button>
           <button
             onClick={onClose}

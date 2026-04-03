@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApps } from '@/hooks/useApps'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 import { useSelectedApp } from '@/hooks/useSelectedApp'
@@ -9,6 +9,7 @@ import { App, Ranking, createApp, deleteApp, CreateAppRequest } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { UpgradeModal } from '@/components/UpgradeModal'
 import { useUpgradeModal } from '@/hooks/useUpgradeModal'
+import { OnboardingFlow, shouldShowOnboarding } from '@/components/OnboardingFlow'
 
 function AppSidebar({
   apps,
@@ -429,6 +430,13 @@ export default function Home() {
   const [modalKeyword, setModalKeyword] = useState<KeywordWithRanking | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [isAddingApp, setIsAddingApp] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    if (!appsLoading && user) {
+      setShowOnboarding(shouldShowOnboarding(user.created_at, apps.length))
+    }
+  }, [appsLoading, user, apps.length])
 
   const handleShowHistory = (keyword: KeywordWithRanking) => {
     setModalKeyword(keyword)
@@ -568,6 +576,18 @@ export default function Home() {
         onClose={upgradeModal.close}
         subhead="複数のアプリをまとめて管理する / Proプランならアプリを無制限に登録できます"
       />
+
+      {showOnboarding && user && (
+        <OnboardingFlow
+          userCreatedAt={user.created_at}
+          appsCount={apps.length}
+          onComplete={(newApp) => {
+            setShowOnboarding(false)
+            refetch()
+          }}
+          onDismiss={() => setShowOnboarding(false)}
+        />
+      )}
     </div>
   )
 }

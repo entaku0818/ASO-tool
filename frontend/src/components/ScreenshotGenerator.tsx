@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import JSZip from 'jszip'
-import { generateScreenshots } from '@/lib/api'
+import { generateScreenshots, generateCaptions } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { UpgradeModal } from '@/components/UpgradeModal'
 import { useUpgradeModal } from '@/hooks/useUpgradeModal'
@@ -37,6 +37,7 @@ type Captions = Record<string, string>
 type BgType = 'solid' | 'gradient' | 'preset'
 type GradDir = 'tb' | 'lr' | 'tlbr'
 type ImageAlign = 'center' | 'bottom'
+type AiState = 'idle' | 'loading' | 'candidates' | 'applied'
 
 interface ScreenshotGeneratorProps {
   appName?: string
@@ -63,6 +64,15 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
   const [isGenerating, setIsGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // AI caption generation state
+  const [aiState, setAiState] = useState<AiState>('idle')
+  const [aiCandidates, setAiCandidates] = useState<string[]>([])
+  const [aiSelected, setAiSelected] = useState<string>('')
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiAppliedLang, setAiAppliedLang] = useState<string>('')
+  // tracks languages for which AI generation has been used this session (Free gate)
+  const [aiUsedLangs, setAiUsedLangs] = useState<Set<string>>(new Set())
 
   // Apply template style from URL params or sessionStorage on mount
   useEffect(() => {
@@ -112,6 +122,63 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleAiGenerate = async () => {
+    setAiError(null)
+    if (!imageFile) {
+      setAiError('⚠️ 先にスクリーンショット画像をアップロードしてください')
+      setTimeout(() => setAiError(null), 3000)
+      return
+    }
+    if (!appId) {
+      setAiError('⚠️ アプリが選択されていません')
+      return
+    }
+    // Free gate: allow only the first language used; block subsequent languages
+    if (!isPro && aiUsedLangs.size >= 1 && !aiUsedLangs.has(selectedLang)) {
+      upgradeModal.open('AI一括キャプション生成')
+      return
+    }
+
+    setAiState('loading')
+    const keywords = Object.values(captions).filter(Boolean).concat(
+      selectedLang ? [LANGUAGES.find(l => l.code === selectedLang)?.label ?? ''] : []
+    ).filter(Boolean)
+    const kws = keywords.length > 0 ? keywords : ['app']
+
+    try {
+      const { captions: candidates } = await generateCaptions(appId, kws, selectedLang)
+      if (candidates.length === 0) {
+        setAiError('候補が生成されませんでした。キャプションを手動で入力してください')
+        setAiState('idle')
+        return
+      }
+      setAiCandidates(candidates)
+      setAiSelected(candidates[0])
+      setAiState('candidates')
+      setAiUsedLangs(prev => new Set(prev).add(selectedLang))
+    } catch (e) {
+      const msg = e instanceof Error && e.message.includes('timeout')
+        ? '⏱ タイムアウトしました。もう一度お試しください'
+        : '✗ 生成に失敗しました。しばらくしてから再試行してください'
+      setAiError(msg)
+      setAiState('idle')
+      setTimeout(() => setAiError(null), 5000)
+    }
+  }
+
+  const handleAiApply = () => {
+    setCaptions(prev => ({ ...prev, [selectedLang]: aiSelected }))
+    setAiAppliedLang(selectedLang)
+    setAiState('applied')
+    setAiCandidates([])
+  }
+
+  const handleAiCancel = () => {
+    setAiState('idle')
+    setAiCandidates([])
+    setAiError(null)
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -132,9 +199,9 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
   }, [bgType, bgGradFrom, bgGradTo, bgGradDir, bgPresetId])
 
   const drawFrame = useCallback((canvas: HTMLCanvasElement, lang: string): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const ctx = canvas.getContext('2d')
-      if (!ctx) return resolve()
+      if (!ctx) return reject(new Error('Canvas context unavailable'))
 
       const PADDING = 40
       // bottom-align uses a taller caption area so the device clearly "sits at the bottom"
@@ -538,7 +605,10 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
           {LANGUAGES.map(l => (
             <button
               key={l.code}
-              onClick={() => setSelectedLang(l.code)}
+              onClick={() => {
+                setSelectedLang(l.code)
+                if (aiState === 'applied') setAiState('idle')
+              }}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 selectedLang === l.code
                   ? 'bg-blue-600 text-white'
@@ -549,13 +619,95 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
             </button>
           ))}
         </div>
-        <textarea
-          value={captions[selectedLang] || ''}
-          onChange={(e) => setCaptions(prev => ({ ...prev, [selectedLang]: e.target.value }))}
-          placeholder={`${LANGUAGES.find(l => l.code === selectedLang)?.label} のキャプションを入力`}
-          rows={2}
-          className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+
+        {/* Skeleton shimmer (loading) */}
+        {aiState === 'loading' ? (
+          <div className="w-full h-16 rounded-lg bg-gray-100 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-[shimmer_1.5s_infinite] bg-[length:200%_100%]" />
+          </div>
+        ) : (
+          <textarea
+            value={captions[selectedLang] || ''}
+            onChange={(e) => setCaptions(prev => ({ ...prev, [selectedLang]: e.target.value }))}
+            placeholder={`${LANGUAGES.find(l => l.code === selectedLang)?.label} のキャプションを入力`}
+            rows={2}
+            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        )}
+
+        {/* Inline error banner */}
+        {aiError && (
+          <p className="mt-1.5 text-sm bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-amber-700">
+            {aiError}
+          </p>
+        )}
+
+        {/* Candidate selection */}
+        {aiState === 'candidates' && aiCandidates.length > 0 && (
+          <div className="mt-3 space-y-2">
+            <p className="text-sm font-medium text-purple-600">✨ AI候補を選んでください</p>
+            {aiCandidates.map((c) => (
+              <label
+                key={c}
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  aiSelected === c
+                    ? 'border-purple-400 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="ai-caption"
+                  value={c}
+                  checked={aiSelected === c}
+                  onChange={() => setAiSelected(c)}
+                  className="mt-0.5 accent-purple-600 flex-shrink-0"
+                />
+                <span className="text-sm text-gray-800">{c}</span>
+              </label>
+            ))}
+            <div className="flex justify-between pt-1">
+              <button
+                onClick={handleAiCancel}
+                className="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleAiApply}
+                disabled={!aiSelected}
+                className="px-4 py-1.5 text-sm font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              >
+                この候補を使う →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* AI generate / re-generate button row */}
+        <div className="flex items-center justify-between mt-2 min-h-[28px]">
+          {aiState === 'applied' && aiAppliedLang === selectedLang && (
+            <span className="text-xs text-green-600">✅ 適用しました</span>
+          )}
+          <div className="ml-auto">
+            {aiState === 'loading' ? (
+              <button disabled className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-50 text-purple-700 border border-purple-200 rounded-lg opacity-60 cursor-not-allowed">
+                <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                生成中...
+              </button>
+            ) : (
+              <button
+                onClick={handleAiGenerate}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+              >
+                ✨ {aiState === 'applied' ? '再生成' : 'AIで生成'}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Preview */}

@@ -616,3 +616,14 @@ export async function getTemplates(category?: string): Promise<Template[]> {
   const qs = category ? `?category=${encodeURIComponent(category)}` : ''
   return fetchApi<Template[]>(`/api/templates${qs}`)
 }
+
+export async function generateCaptions(
+  appId: string,
+  keywords: string[],
+  language: string
+): Promise<{ captions: string[] }> {
+  return fetchApi<{ captions: string[] }>(`/api/apps/${appId}/captions/generate`, {
+    method: 'POST',
+    body: JSON.stringify({ keywords, language }),
+  })
+}

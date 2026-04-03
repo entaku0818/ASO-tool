@@ -129,6 +129,10 @@ func main() {
 	templateService := service.NewTemplateService(templateRepo)
 	templateHandler := handler.NewTemplateHandler(templateService)
 
+	// AI Caption
+	captionService := service.NewCaptionService()
+	captionHandler := handler.NewCaptionHandler(captionService, userRepo)
+
 	// Translation
 	translationService := service.NewTranslationService()
 	translationHandler := handler.NewTranslationHandler(translationService)
@@ -233,6 +237,8 @@ func main() {
 					r.Delete("/{competitorID}", competitorHandler.Delete)
 					r.Post("/update-rankings", competitorHandler.UpdateRankings)
 				})
+
+				r.Post("/{appID}/captions/generate", captionHandler.Generate)
 
 				r.Route("/{appID}/screenshots", func(r chi.Router) {
 					r.Get("/", screenshotHandler.List)
