@@ -131,6 +131,8 @@ func (s *BillingService) HandleWebhook(ctx context.Context, body io.Reader, sign
 	switch event.Type {
 	case "checkout.session.completed":
 		return s.handleCheckoutCompleted(ctx, event)
+	case "customer.subscription.updated":
+		return s.handleSubscriptionUpdated(ctx, event)
 	case "customer.subscription.deleted":
 		return s.handleSubscriptionDeleted(ctx, event)
 	default:
@@ -161,6 +163,30 @@ func (s *BillingService) handleCheckoutCompleted(ctx context.Context, event stri
 	}
 
 	log.Printf("info: user %s upgraded to pro (subscription: %s)", user.ID, subscriptionID)
+	return nil
+}
+
+func (s *BillingService) handleSubscriptionUpdated(ctx context.Context, event stripe.Event) error {
+	var sub stripe.Subscription
+	if err := json.Unmarshal(event.Data.Raw, &sub); err != nil {
+		return fmt.Errorf("parse subscription: %w", err)
+	}
+
+	user, err := s.userRepo.GetByStripeCustomerID(ctx, sub.Customer.ID)
+	if err != nil {
+		return fmt.Errorf("get user by stripe customer %s: %w", sub.Customer.ID, err)
+	}
+
+	plan := "free"
+	if sub.Status == stripe.SubscriptionStatusActive || sub.Status == stripe.SubscriptionStatusTrialing {
+		plan = "pro"
+	}
+
+	if err := s.userRepo.UpdatePlan(ctx, user.ID, plan, sub.Customer.ID, sub.ID, nil); err != nil {
+		return fmt.Errorf("update plan on subscription update: %w", err)
+	}
+
+	log.Printf("info: user %s plan updated to %s (subscription: %s, status: %s)", user.ID, plan, sub.ID, sub.Status)
 	return nil
 }
 

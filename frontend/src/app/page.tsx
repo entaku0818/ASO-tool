@@ -449,7 +449,12 @@ export default function Home() {
       setShowAddModal(false)
       refetch()
     } catch (e) {
-      alert('アプリの追加に失敗しました')
+      if (e instanceof Error && e.message.includes('402')) {
+        setShowAddModal(false)
+        upgradeModal.open('app_limit')
+      } else {
+        alert('アプリの追加に失敗しました')
+      }
     } finally {
       setIsAddingApp(false)
     }

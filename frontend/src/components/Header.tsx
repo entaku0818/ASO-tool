@@ -100,6 +100,9 @@ export function Header() {
           <Link href="/keywords" className="text-gray-600 hover:text-gray-900">
             Keywords
           </Link>
+          <Link href="/templates" className={`hover:text-gray-900 ${pathname === '/templates' ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+            テンプレート
+          </Link>
           <Link href="/popular-keywords" className="text-gray-600 hover:text-gray-900">
             人気キーワード
           </Link>

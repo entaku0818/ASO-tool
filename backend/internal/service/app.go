@@ -27,17 +27,11 @@ func (s *AppService) Create(ctx context.Context, userID string, req *model.Creat
 		return nil, err
 	}
 
-	// Enforce free plan app limit
+	// Enforce free plan app limit atomically to prevent TOCTOU races.
 	if s.userRepo != nil && userID != "" {
 		user, err := s.userRepo.GetByID(ctx, userID)
 		if err == nil && !user.IsPro() {
-			count, err := s.repo.CountByUser(ctx, userID)
-			if err != nil {
-				return nil, err
-			}
-			if count >= freePlanAppLimit {
-				return nil, model.ErrAppLimitExceeded
-			}
+			return s.repo.CreateWithLimit(ctx, userID, req, freePlanAppLimit)
 		}
 	}
 

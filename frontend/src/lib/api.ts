@@ -590,3 +590,29 @@ export async function createCheckoutSession(planType: 'monthly' | 'yearly'): Pro
     body: JSON.stringify({ plan_type: planType }),
   })
 }
+
+export type TemplateStyle = {
+  bg_color?: string
+  bg_gradient_from?: string
+  bg_gradient_to?: string
+  bg_gradient_dir?: string
+  text_color?: string
+  image_align?: string
+}
+
+export type Template = {
+  id: string
+  name: string
+  category: string
+  description: string
+  device: string
+  style: TemplateStyle
+  is_pro: boolean
+  sort_order: number
+  created_at: string
+}
+
+export async function getTemplates(category?: string): Promise<Template[]> {
+  const qs = category ? `?category=${encodeURIComponent(category)}` : ''
+  return fetchApi<Template[]>(`/api/templates${qs}`)
+}

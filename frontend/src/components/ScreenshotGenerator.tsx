@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import JSZip from 'jszip'
 import { generateScreenshots } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -63,6 +63,54 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
   const [isGenerating, setIsGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // Apply template style from URL params or sessionStorage on mount
+  useEffect(() => {
+    // Priority 1: URL search params (?bg_type=gradient&...)
+    const params = new URLSearchParams(window.location.search)
+    const bgTypeParam = params.get('bg_type') as BgType | null
+
+    // Priority 2: sessionStorage pending_template (set by template library)
+    let sessionStyle: Record<string, string> | null = null
+    try {
+      const raw = sessionStorage.getItem('pending_template')
+      if (raw) {
+        sessionStyle = JSON.parse(raw)
+        sessionStorage.removeItem('pending_template')
+      }
+    } catch {
+      // ignore malformed sessionStorage
+    }
+
+    const get = (key: string) => params.get(key) ?? sessionStyle?.[key] ?? null
+
+    const bgType = bgTypeParam ?? (sessionStyle?.bg_gradient_from ? 'gradient' : sessionStyle?.bg_color ? 'solid' : null)
+    if (bgType) setBgType(bgType as BgType)
+
+    const bgColor = get('bg_color')
+    if (bgColor) setBgColor(bgColor)
+
+    const bgFrom = get('bg_gradient_from')
+    if (bgFrom) setBgGradFrom(bgFrom)
+
+    const bgTo = get('bg_gradient_to')
+    if (bgTo) setBgGradTo(bgTo)
+
+    const bgDir = get('bg_gradient_dir') as GradDir | null
+    if (bgDir) setBgGradDir(bgDir)
+
+    const textColor = get('text_color')
+    if (textColor) setTextColor(textColor)
+
+    const imageAlign = get('image_align') as ImageAlign | null
+    if (imageAlign) setImageAlign(imageAlign)
+
+    const deviceParam = get('device')
+    if (deviceParam) {
+      const preset = DEVICE_PRESETS.find(d => d.id === deviceParam)
+      if (preset) setDevice(preset)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

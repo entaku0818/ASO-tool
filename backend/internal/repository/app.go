@@ -53,6 +53,59 @@ func (r *AppRepository) CountByUser(ctx context.Context, userID string) (int, er
 	return count, err
 }
 
+// CreateWithLimit atomically checks the per-user app count and inserts a new app
+// within a single transaction to prevent TOCTOU races.
+// It locks the user row (SELECT … FOR UPDATE) so concurrent requests serialize.
+func (r *AppRepository) CreateWithLimit(ctx context.Context, userID string, req *model.CreateAppRequest, limit int) (*model.App, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	// Lock the user row to serialize concurrent app-creation requests for the same user.
+	var lockedID string
+	if err := tx.QueryRow(ctx, `SELECT id FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&lockedID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, model.ErrNotFound
+		}
+		return nil, err
+	}
+
+	var count int
+	if err := tx.QueryRow(ctx, `SELECT COUNT(*) FROM apps WHERE user_id = $1`, userID).Scan(&count); err != nil {
+		return nil, err
+	}
+	if count >= limit {
+		return nil, model.ErrAppLimitExceeded
+	}
+
+	app := &model.App{
+		ID:       uuid.New().String(),
+		Name:     req.Name,
+		BundleID: req.BundleID,
+		Platform: req.Platform,
+		StoreURL: req.StoreURL,
+		UserID:   userID,
+	}
+
+	query := `
+		INSERT INTO apps (id, name, bundle_id, platform, store_url, user_id, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+		RETURNING created_at, updated_at
+	`
+	if err := tx.QueryRow(ctx, query,
+		app.ID, app.Name, app.BundleID, app.Platform, app.StoreURL, app.UserID,
+	).Scan(&app.CreatedAt, &app.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return app, nil
+}
+
 func (r *AppRepository) Get(ctx context.Context, userID, id string) (*model.App, error) {
 	query := `
 		SELECT id, name, bundle_id, platform, store_url, user_id, created_at, updated_at

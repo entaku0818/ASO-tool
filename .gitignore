@@ -27,3 +27,6 @@ vendor/
 dist/
 build/
 out/
+backend/tmp/
+test-*.png
+page_*.png

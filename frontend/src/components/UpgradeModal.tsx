@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import { createCheckoutSession } from '@/lib/api'
 
-const PRO_FEATURES = [
-  'キーワード 無制限',
-  '競合キーワード逆引き — 競合アプリの上位キーワードをリスト化',
-  'CSVエクスポート',
-  '多言語スクリーンショット 一括生成（6言語）',
-  '背景プリセット 全種類',
+const COMPARISON_ROWS = [
+  { label: 'アプリ登録',         free: '1件まで',   pro: '無制限' },
+  { label: 'キーワード',         free: '10件まで',  pro: '無制限' },
+  { label: '競合キーワード逆引き', free: false,       pro: true },
+  { label: 'CSVエクスポート',     free: false,       pro: true },
+  { label: '多言語スクショ一括生成', free: false,     pro: true },
 ]
 
 interface UpgradeModalProps {
@@ -16,11 +16,12 @@ interface UpgradeModalProps {
   onClose: () => void
   /** Feature name that triggered the modal — generates default subhead */
   triggerFeature?: string
-  /** Overrides the auto-generated subhead (e.g. pattern D copy) */
+  /** Overrides the auto-generated subhead */
   subhead?: string
 }
 
 export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: UpgradeModalProps) {
+  const [planType, setPlanType] = useState<'monthly' | 'yearly'>('yearly')
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
     return () => document.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
 
-  const handleUpgrade = async (planType: 'monthly' | 'yearly') => {
+  const handleUpgrade = async () => {
     setIsLoading(true)
     try {
       const { url } = await createCheckoutSession(planType)
@@ -43,7 +44,7 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
 
   if (!isOpen) return null
 
-  const resolvedSubhead = subhead ?? (triggerFeature ? `「${triggerFeature}」は Pro プランの機能です` : undefined)
+  const resolvedSubhead = subhead ?? (triggerFeature ? `「${triggerFeature}」を使って差をつけよう` : undefined)
 
   return (
     <div
@@ -51,51 +52,117 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4"
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-4xl mb-3">🚀</div>
-          <h2 className="text-xl font-bold text-gray-900">Pro にアップグレード</h2>
-          {resolvedSubhead && (
-            <p className="text-sm text-gray-500 mt-1">{resolvedSubhead}</p>
-          )}
+        {/* Gradient bar */}
+        <div className="h-2 bg-gradient-to-r from-blue-600 to-purple-600" />
+
+        <div className="p-8">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="text-2xl mb-2">✦</div>
+            <h2 className="text-xl font-bold text-gray-900">Pro にアップグレード</h2>
+            {resolvedSubhead && (
+              <p className="text-sm text-gray-500 mt-1">{resolvedSubhead}</p>
+            )}
+          </div>
+
+          {/* FREE / PRO comparison */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {/* Free column */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">FREE（現在）</p>
+              <ul className="space-y-2">
+                {COMPARISON_ROWS.map(row => (
+                  <li key={row.label} className="flex items-center gap-2 text-xs text-gray-600">
+                    {typeof row.free === 'string' ? (
+                      <>
+                        <span className="text-gray-400 flex-shrink-0">—</span>
+                        <span>{row.label}: {row.free}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-red-400 flex-shrink-0">✗</span>
+                        <span>{row.label}</span>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Pro column */}
+            <div className="bg-blue-50 ring-1 ring-blue-200 rounded-xl p-4">
+              <p className="text-xs font-semibold text-blue-700 mb-3 uppercase tracking-wide">✦ PRO</p>
+              <ul className="space-y-2">
+                {COMPARISON_ROWS.map(row => (
+                  <li key={row.label} className="flex items-center gap-2 text-xs text-gray-700">
+                    {typeof row.pro === 'string' ? (
+                      <>
+                        <span className="text-green-500 flex-shrink-0">✓</span>
+                        <span>{row.label}: {row.pro}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-green-500 flex-shrink-0">✓</span>
+                        <span>{row.label}</span>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Plan selector */}
+          <div className="border border-gray-200 rounded-xl p-4 mb-5 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="planType"
+                value="monthly"
+                checked={planType === 'monthly'}
+                onChange={() => setPlanType('monthly')}
+                className="accent-blue-600"
+              />
+              <span className="text-sm text-gray-700">
+                月払い <span className="font-semibold">¥1,980</span>
+                <span className="text-gray-400"> / 月</span>
+              </span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="planType"
+                value="yearly"
+                checked={planType === 'yearly'}
+                onChange={() => setPlanType('yearly')}
+                className="accent-blue-600"
+              />
+              <span className="text-sm text-gray-700 flex items-center gap-2">
+                年払い <span className="font-semibold">¥1,650</span>
+                <span className="text-gray-400"> / 月</span>
+                <span className="bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded-full">人気 17%OFF</span>
+              </span>
+            </label>
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={handleUpgrade}
+            disabled={isLoading}
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isLoading ? '処理中...' : '7日間 無料トライアルを開始'}
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            今は無料のまま使う（いつでも変更可）
+          </button>
         </div>
-
-        {/* Feature list */}
-        <ul className="space-y-2 mb-6">
-          {PRO_FEATURES.map(f => (
-            <li key={f} className="flex items-center gap-2 text-sm text-gray-700">
-              <span className="text-green-500 font-bold flex-shrink-0">✓</span>
-              {f}
-            </li>
-          ))}
-        </ul>
-
-        {/* Pricing */}
-        <div className="text-center mb-6 p-4 bg-blue-50 rounded-xl">
-          <p className="text-2xl font-bold text-gray-900">
-            ¥1,980<span className="text-sm font-normal text-gray-500">/月</span>
-          </p>
-          <p className="text-xs text-gray-500 mt-1">¥19,800/年（17% OFF・2ヶ月分お得）</p>
-          <p className="text-xs text-gray-400 mt-1">いつでもキャンセル可能。</p>
-        </div>
-
-        {/* CTA */}
-        <button
-          onClick={() => handleUpgrade('monthly')}
-          disabled={isLoading}
-          className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isLoading ? '処理中...' : '7日間無料で試す'}
-        </button>
-        <button
-          onClick={onClose}
-          className="w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          今は無料のまま使う
-        </button>
       </div>
     </div>
   )

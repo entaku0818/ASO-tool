@@ -124,6 +124,11 @@ func main() {
 	billingService := service.NewBillingService(userRepo)
 	billingHandler := handler.NewBillingHandler(billingService)
 
+	// Templates
+	templateRepo := repository.NewTemplateRepository(pool)
+	templateService := service.NewTemplateService(templateRepo)
+	templateHandler := handler.NewTemplateHandler(templateService)
+
 	// Translation
 	translationService := service.NewTranslationService()
 	translationHandler := handler.NewTranslationHandler(translationService)
@@ -269,6 +274,9 @@ func main() {
 
 				r.Get("/{appID}/keywords/{keywordID}/comparison", competitorHandler.GetComparison)
 			})
+
+			// Templates
+			r.Get("/templates", templateHandler.List)
 
 			// Translation
 			r.Post("/keywords/translate", translationHandler.Translate)
