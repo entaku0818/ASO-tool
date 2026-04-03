@@ -128,7 +128,11 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
       setCreatedApp(app)
       setStep(3)
     } catch (e) {
-      setAppError('アプリの登録に失敗しました。入力内容を確認してください。')
+      const is402 = e instanceof Error && e.message.includes('402')
+      setAppError(is402
+        ? 'Freeプランでは1アプリまで登録できます。アップグレードをご検討ください。'
+        : 'アプリの登録に失敗しました。入力内容を確認してください。'
+      )
     } finally {
       setIsCreatingApp(false)
     }

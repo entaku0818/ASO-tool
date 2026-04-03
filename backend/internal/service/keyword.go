@@ -42,23 +42,23 @@ func (s *KeywordService) Create(ctx context.Context, userID string, req *model.C
 		return nil, err
 	}
 
-	// Enforce free plan keyword limit
+	// Enforce free plan keyword limit (atomic check-and-insert to prevent TOCTOU)
+	var keyword *model.Keyword
 	if s.userRepo != nil && userID != "" {
 		user, err := s.userRepo.GetByID(ctx, userID)
 		if err == nil && !user.IsPro() {
-			count, err := s.repo.CountByApp(ctx, req.AppID)
+			keyword, err = s.repo.CountAndCreateWithLock(ctx, req, freePlanKeywordLimit)
 			if err != nil {
 				return nil, err
 			}
-			if count >= freePlanKeywordLimit {
-				return nil, model.ErrPlanLimitExceeded
-			}
 		}
 	}
-
-	keyword, err := s.repo.Create(ctx, req)
-	if err != nil {
-		return nil, err
+	if keyword == nil {
+		var err error
+		keyword, err = s.repo.Create(ctx, req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Auto-create tracked keyword if tracking repo is available

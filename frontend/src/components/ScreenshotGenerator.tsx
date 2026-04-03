@@ -607,7 +607,10 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
               key={l.code}
               onClick={() => {
                 setSelectedLang(l.code)
-                if (aiState === 'applied') setAiState('idle')
+                if (aiState === 'applied' || aiState === 'candidates') {
+                  setAiState('idle')
+                  setAiCandidates([])
+                }
               }}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 selectedLang === l.code

@@ -27,6 +27,7 @@ import { ReviewsSection } from '@/components/ReviewsSection'
 import { CompetitorSection } from '@/components/CompetitorSection'
 import { AnalyticsSection } from '@/components/AnalyticsSection'
 import { ScreenshotGenerator } from '@/components/ScreenshotGenerator'
+import { RankShareCard } from '@/components/RankShareCard'
 import { useAuth } from '@/contexts/AuthContext'
 import { UpgradeModal } from '@/components/UpgradeModal'
 import { useUpgradeModal } from '@/hooks/useUpgradeModal'
@@ -129,9 +130,12 @@ function KeywordRow({
   )
 }
 
+const SHARE_THRESHOLD = 3
+
 function RisingKeywordsSection({ appId }: { appId: string }) {
   const [keywords, setKeywords] = useState<RisingKeyword[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [shareKeyword, setShareKeyword] = useState<RisingKeyword | null>(null)
 
   useEffect(() => {
     getRisingKeywords(appId)
@@ -143,38 +147,55 @@ function RisingKeywordsSection({ appId }: { appId: string }) {
   if (isLoading || keywords.length === 0) return null
 
   return (
-    <div className="bg-white rounded-lg shadow mt-6">
-      <div className="p-4 border-b">
-        <h3 className="text-lg font-semibold">急上昇キーワード</h3>
-        <p className="text-sm text-gray-500">過去7日間で順位が上昇したキーワード</p>
-      </div>
-      <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
-            <th className="py-3 px-4 text-left font-medium text-gray-600">国</th>
-            <th className="py-3 px-4 text-right font-medium text-gray-600">現在順位</th>
-            <th className="py-3 px-4 text-right font-medium text-gray-600">以前の順位</th>
-            <th className="py-3 px-4 text-right font-medium text-gray-600">上昇幅</th>
-          </tr>
-        </thead>
-        <tbody>
-          {keywords.map((kw) => (
-            <tr key={kw.keyword_id} className="border-b hover:bg-gray-50">
-              <td className="py-3 px-4 font-medium text-gray-900">{kw.keyword}</td>
-              <td className="py-3 px-4 text-gray-500">{kw.country}</td>
-              <td className="py-3 px-4 text-right font-bold text-green-600">{kw.current_rank}位</td>
-              <td className="py-3 px-4 text-right text-gray-500">{kw.previous_rank}位</td>
-              <td className="py-3 px-4 text-right">
-                <span className="inline-flex items-center gap-1 text-green-600 font-bold">
-                  ▲ {kw.improvement}
-                </span>
-              </td>
+    <>
+      <div className="bg-white rounded-lg shadow mt-6">
+        <div className="p-4 border-b">
+          <h3 className="text-lg font-semibold">急上昇キーワード</h3>
+          <p className="text-sm text-gray-500">過去7日間で順位が上昇したキーワード</p>
+        </div>
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
+              <th className="py-3 px-4 text-left font-medium text-gray-600">国</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600">現在順位</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600">以前の順位</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600">上昇幅</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {keywords.map((kw) => (
+              <tr key={kw.keyword_id} className="border-b hover:bg-gray-50">
+                <td className="py-3 px-4 font-medium text-gray-900">{kw.keyword}</td>
+                <td className="py-3 px-4 text-gray-500">{kw.country}</td>
+                <td className="py-3 px-4 text-right font-bold text-green-600">{kw.current_rank}位</td>
+                <td className="py-3 px-4 text-right text-gray-500">{kw.previous_rank}位</td>
+                <td className="py-3 px-4 text-right">
+                  <span className="inline-flex items-center gap-1 text-green-600 font-bold">
+                    ▲ {kw.improvement}
+                  </span>
+                </td>
+                <td className="py-3 px-4 text-right">
+                  {kw.improvement >= SHARE_THRESHOLD && (
+                    <button
+                      onClick={() => setShareKeyword(kw)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-80"
+                      style={{ background: 'linear-gradient(135deg, #4f46e5, #ec4899)' }}
+                    >
+                      シェア
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {shareKeyword && (
+        <RankShareCard keyword={shareKeyword} onClose={() => setShareKeyword(null)} />
+      )}
+    </>
   )
 }
 
