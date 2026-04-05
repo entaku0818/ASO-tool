@@ -627,3 +627,14 @@ export async function generateCaptions(
     body: JSON.stringify({ keywords, language }),
   })
 }
+
+export async function generateCaptionsBulk(
+  appId: string,
+  keywords: string[],
+  languages: string[]
+): Promise<{ results: Record<string, string[]> }> {
+  return fetchApi<{ results: Record<string, string[]> }>(`/api/apps/${appId}/captions/generate`, {
+    method: 'POST',
+    body: JSON.stringify({ keywords, languages }),
+  })
+}

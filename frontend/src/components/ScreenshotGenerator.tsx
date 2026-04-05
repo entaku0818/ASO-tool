@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import JSZip from 'jszip'
-import { generateScreenshots, generateCaptions } from '@/lib/api'
+import { generateScreenshots, generateCaptions, generateCaptionsBulk } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { UpgradeModal } from '@/components/UpgradeModal'
 import { useUpgradeModal } from '@/hooks/useUpgradeModal'
@@ -73,6 +73,9 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
   const [aiAppliedLang, setAiAppliedLang] = useState<string>('')
   // tracks languages for which AI generation has been used this session (Free gate)
   const [aiUsedLangs, setAiUsedLangs] = useState<Set<string>>(new Set())
+  // bulk generation state (Pro only)
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkDone, setBulkDone] = useState(false)
 
   // Apply template style from URL params or sessionStorage on mount
   useEffect(() => {
@@ -177,6 +180,33 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
     setAiState('idle')
     setAiCandidates([])
     setAiError(null)
+  }
+
+  // Pro only: generate captions for all languages at once, apply first candidate each
+  const handleBulkGenerate = async () => {
+    if (!appId) return
+    setBulkLoading(true)
+    setBulkDone(false)
+    const keywords = Object.values(captions).filter(Boolean)
+    const kws = keywords.length > 0 ? keywords : ['app']
+    const languages = LANGUAGES.map(l => l.code)
+    try {
+      const { results } = await generateCaptionsBulk(appId, kws, languages)
+      setCaptions(prev => {
+        const next = { ...prev }
+        for (const [lang, candidates] of Object.entries(results)) {
+          if (candidates.length > 0) next[lang] = candidates[0]
+        }
+        return next
+      })
+      setBulkDone(true)
+      setTimeout(() => setBulkDone(false), 3000)
+    } catch {
+      setAiError('✗ 一括生成に失敗しました。しばらくしてから再試行してください')
+      setTimeout(() => setAiError(null), 5000)
+    } finally {
+      setBulkLoading(false)
+    }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -600,7 +630,32 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
 
       {/* Language captions */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">キャプション（言語ごと）</label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-gray-700">キャプション（言語ごと）</label>
+          {/* Pro: 全言語一括生成ボタン */}
+          {isPro && (
+            <button
+              onClick={handleBulkGenerate}
+              disabled={bulkLoading || !appId}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg border transition-colors disabled:opacity-50"
+              style={bulkLoading ? {} : { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff', borderColor: 'transparent' }}
+            >
+              {bulkLoading ? (
+                <>
+                  <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                  生成中...
+                </>
+              ) : bulkDone ? (
+                '✅ 全言語に適用しました'
+              ) : (
+                '✨ 全言語まとめて生成'
+              )}
+            </button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-1 mb-3">
           {LANGUAGES.map(l => (
             <button

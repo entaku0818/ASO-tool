@@ -28,6 +28,7 @@ import { CompetitorSection } from '@/components/CompetitorSection'
 import { AnalyticsSection } from '@/components/AnalyticsSection'
 import { ScreenshotGenerator } from '@/components/ScreenshotGenerator'
 import { RankShareCard } from '@/components/RankShareCard'
+import { KeywordLimitBanner } from '@/components/KeywordLimitBanner'
 import { useAuth } from '@/contexts/AuthContext'
 import { UpgradeModal } from '@/components/UpgradeModal'
 import { useUpgradeModal } from '@/hooks/useUpgradeModal'
@@ -826,6 +827,16 @@ export default function AppDetailPage() {
             )
           })()}
         </div>
+
+        {/* キーワード上限バナー（Free のみ・dismissible） */}
+        {!isPro && !keywordsLoading && keywords.length >= 7 && (
+          <div className="px-4 pt-4">
+            <KeywordLimitBanner
+              count={keywords.length}
+              onUpgrade={() => upgradeModal.open('キーワード上限')}
+            />
+          </div>
+        )}
 
         {keywordsLoading ? (
           <p className="p-4 text-gray-500">読み込み中...</p>
