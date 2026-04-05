@@ -797,6 +797,34 @@ export default function AppDetailPage() {
               {isAdding ? '追加中...' : '追加'}
             </button>
           </div>
+          {/* キーワード件数 3段階ステート（Free のみ） */}
+          {!isPro && (() => {
+            const count = keywords.length
+            const limit = 10
+            if (count >= limit) {
+              return (
+                <div className="mt-2 flex items-center justify-between px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm">
+                  <span className="text-red-700 font-medium">🔒 上限到達 {count} / {limit}件</span>
+                  <button
+                    onClick={() => upgradeModal.open('キーワード上限')}
+                    className="text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    Pro にアップグレード →
+                  </button>
+                </div>
+              )
+            }
+            if (count >= 8) {
+              return (
+                <p className="mt-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                  ⚠️ 残り {limit - count} 件で上限です（{count} / {limit}件）
+                </p>
+              )
+            }
+            return (
+              <p className="mt-2 text-xs text-gray-400 text-right">{count} / {limit}件</p>
+            )
+          })()}
         </div>
 
         {keywordsLoading ? (

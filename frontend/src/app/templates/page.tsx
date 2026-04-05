@@ -94,10 +94,29 @@ function TemplateCard({
   )
 }
 
+// ── スケルトングリッド ────────────────────────────────────────
+function SkeletonGrid() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
+          <div className="aspect-video bg-gray-200" />
+          <div className="p-4 space-y-3">
+            <div className="h-3 w-16 bg-gray-200 rounded-full" />
+            <div className="h-4 w-2/3 bg-gray-200 rounded" />
+            <div className="h-3 w-full bg-gray-100 rounded" />
+            <div className="h-9 w-full bg-gray-100 rounded-lg mt-2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── ページ本体 ────────────────────────────────────────────────
 export default function TemplatesPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const isPro = user?.is_pro ?? false
   const upgradeModal = useUpgradeModal()
 
@@ -107,13 +126,18 @@ export default function TemplatesPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (authLoading) return   // auth未解決のうちはフェッチしない
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
     setIsLoading(true)
     setError(null)
     getTemplates(selectedCategory || undefined)
       .then(setTemplates)
       .catch(() => setError('テンプレートの取得に失敗しました'))
       .finally(() => setIsLoading(false))
-  }, [selectedCategory])
+  }, [selectedCategory, authLoading, user])
 
   const handleUse = (template: Template) => {
     // Store style in sessionStorage — ScreenshotGenerator reads it on mount
@@ -168,9 +192,30 @@ export default function TemplatesPage() {
       </div>
 
       {/* Content */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <p className="text-gray-500">読み込み中...</p>
+      {authLoading || isLoading ? (
+        <SkeletonGrid />
+      ) : !user ? (
+        <div className="relative">
+          {/* ぼかしプレビュー（価値の訴求） */}
+          <div className="blur-sm pointer-events-none select-none">
+            <SkeletonGrid />
+          </div>
+          {/* ソフトバナー */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white rounded-2xl shadow-2xl px-8 py-7 max-w-sm w-full text-center border border-gray-100">
+              <div className="text-3xl mb-3">🔒</div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">ログインが必要です</h3>
+              <p className="text-sm text-gray-500 mb-5">
+                テンプレートライブラリを利用するにはアカウントが必要です。
+              </p>
+              <button
+                onClick={() => router.push('/login')}
+                className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+              >
+                ログインする →
+              </button>
+            </div>
+          </div>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-20">
