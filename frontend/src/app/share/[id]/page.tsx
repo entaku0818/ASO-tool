@@ -1,19 +1,50 @@
-'use client'
-
-import { Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
-// ── カード本体（認証不要、クエリパラメータのみで完結） ─────────
+// ── Server Component — OGP tags are SSR'd by generateMetadata ────────────────
 // URL例: /share/abc123?kw=ゲーム&from=45&to=12&app=MyApp
-function ShareContent() {
-  const params = useSearchParams()
-  const router = useRouter()
 
-  const keyword  = params.get('kw')   ?? ''
-  const fromRank = parseInt(params.get('from') ?? '0', 10)
-  const toRank   = parseInt(params.get('to')   ?? '0', 10)
-  const appName  = params.get('app')  ?? 'このアプリ'
+type Props = {
+  params: { id: string }
+  searchParams: { kw?: string; from?: string; to?: string; app?: string }
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const keyword  = searchParams.kw  ?? ''
+  const fromRank = parseInt(searchParams.from ?? '0', 10)
+  const toRank   = parseInt(searchParams.to   ?? '0', 10)
+  const appName  = searchParams.app ?? 'アプリ'
+  const improvement = fromRank - toRank
+
+  const title = improvement > 0
+    ? `${appName}「${keyword}」が #${toRank} に急上昇！`
+    : `${appName} のキーワード順位 — ASO Tool`
+  const description = improvement > 0
+    ? `キーワード「${keyword}」で #${fromRank} → #${toRank}（+${improvement}位）。ASO Tool でキーワード順位を自動追跡。`
+    : 'ASO Tool でキーワード順位を自動追跡・分析。無料プランで今すぐ始められます。'
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      siteName: 'ASO Tool',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
+  }
+}
+
+export default function SharePage({ searchParams }: Props) {
+  const keyword  = searchParams.kw  ?? ''
+  const fromRank = parseInt(searchParams.from ?? '0', 10)
+  const toRank   = parseInt(searchParams.to   ?? '0', 10)
+  const appName  = searchParams.app ?? 'このアプリ'
   const improvement = fromRank - toRank
 
   const isValid = keyword && fromRank > 0 && toRank > 0 && improvement > 0
@@ -87,13 +118,13 @@ function ShareContent() {
           ASO Tool でキーワード順位を自動追跡・分析。<br />
           無料プランでも今すぐ始められます。
         </p>
-        <button
-          onClick={() => router.push('/login')}
-          className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-lg transition-opacity hover:opacity-90"
+        <Link
+          href="/login"
+          className="block w-full py-3.5 rounded-xl font-bold text-white text-base shadow-lg transition-opacity hover:opacity-90 text-center"
           style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%)' }}
         >
           無料で始める →
-        </button>
+        </Link>
         <p className="text-xs text-gray-400 mt-3">クレジットカード不要・登録30秒</p>
       </div>
 
@@ -117,21 +148,5 @@ function ShareContent() {
         © ASO Tool — App Store Optimization Platform
       </p>
     </div>
-  )
-}
-
-// ── useSearchParams は Suspense が必要 ──────────────────────────
-export default function SharePage() {
-  return (
-    <Suspense fallback={
-      <div className="max-w-2xl mx-auto">
-        <div className="w-full h-64 rounded-2xl bg-gray-200 animate-pulse" />
-        <div className="grid grid-cols-3 gap-4 mt-6">
-          {[0,1,2].map(i => <div key={i} className="h-24 bg-gray-200 rounded-xl animate-pulse" />)}
-        </div>
-      </div>
-    }>
-      <ShareContent />
-    </Suspense>
   )
 }

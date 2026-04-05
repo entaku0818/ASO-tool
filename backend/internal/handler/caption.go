@@ -71,6 +71,8 @@ func (h *CaptionHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Multi-language bulk: generate for each language, return { "results": { "ja": [...], ... } }
+	// A single language failure does NOT abort the entire request; it is silently skipped so
+	// callers receive partial results (e.g. when one Claude API call hits a rate limit).
 	if len(req.Languages) > 1 {
 		results := make(map[string][]string, len(req.Languages))
 		for _, lang := range req.Languages {
@@ -80,8 +82,8 @@ func (h *CaptionHandler) Generate(w http.ResponseWriter, r *http.Request) {
 			}
 			captions, err := h.service.Generate(r.Context(), req.Keywords, lang)
 			if err != nil {
-				respondError(w, http.StatusInternalServerError, "failed to generate captions for "+lang)
-				return
+				// skip this language; partial results are acceptable
+				continue
 			}
 			results[lang] = captions
 		}
