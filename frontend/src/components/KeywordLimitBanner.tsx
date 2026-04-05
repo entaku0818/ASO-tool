@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { UpgradeModal } from './UpgradeModal'
 
 function lsKey(appId: string) {
   return `keyword_limit_banner_dismissed_${appId}`
@@ -19,6 +20,7 @@ interface KeywordLimitBannerProps {
 
 export function KeywordLimitBanner({ appId, count, limit = 10, onUpgrade }: KeywordLimitBannerProps) {
   const [visible, setVisible] = useState(false)
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
 
   useEffect(() => {
     // 7〜9件は dismiss 済みなら非表示。10件（上限）は dismiss 不可なので常に表示
@@ -41,6 +43,7 @@ export function KeywordLimitBanner({ appId, count, limit = 10, onUpgrade }: Keyw
   }
 
   return (
+    <>
     <div className={`flex items-start justify-between gap-3 px-4 py-3 rounded-xl border mb-4 ${
       atLimit
         ? 'bg-red-50 border-red-200'
@@ -80,18 +83,32 @@ export function KeywordLimitBanner({ appId, count, limit = 10, onUpgrade }: Keyw
             Pro へアップグレード
           </button>
         ) : (
-          // 警告（7〜9件）: dismiss 可
-          <button
-            onClick={handleDismiss}
-            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-            aria-label="閉じる"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          // 警告（7〜9件）: アップグレード CTA + dismiss
+          <>
+            <button
+              onClick={() => setUpgradeModalOpen(true)}
+              className="text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+            >
+              Proにアップグレード
+            </button>
+            <button
+              onClick={handleDismiss}
+              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              aria-label="閉じる"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </>
         )}
       </div>
     </div>
+    <UpgradeModal
+      isOpen={upgradeModalOpen}
+      onClose={() => setUpgradeModalOpen(false)}
+      triggerFeature="キーワード無制限登録"
+    />
+    </>
   )
 }

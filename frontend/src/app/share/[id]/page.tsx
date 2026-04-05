@@ -143,6 +143,28 @@ export default function SharePage({ searchParams }: Props) {
         ))}
       </div>
 
+      {/* ── Xでシェア ───────────────────────────────────────── */}
+      {(() => {
+        const tweetText = `「${keyword}」で #${toRank} 位達成！#${fromRank}位から+${improvement}位改善 🎉 #ASO #AppStore`
+        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(`https://aso-tool.app/share/${searchParams.kw ?? ''}`)}`
+        return (
+          <div className="mt-6 text-center">
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-sm shadow transition-opacity hover:opacity-90"
+              style={{ background: '#000000' }}
+            >
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              もう一度シェアする
+            </a>
+          </div>
+        )
+      })()}
+
       {/* ── フッター ────────────────────────────────────────── */}
       <p className="text-center text-xs text-gray-400 mt-8 mb-4">
         © ASO Tool — App Store Optimization Platform
