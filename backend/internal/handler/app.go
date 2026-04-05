@@ -115,6 +115,12 @@ func handleServiceError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, model.ErrNotFound):
 		respondError(w, http.StatusNotFound, "not found")
+	case errors.Is(err, model.ErrInvalidCredentials), errors.Is(err, model.ErrUnauthorized):
+		respondError(w, http.StatusUnauthorized, "invalid credentials")
+	case errors.Is(err, model.ErrAlreadyExists):
+		respondError(w, http.StatusConflict, "already exists")
+	case errors.Is(err, model.ErrPlanLimitExceeded):
+		respondError(w, http.StatusPaymentRequired, "plan limit exceeded")
 	case errors.Is(err, model.ErrNameRequired),
 		errors.Is(err, model.ErrBundleIDRequired),
 		errors.Is(err, model.ErrInvalidPlatform),
