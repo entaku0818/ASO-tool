@@ -832,6 +832,7 @@ export default function AppDetailPage() {
         {!isPro && !keywordsLoading && keywords.length >= 7 && (
           <div className="px-4 pt-4">
             <KeywordLimitBanner
+              appId={appId}
               count={keywords.length}
               onUpgrade={() => upgradeModal.open('キーワード上限')}
             />

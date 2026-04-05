@@ -2,25 +2,33 @@
 
 import { useState, useEffect } from 'react'
 
-const LS_KEY = 'keyword_limit_banner_dismissed'
+function lsKey(appId: string) {
+  return `keyword_limit_banner_dismissed_${appId}`
+}
 
-function isDismissed(): boolean {
-  try { return localStorage.getItem(LS_KEY) === 'true' } catch { return false }
+function isDismissed(appId: string): boolean {
+  try { return localStorage.getItem(lsKey(appId)) === 'true' } catch { return false }
 }
 
 interface KeywordLimitBannerProps {
+  appId: string
   count: number
   limit?: number
   onUpgrade: () => void
 }
 
-export function KeywordLimitBanner({ count, limit = 10, onUpgrade }: KeywordLimitBannerProps) {
+export function KeywordLimitBanner({ appId, count, limit = 10, onUpgrade }: KeywordLimitBannerProps) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    // 7件以上かつ未dismissの場合に表示
-    if (count >= 7 && !isDismissed()) setVisible(true)
-  }, [count])
+    // 7〜9件は dismiss 済みなら非表示。10件（上限）は dismiss 不可なので常に表示
+    const atLimit = count >= limit
+    if (atLimit) {
+      setVisible(true)
+    } else if (count >= 7 && !isDismissed(appId)) {
+      setVisible(true)
+    }
+  }, [count, limit, appId])
 
   if (!visible) return null
 
@@ -28,7 +36,7 @@ export function KeywordLimitBanner({ count, limit = 10, onUpgrade }: KeywordLimi
   const atLimit = remaining <= 0
 
   const handleDismiss = () => {
-    try { localStorage.setItem(LS_KEY, 'true') } catch {}
+    try { localStorage.setItem(lsKey(appId), 'true') } catch {}
     setVisible(false)
   }
 
@@ -63,23 +71,26 @@ export function KeywordLimitBanner({ count, limit = 10, onUpgrade }: KeywordLimi
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        {atLimit && (
+        {atLimit ? (
+          // 上限到達: Pro CTA のみ、dismiss 不可
           <button
             onClick={onUpgrade}
             className="text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
           >
             Pro へアップグレード
           </button>
+        ) : (
+          // 警告（7〜9件）: dismiss 可
+          <button
+            onClick={handleDismiss}
+            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+            aria-label="閉じる"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         )}
-        <button
-          onClick={handleDismiss}
-          className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-          aria-label="閉じる"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
     </div>
   )
