@@ -98,6 +98,10 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	return nil, model.ErrUnauthorized
 }
 
+func (s *AuthService) GenerateTokenForUser(user *model.User) (string, error) {
+	return s.generateToken(user)
+}
+
 func (s *AuthService) generateToken(user *model.User) (string, error) {
 	claims := &Claims{
 		UserID:  user.ID,

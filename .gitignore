@@ -30,3 +30,11 @@ out/
 backend/tmp/
 test-*.png
 page_*.png
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM

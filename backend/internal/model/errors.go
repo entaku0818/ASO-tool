@@ -64,4 +64,9 @@ var (
 	ErrPlanLimitExceeded    = errors.New("keyword limit reached for free plan")
 	ErrAppLimitExceeded     = errors.New("app limit reached for free plan")
 	ErrStripeKeyRequired    = errors.New("stripe secret key is not configured")
+
+	// License errors
+	ErrLicenseKeyRequired  = errors.New("license key is required")
+	ErrLicenseNotFound     = errors.New("license key not found")
+	ErrLicenseAlreadyUsed  = errors.New("license key already activated by another account")
 )

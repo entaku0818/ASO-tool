@@ -121,6 +121,10 @@ func handleServiceError(w http.ResponseWriter, err error) {
 		respondError(w, http.StatusConflict, "already exists")
 	case errors.Is(err, model.ErrPlanLimitExceeded):
 		respondError(w, http.StatusPaymentRequired, "plan limit exceeded")
+	case errors.Is(err, model.ErrLicenseNotFound):
+		respondError(w, http.StatusNotFound, "license key not found")
+	case errors.Is(err, model.ErrLicenseAlreadyUsed):
+		respondError(w, http.StatusConflict, "license key already activated by another account")
 	case errors.Is(err, model.ErrNameRequired),
 		errors.Is(err, model.ErrBundleIDRequired),
 		errors.Is(err, model.ErrInvalidPlatform),
@@ -128,7 +132,9 @@ func handleServiceError(w http.ResponseWriter, err error) {
 		errors.Is(err, model.ErrKeywordRequired),
 		errors.Is(err, model.ErrKeywordIDRequired),
 		errors.Is(err, model.ErrReviewIDRequired),
-		errors.Is(err, model.ErrInvalidRating):
+		errors.Is(err, model.ErrInvalidRating),
+		errors.Is(err, model.ErrLicenseKeyRequired),
+		errors.Is(err, model.ErrEmailRequired):
 		respondError(w, http.StatusBadRequest, err.Error())
 	default:
 		respondError(w, http.StatusInternalServerError, "internal server error")

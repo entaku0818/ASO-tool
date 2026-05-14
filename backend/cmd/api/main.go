@@ -137,6 +137,11 @@ func main() {
 	translationService := service.NewTranslationService()
 	translationHandler := handler.NewTranslationHandler(translationService)
 
+	// License keys (macOS app)
+	licenseRepo := repository.NewLicenseRepository(pool)
+	licenseService := service.NewLicenseService(licenseRepo, userRepo, authService)
+	licenseHandler := handler.NewLicenseHandler(licenseService)
+
 	// Public service
 	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
 	storeRankingRepo := repository.NewStoreRankingRepository(pool)
@@ -175,6 +180,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		// Public routes
 		r.Post("/auth/login", authHandler.Login)
+		r.Post("/licenses/activate", licenseHandler.Activate)
 
 		// Stripe webhook — public but signature-verified
 		r.Post("/billing/webhook", billingHandler.Webhook)
@@ -196,6 +202,10 @@ func main() {
 
 			// Billing
 			r.Post("/billing/checkout", billingHandler.CreateCheckout)
+
+			// License keys
+			r.Get("/licenses/me", licenseHandler.GetMyLicense)
+			r.With(authMiddleware.RequireAdmin).Post("/licenses/generate", licenseHandler.Generate)
 
 			// Admin-only routes
 			r.With(authMiddleware.RequireAdmin).Post("/users", authHandler.CreateUser)
