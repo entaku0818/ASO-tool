@@ -11,8 +11,8 @@ export function Header() {
   const router = useRouter()
 
   // Public pages that don't require authentication
-  const publicPages = ['/login', '/popular-keywords']
-  const isPublicPage = publicPages.includes(pathname)
+  const publicPages = ['/login', '/popular-keywords', '/buy', '/buy/success']
+  const isPublicPage = publicPages.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   useEffect(() => {
     if (!isLoading && !user && !isPublicPage) {
