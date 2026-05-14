@@ -239,3 +239,54 @@ func (r *CompetitorRepository) GetComparisonData(ctx context.Context, appID stri
 		RecordedAt:  recordedAt,
 	}, nil
 }
+
+// GetKeywordGap returns keywords where any competitor ranks <= competitorThreshold
+// but our app ranks > ourThreshold or has no ranking.
+func (r *CompetitorRepository) GetKeywordGap(ctx context.Context, appID string, competitorThreshold, ourThreshold int) ([]*model.KeywordGap, error) {
+	query := `
+		SELECT DISTINCT ON (k.id)
+			k.id          AS keyword_id,
+			k.keyword,
+			k.country,
+			c.competitor_name,
+			cr_latest.rank AS competitor_rank,
+			rh_latest.rank AS our_rank
+		FROM keywords k
+		JOIN competitors c ON c.app_id = k.app_id
+		JOIN LATERAL (
+			SELECT rank
+			FROM competitor_rankings
+			WHERE competitor_id = c.id AND keyword_id = k.id
+			ORDER BY recorded_at DESC
+			LIMIT 1
+		) cr_latest ON true
+		LEFT JOIN LATERAL (
+			SELECT rank
+			FROM ranking_history
+			WHERE keyword_id = k.id
+			ORDER BY recorded_at DESC
+			LIMIT 1
+		) rh_latest ON true
+		WHERE k.app_id = $1
+		  AND cr_latest.rank IS NOT NULL
+		  AND cr_latest.rank <= $2
+		  AND (rh_latest.rank IS NULL OR rh_latest.rank > $3)
+		ORDER BY k.id, cr_latest.rank ASC
+	`
+
+	rows, err := r.pool.Query(ctx, query, appID, competitorThreshold, ourThreshold)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var gaps []*model.KeywordGap
+	for rows.Next() {
+		g := &model.KeywordGap{}
+		if err := rows.Scan(&g.KeywordID, &g.Keyword, &g.Country, &g.CompetitorName, &g.CompetitorRank, &g.OurRank); err != nil {
+			return nil, err
+		}
+		gaps = append(gaps, g)
+	}
+	return gaps, nil
+}

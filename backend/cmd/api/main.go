@@ -243,6 +243,7 @@ func main() {
 				r.Route("/{appID}/competitors", func(r chi.Router) {
 					r.Get("/", competitorHandler.List)
 					r.Post("/", competitorHandler.Create)
+					r.Get("/keyword-gap", competitorHandler.GetKeywordGap)
 					r.Get("/{competitorID}", competitorHandler.Get)
 					r.Delete("/{competitorID}", competitorHandler.Delete)
 					r.Post("/update-rankings", competitorHandler.UpdateRankings)

@@ -77,3 +77,13 @@ type CompetitorRankData struct {
 	BundleID       string `json:"bundle_id"`
 	Rank           *int   `json:"rank"`
 }
+
+// KeywordGap is a keyword where a competitor outranks our app significantly.
+type KeywordGap struct {
+	KeywordID      string  `json:"keyword_id"`
+	Keyword        string  `json:"keyword"`
+	Country        string  `json:"country"`
+	CompetitorName string  `json:"competitor_name"`
+	CompetitorRank int     `json:"competitor_rank"`
+	OurRank        *int    `json:"our_rank"`
+}

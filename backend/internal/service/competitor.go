@@ -98,3 +98,8 @@ func (s *CompetitorService) GetComparison(ctx context.Context, appID string, key
 func (s *CompetitorService) GetLatestRanking(ctx context.Context, competitorID string, keywordID string) (*model.CompetitorRanking, error) {
 	return s.repo.GetLatestRankings(ctx, competitorID, keywordID)
 }
+
+// GetKeywordGap returns keywords where a competitor outranks us (competitor<=20, ours>30 or none).
+func (s *CompetitorService) GetKeywordGap(ctx context.Context, appID string) ([]*model.KeywordGap, error) {
+	return s.repo.GetKeywordGap(ctx, appID, 20, 30)
+}

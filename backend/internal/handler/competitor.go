@@ -99,3 +99,21 @@ func (h *CompetitorHandler) GetComparison(w http.ResponseWriter, r *http.Request
 
 	respondJSON(w, http.StatusOK, comparison)
 }
+
+// GetKeywordGap returns keywords where a competitor outranks the app.
+// GET /api/apps/{appID}/competitors/keyword-gap
+func (h *CompetitorHandler) GetKeywordGap(w http.ResponseWriter, r *http.Request) {
+	appID := chi.URLParam(r, "appID")
+
+	gaps, err := h.service.GetKeywordGap(r.Context(), appID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if gaps == nil {
+		gaps = []*model.KeywordGap{}
+	}
+
+	respondJSON(w, http.StatusOK, gaps)
+}
