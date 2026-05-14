@@ -281,6 +281,46 @@ export async function getKeywordGap(appId: string): Promise<KeywordGap[]> {
   return fetchApi<KeywordGap[]>(`/api/apps/${appId}/competitors/keyword-gap`)
 }
 
+// App Metadata Versions
+export type AppMetadataVersion = {
+  id: string
+  app_id: string
+  locale: string
+  version_tag: string
+  title: string | null
+  subtitle: string | null
+  description: string | null
+  keywords: string | null
+  promotional_text: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type UpsertMetadataRequest = {
+  locale: string
+  version_tag: string
+  title?: string
+  subtitle?: string
+  description?: string
+  keywords?: string
+  promotional_text?: string
+}
+
+export async function getMetadata(appId: string): Promise<AppMetadataVersion[]> {
+  return fetchApi<AppMetadataVersion[]>(`/api/apps/${appId}/metadata`)
+}
+
+export async function upsertMetadata(appId: string, data: UpsertMetadataRequest): Promise<AppMetadataVersion> {
+  return fetchApi<AppMetadataVersion>(`/api/apps/${appId}/metadata`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteMetadata(appId: string, metadataId: string): Promise<void> {
+  await fetchApi<void>(`/api/apps/${appId}/metadata/${metadataId}`, { method: 'DELETE' })
+}
+
 // App Store Connect Analytics
 export type ASCCredentials = {
   id: string

@@ -27,6 +27,7 @@ import {
 import { useToast } from '@/components/Toast'
 import { ReviewsSection } from '@/components/ReviewsSection'
 import { CompetitorSection } from '@/components/CompetitorSection'
+import { MetadataSection } from '@/components/MetadataSection'
 import { AnalyticsSection } from '@/components/AnalyticsSection'
 import { ScreenshotGenerator } from '@/components/ScreenshotGenerator'
 import { RankShareCard } from '@/components/RankShareCard'
@@ -997,6 +998,10 @@ export default function AppDetailPage() {
 
       <div className="mt-6">
         <ReviewsSection appId={appId} />
+      </div>
+
+      <div className="mt-6">
+        <MetadataSection appId={appId} />
       </div>
 
       {/* Translate modal */}
