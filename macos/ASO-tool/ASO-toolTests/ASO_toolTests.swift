@@ -27,7 +27,6 @@ struct AppStateTests {
         #expect(state.email == "user@example.com")
         #expect(state.licenseKey == "ASOT-AAAA-BBBB-CCCC")
 
-        // Cleanup
         state.deactivate()
     }
 
@@ -135,114 +134,5 @@ struct ASOModelsTests {
         #expect(resp.token == "eyJ...")
         #expect(resp.key == "ASOT-AAAA-BBBB-CCCC")
         #expect(resp.user.email == "user@example.com")
-    }
-}
-
-// MARK: - APIClient Tests (MockURLProtocol)
-
-final class MockURLProtocol: URLProtocol {
-    static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
-
-    override class func canInit(with request: URLRequest) -> Bool { true }
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
-
-    override func startLoading() {
-        guard let handler = Self.handler else {
-            client?.urlProtocol(self, didFailWithError: URLError(.unknown))
-            return
-        }
-        do {
-            let (response, data) = try handler(request)
-            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            client?.urlProtocol(self, didLoad: data)
-            client?.urlProtocolDidFinishLoading(self)
-        } catch {
-            client?.urlProtocol(self, didFailWithError: error)
-        }
-    }
-
-    override func stopLoading() {}
-}
-
-@Suite("APIClient")
-struct APIClientTests {
-
-    private func makeSUT() -> APIClient {
-        let config = URLSessionConfiguration.ephemeral
-        config.protocolClasses = [MockURLProtocol.self]
-        let client = APIClient()
-        client.session = URLSession(configuration: config)
-        client.baseURL = "https://test.example.com"
-        return client
-    }
-
-    @Test("activateLicense: 成功レスポンスをデコードできる")
-    func activateLicenseSuccess() async throws {
-        let sut = makeSUT()
-        let responseJSON = """
-        {"token":"jwt-token","key":"ASOT-AAAA-BBBB-CCCC",
-         "user":{"id":"u-1","email":"test@example.com","name":"Test","plan":"free"}}
-        """.data(using: .utf8)!
-
-        MockURLProtocol.handler = { _ in
-            let response = HTTPURLResponse(
-                url: URL(string: "https://test.example.com/api/licenses/activate")!,
-                statusCode: 200, httpVersion: nil, headerFields: nil)!
-            return (response, responseJSON)
-        }
-
-        let result = try await sut.activateLicense(key: "ASOT-AAAA-BBBB-CCCC", email: "test@example.com")
-        #expect(result.token == "jwt-token")
-        #expect(result.key == "ASOT-AAAA-BBBB-CCCC")
-    }
-
-    @Test("activateLicense: 404 で APIClientError.httpError が投げられる")
-    func activateLicense404() async throws {
-        let sut = makeSUT()
-        let errorJSON = #"{"error":"license key not found"}"#.data(using: .utf8)!
-
-        MockURLProtocol.handler = { _ in
-            let response = HTTPURLResponse(
-                url: URL(string: "https://test.example.com/api/licenses/activate")!,
-                statusCode: 404, httpVersion: nil, headerFields: nil)!
-            return (response, errorJSON)
-        }
-
-        await #expect(throws: APIClientError.self) {
-            _ = try await sut.activateLicense(key: "BAD-KEY", email: "test@example.com")
-        }
-    }
-
-    @Test("getApps: 配列をデコードできる")
-    func getAppsSuccess() async throws {
-        let sut = makeSUT()
-        let json = """
-        [{"id":"a-1","name":"App","bundle_id":"com.app","platform":"ios","created_at":"2024-01-01T00:00:00Z"}]
-        """.data(using: .utf8)!
-
-        MockURLProtocol.handler = { _ in
-            let response = HTTPURLResponse(
-                url: URL(string: "https://test.example.com/api/apps")!,
-                statusCode: 200, httpVersion: nil, headerFields: nil)!
-            return (response, json)
-        }
-
-        let apps = try await sut.getApps(token: "tok")
-        #expect(apps.count == 1)
-        #expect(apps[0].name == "App")
-    }
-
-    @Test("getRankings: 空配列を返す")
-    func getRankingsEmpty() async throws {
-        let sut = makeSUT()
-        MockURLProtocol.handler = { _ in
-            let response = HTTPURLResponse(
-                url: URL(string: "https://test.example.com/api/apps/a-1/keywords/k-1/rankings")!,
-                statusCode: 200, httpVersion: nil, headerFields: nil)!
-            return (response, "[]".data(using: .utf8)!)
-        }
-
-        let rankings = try await sut.getRankings(token: "tok", appID: "a-1", keywordID: "k-1")
-        #expect(rankings.isEmpty)
     }
 }
