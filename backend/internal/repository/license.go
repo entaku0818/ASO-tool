@@ -51,6 +51,33 @@ func (r *LicenseRepository) Activate(ctx context.Context, keyID, userID string) 
 	return err
 }
 
+func (r *LicenseRepository) List(ctx context.Context) ([]*model.LicenseKey, error) {
+	query := `
+		SELECT id, key, email, user_id, is_active, activated_at, expires_at, stripe_session_id, created_at
+		FROM license_keys ORDER BY created_at DESC
+	`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []*model.LicenseKey
+	for rows.Next() {
+		lk := &model.LicenseKey{}
+		err := rows.Scan(
+			&lk.ID, &lk.Key, &lk.Email, &lk.UserID,
+			&lk.IsActive, &lk.ActivatedAt, &lk.ExpiresAt,
+			&lk.StripeSessionID, &lk.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, lk)
+	}
+	return keys, nil
+}
+
 type scannable interface {
 	Scan(dest ...any) error
 }

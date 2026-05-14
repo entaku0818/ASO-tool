@@ -18,6 +18,7 @@ import (
 
 type BillingService struct {
 	userRepo        *repository.UserRepository
+	licenseService  *LicenseService
 	webhookSecret   string
 	priceIDMonthly  string
 	priceIDYearly   string
@@ -46,6 +47,11 @@ func NewBillingService(userRepo *repository.UserRepository) *BillingService {
 	}
 
 	return svc
+}
+
+// SetLicenseService wires the license service for webhook handling.
+func (s *BillingService) SetLicenseService(ls *LicenseService) {
+	s.licenseService = ls
 }
 
 // CreateCheckoutSession creates a Stripe Checkout session and returns the URL.
@@ -148,6 +154,27 @@ func (s *BillingService) handleCheckoutCompleted(ctx context.Context, event stri
 		return fmt.Errorf("parse checkout.session: %w", err)
 	}
 
+	// License key purchase (one-time payment)
+	if sess.Metadata["purchase_type"] == "license" {
+		email := sess.CustomerEmail
+		if email == "" && sess.CustomerDetails != nil {
+			email = sess.CustomerDetails.Email
+		}
+		if email == "" {
+			return fmt.Errorf("no email in license checkout session %s", sess.ID)
+		}
+		if s.licenseService == nil {
+			return fmt.Errorf("license service not wired")
+		}
+		lk, err := s.licenseService.GenerateAndSendLicense(ctx, email, sess.ID)
+		if err != nil {
+			return fmt.Errorf("generate license for %s: %w", email, err)
+		}
+		log.Printf("info: license key %s generated and sent to %s (session: %s)", lk.Key, email, sess.ID)
+		return nil
+	}
+
+	// Subscription upgrade (existing flow)
 	user, err := s.userRepo.GetByStripeCustomerID(ctx, sess.Customer.ID)
 	if err != nil {
 		return fmt.Errorf("get user by stripe customer %s: %w", sess.Customer.ID, err)

@@ -141,6 +141,7 @@ func main() {
 	licenseRepo := repository.NewLicenseRepository(pool)
 	licenseService := service.NewLicenseService(licenseRepo, userRepo, authService)
 	licenseHandler := handler.NewLicenseHandler(licenseService)
+	billingService.SetLicenseService(licenseService)
 
 	// App metadata versions
 	metadataRepo := repository.NewMetadataRepository(pool)
@@ -186,6 +187,7 @@ func main() {
 		// Public routes
 		r.Post("/auth/login", authHandler.Login)
 		r.Post("/licenses/activate", licenseHandler.Activate)
+		r.Post("/licenses/checkout", licenseHandler.CreateCheckout)
 
 		// Stripe webhook — public but signature-verified
 		r.Post("/billing/webhook", billingHandler.Webhook)
@@ -211,6 +213,7 @@ func main() {
 			// License keys
 			r.Get("/licenses/me", licenseHandler.GetMyLicense)
 			r.With(authMiddleware.RequireAdmin).Post("/licenses/generate", licenseHandler.Generate)
+			r.With(authMiddleware.RequireAdmin).Get("/admin/licenses", licenseHandler.ListAll)
 
 			// Admin-only routes
 			r.With(authMiddleware.RequireAdmin).Post("/users", authHandler.CreateUser)
