@@ -135,4 +135,45 @@ struct ASOModelsTests {
         #expect(resp.key == "ASOT-AAAA-BBBB-CCCC")
         #expect(resp.user.email == "user@example.com")
     }
+
+    @Test("KeywordGap: our_rank あり")
+    func decodeKeywordGapWithRank() throws {
+        let json = """
+        {"keyword_id":"kw-1","keyword":"fitness","country":"JP",
+         "competitor_name":"Rival","competitor_rank":8,"our_rank":45}
+        """.data(using: .utf8)!
+
+        let g = try JSONDecoder().decode(KeywordGap.self, from: json)
+        #expect(g.keyword == "fitness")
+        #expect(g.competitorRank == 8)
+        #expect(g.ourRank == 45)
+    }
+
+    @Test("KeywordGap: our_rank null")
+    func decodeKeywordGapNullRank() throws {
+        let json = """
+        {"keyword_id":"kw-2","keyword":"running","country":"US",
+         "competitor_name":"Rival","competitor_rank":3,"our_rank":null}
+        """.data(using: .utf8)!
+
+        let g = try JSONDecoder().decode(KeywordGap.self, from: json)
+        #expect(g.ourRank == nil)
+    }
+
+    @Test("AppMetadataVersion のデコード")
+    func decodeAppMetadataVersion() throws {
+        let json = """
+        {"id":"m-1","app_id":"app-1","locale":"ja","version_tag":"draft",
+         "title":"テストアプリ","subtitle":null,"description":null,
+         "keywords":"test,app","promotional_text":null,
+         "created_at":"2024-01-01T00:00:00Z","updated_at":"2024-01-02T00:00:00Z"}
+        """.data(using: .utf8)!
+
+        let m = try JSONDecoder().decode(AppMetadataVersion.self, from: json)
+        #expect(m.locale == "ja")
+        #expect(m.versionTag == "draft")
+        #expect(m.title == "テストアプリ")
+        #expect(m.subtitle == nil)
+        #expect(m.keywords == "test,app")
+    }
 }

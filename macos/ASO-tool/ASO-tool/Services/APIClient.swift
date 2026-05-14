@@ -63,6 +63,34 @@ final class APIClient {
         try await get("/api/apps/\(appID)/keywords/\(keywordID)/rankings?limit=\(limit)", token: token)
     }
 
+    // MARK: - Competitors
+
+    func getCompetitors(token: String, appID: String) async throws -> [Competitor] {
+        try await get("/api/apps/\(appID)/competitors", token: token)
+    }
+
+    func getKeywordGap(token: String, appID: String) async throws -> [KeywordGap] {
+        try await get("/api/apps/\(appID)/competitors/keyword-gap", token: token)
+    }
+
+    func updateCompetitorRankings(token: String, appID: String) async throws -> UpdateRankingsResponse {
+        try await post("/api/apps/\(appID)/competitors/update-rankings", body: EmptyBody(), token: token)
+    }
+
+    // MARK: - Metadata
+
+    func getMetadata(token: String, appID: String) async throws -> [AppMetadataVersion] {
+        try await get("/api/apps/\(appID)/metadata", token: token)
+    }
+
+    func upsertMetadata(token: String, appID: String, request: UpsertMetadataRequest) async throws -> AppMetadataVersion {
+        try await put("/api/apps/\(appID)/metadata", body: request, token: token)
+    }
+
+    func deleteMetadata(token: String, appID: String, metadataID: String) async throws {
+        try await delete("/api/apps/\(appID)/metadata/\(metadataID)", token: token)
+    }
+
     // MARK: - Helpers
 
     func get<T: Decodable>(_ path: String, token: String?) async throws -> T {
@@ -73,6 +101,10 @@ final class APIClient {
         try await perform(makeRequest("POST", path: path, body: body, token: token))
     }
 
+    func put<B: Encodable, T: Decodable>(_ path: String, body: B, token: String?) async throws -> T {
+        try await perform(makeRequest("PUT", path: path, body: body, token: token))
+    }
+
     func delete(_ path: String, token: String?) async throws {
         let req = try makeRequest("DELETE", path: path, body: nil as [String: String]?, token: token)
         let (_, response) = try await session.data(for: req)
@@ -80,6 +112,8 @@ final class APIClient {
             throw APIClientError.httpError(http.statusCode, "delete failed")
         }
     }
+
+    private struct EmptyBody: Encodable {}
 
     private func makeRequest<B: Encodable>(_ method: String, path: String, body: B?, token: String?) throws -> URLRequest {
         guard let url = URL(string: baseURL + path) else { throw APIClientError.invalidURL }

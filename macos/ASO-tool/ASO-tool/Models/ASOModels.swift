@@ -63,3 +63,87 @@ struct ActivateLicenseResponse: Codable {
 struct APIErrorResponse: Codable {
     let error: String
 }
+
+// MARK: - Competitor
+
+struct Competitor: Codable, Identifiable, Hashable {
+    let id: String
+    let appID: String
+    let competitorBundleID: String
+    let competitorName: String
+    let platform: String
+    let notes: String?
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, platform, notes
+        case appID = "app_id"
+        case competitorBundleID = "competitor_bundle_id"
+        case competitorName = "competitor_name"
+        case createdAt = "created_at"
+    }
+}
+
+struct KeywordGap: Codable, Identifiable {
+    let keywordID: String
+    let keyword: String
+    let country: String
+    let competitorName: String
+    let competitorRank: Int
+    let ourRank: Int?
+
+    var id: String { keywordID }
+
+    enum CodingKeys: String, CodingKey {
+        case keyword, country
+        case keywordID = "keyword_id"
+        case competitorName = "competitor_name"
+        case competitorRank = "competitor_rank"
+        case ourRank = "our_rank"
+    }
+}
+
+struct UpdateRankingsResponse: Codable {
+    let updated: Int
+}
+
+// MARK: - Metadata
+
+struct AppMetadataVersion: Codable, Identifiable, Hashable {
+    let id: String
+    let appID: String
+    let locale: String
+    let versionTag: String
+    let title: String?
+    let subtitle: String?
+    let description: String?
+    let keywords: String?
+    let promotionalText: String?
+    let createdAt: String
+    let updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, locale, title, subtitle, description, keywords
+        case appID = "app_id"
+        case versionTag = "version_tag"
+        case promotionalText = "promotional_text"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+struct UpsertMetadataRequest: Codable {
+    let locale: String
+    let versionTag: String
+    let title: String?
+    let subtitle: String?
+    let description: String?
+    let keywords: String?
+    let promotionalText: String?
+
+    enum CodingKeys: String, CodingKey {
+        case locale, title, subtitle, description, keywords
+        case versionTag = "version_tag"
+        case promotionalText = "promotional_text"
+    }
+}

@@ -6,15 +6,61 @@ struct AppDetailView: View {
     @EnvironmentObject var appState: AppState
     let app: ASOApp
 
-    enum Tab { case keywords }
+    enum Tab: String, CaseIterable {
+        case keywords = "キーワード"
+        case gap      = "競合ギャップ"
+        case metadata = "メタデータ"
+    }
+
+    @State private var selectedTab: Tab = .keywords
     @State private var keywords: [Keyword] = []
     @State private var selectedKeyword: Keyword?
     @State private var showAddKeyword = false
     @State private var isLoading = false
 
     var body: some View {
+        VStack(spacing: 0) {
+            // Tab bar
+            HStack(spacing: 0) {
+                ForEach(Tab.allCases, id: \.self) { tab in
+                    Button(tab.rawValue) { selectedTab = tab }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(selectedTab == tab ? Color.accentColor.opacity(0.15) : .clear)
+                        .foregroundStyle(selectedTab == tab ? Color.accentColor : .primary)
+                        .fontWeight(selectedTab == tab ? .semibold : .regular)
+                }
+                Spacer()
+            }
+            .background(Color(nsColor: .windowBackgroundColor))
+
+            Divider()
+
+            switch selectedTab {
+            case .keywords:
+                keywordsPane
+            case .gap:
+                KeywordGapView(app: app)
+                    .environmentObject(appState)
+            case .metadata:
+                MetadataView(app: app)
+                    .environmentObject(appState)
+            }
+        }
+        .navigationTitle(app.name)
+        .sheet(isPresented: $showAddKeyword) {
+            AddKeywordView(app: app) { newKw in
+                keywords.append(newKw)
+            }
+            .environmentObject(appState)
+        }
+    }
+
+    // MARK: - Keywords pane
+
+    private var keywordsPane: some View {
         HSplitView {
-            // Left: keyword list
             VStack(spacing: 0) {
                 HStack {
                     Text("キーワード").font(.headline)
@@ -47,8 +93,8 @@ struct AppDetailView: View {
                 }
             }
             .frame(minWidth: 220, idealWidth: 240, maxWidth: 300)
+            .task { await fetchKeywords() }
 
-            // Right: ranking chart
             if let kw = selectedKeyword {
                 RankingChartView(app: app, keyword: kw)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -60,14 +106,6 @@ struct AppDetailView: View {
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-        }
-        .navigationTitle(app.name)
-        .task { await fetchKeywords() }
-        .sheet(isPresented: $showAddKeyword) {
-            AddKeywordView(app: app) { newKw in
-                keywords.append(newKw)
-            }
-            .environmentObject(appState)
         }
     }
 
