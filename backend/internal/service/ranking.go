@@ -30,6 +30,13 @@ func (s *RankingService) ListByKeyword(ctx context.Context, keywordID string, li
 	return s.repo.ListByKeyword(ctx, keywordID, limit)
 }
 
+func (s *RankingService) ListByKeywordDays(ctx context.Context, keywordID string, days int) ([]*model.RankingHistory, error) {
+	if days <= 0 {
+		days = 30
+	}
+	return s.repo.ListByKeywordDays(ctx, keywordID, days)
+}
+
 func (s *RankingService) ListByApp(ctx context.Context, appID string, days int) ([]*model.RankingWithKeyword, error) {
 	if days <= 0 {
 		days = 30

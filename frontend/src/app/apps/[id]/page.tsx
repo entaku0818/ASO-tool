@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '@/hooks/useApp'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
-import { useRankings } from '@/hooks/useRankings'
+import { useMultiRankings } from '@/hooks/useMultiRankings'
 import { RankingChart } from '@/components/RankingChart'
 import {
   createKeyword,
@@ -70,13 +70,13 @@ function DifficultyBadge({ popularityScore }: { popularityScore?: number }) {
 function KeywordRow({
   keyword,
   isSelected,
-  onSelect,
+  onToggle,
   onDelete,
   onTranslate,
 }: {
   keyword: KeywordWithRanking
   isSelected: boolean
-  onSelect: () => void
+  onToggle: () => void
   onDelete: () => void
   onTranslate: (text: string) => void
 }) {
@@ -91,9 +91,20 @@ function KeywordRow({
   return (
     <tr
       className={`border-b cursor-pointer ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-      onClick={onSelect}
+      onClick={onToggle}
     >
-      <td className="py-3 px-4">{keyword.keyword}</td>
+      <td className="py-3 px-4">
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggle}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded border-gray-300 text-blue-600"
+          />
+          {keyword.keyword}
+        </div>
+      </td>
       <td className="py-3 px-4">{keyword.country}</td>
       <td className={`py-3 px-4 font-bold ${rankColor}`}>
         {keyword.latestRank === null ? '圏外' : `${keyword.latestRank}位`}
@@ -200,16 +211,52 @@ function RisingKeywordsSection({ appId }: { appId: string }) {
   )
 }
 
-function RankingChartSection({ appId, keywordId, keywordName }: { appId: string; keywordId: string; keywordName: string }) {
-  const { rankings, isLoading } = useRankings(appId, keywordId)
+const PERIOD_OPTIONS = [
+  { label: '7日', value: 7 },
+  { label: '30日', value: 30 },
+  { label: '90日', value: 90 },
+] as const
+
+function MultiRankingChartSection({
+  appId,
+  selectedKeywords,
+}: {
+  appId: string
+  selectedKeywords: { id: string; keyword: string }[]
+}) {
+  const [days, setDays] = useState<7 | 30 | 90>(30)
+  const { data, isLoading } = useMultiRankings(appId, selectedKeywords, days)
+
+  if (selectedKeywords.length === 0) return null
+
+  const title = selectedKeywords.length === 1
+    ? `「${selectedKeywords[0].keyword}」の順位推移`
+    : `${selectedKeywords.length}件のキーワード比較`
 
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-6">
-      <h3 className="text-lg font-semibold mb-4">「{keywordName}」の順位推移</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <div className="flex gap-1">
+          {PERIOD_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setDays(opt.value)}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                days === opt.value
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {isLoading ? (
-        <p className="text-gray-500">読み込み中...</p>
+        <p className="text-gray-500 text-sm">読み込み中...</p>
       ) : (
-        <RankingChart rankings={rankings} />
+        <RankingChart keywords={data} />
       )}
     </div>
   )
@@ -604,7 +651,7 @@ export default function AppDetailPage() {
   const { user } = useAuth()
   const isPro = user?.is_pro ?? false
   const upgradeModal = useUpgradeModal()
-  const [selectedKeyword, setSelectedKeyword] = useState<KeywordWithRanking | null>(null)
+  const [selectedKeywordIds, setSelectedKeywordIds] = useState<Set<string>>(new Set())
   const [newKeyword, setNewKeyword] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [translateModal, setTranslateModal] = useState<{ text: string; result: string; sourceLang: string } | null>(null)
@@ -633,9 +680,7 @@ export default function AppDetailPage() {
     if (!confirm('このキーワードを削除しますか？')) return
     try {
       await deleteKeyword(appId, keywordId)
-      if (selectedKeyword?.id === keywordId) {
-        setSelectedKeyword(null)
-      }
+      setSelectedKeywordIds((prev) => { const next = new Set(prev); next.delete(keywordId); return next })
       refetch()
     } catch {
       showToast('キーワードの削除に失敗しました', 'error')
@@ -746,13 +791,12 @@ export default function AppDetailPage() {
         <SearchAdsSection appId={appId} onPopularityRefreshed={refetch} />
       )}
 
-      {selectedKeyword && (
-        <RankingChartSection
-          appId={appId}
-          keywordId={selectedKeyword.id}
-          keywordName={selectedKeyword.keyword}
-        />
-      )}
+      <MultiRankingChartSection
+        appId={appId}
+        selectedKeywords={keywords
+          .filter((k) => selectedKeywordIds.has(k.id))
+          .map((k) => ({ id: k.id, keyword: k.keyword }))}
+      />
 
       <div className="bg-white rounded-lg shadow">
         <div className="p-4 border-b flex items-center justify-between">
@@ -860,8 +904,12 @@ export default function AppDetailPage() {
                 <KeywordRow
                   key={keyword.id}
                   keyword={keyword}
-                  isSelected={selectedKeyword?.id === keyword.id}
-                  onSelect={() => setSelectedKeyword(keyword)}
+                  isSelected={selectedKeywordIds.has(keyword.id)}
+                  onToggle={() => setSelectedKeywordIds((prev) => {
+                    const next = new Set(prev)
+                    next.has(keyword.id) ? next.delete(keyword.id) : next.add(keyword.id)
+                    return next
+                  })}
                   onDelete={() => handleDeleteKeyword(keyword.id)}
                   onTranslate={handleTranslate}
                 />
@@ -906,7 +954,7 @@ export default function AppDetailPage() {
         <CompetitorSection
           appId={appId}
           platform={app.platform}
-          selectedKeywordId={selectedKeyword?.id}
+          selectedKeywordId={selectedKeywordIds.size === 1 ? Array.from(selectedKeywordIds)[0] : undefined}
         />
       </div>
 

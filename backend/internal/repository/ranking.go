@@ -41,6 +41,32 @@ func (r *RankingRepository) Create(ctx context.Context, req *model.CreateRanking
 	return ranking, nil
 }
 
+func (r *RankingRepository) ListByKeywordDays(ctx context.Context, keywordID string, days int) ([]*model.RankingHistory, error) {
+	since := time.Now().AddDate(0, 0, -days)
+	query := `
+		SELECT id, keyword_id, rank, recorded_at
+		FROM ranking_history
+		WHERE keyword_id = $1
+		  AND recorded_at >= $2
+		ORDER BY recorded_at ASC
+	`
+	rows, err := r.pool.Query(ctx, query, keywordID, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var rankings []*model.RankingHistory
+	for rows.Next() {
+		ranking := &model.RankingHistory{}
+		if err := rows.Scan(&ranking.ID, &ranking.KeywordID, &ranking.Rank, &ranking.RecordedAt); err != nil {
+			return nil, err
+		}
+		rankings = append(rankings, ranking)
+	}
+	return rankings, nil
+}
+
 func (r *RankingRepository) ListByKeyword(ctx context.Context, keywordID string, limit int) ([]*model.RankingHistory, error) {
 	query := `
 		SELECT id, keyword_id, rank, recorded_at

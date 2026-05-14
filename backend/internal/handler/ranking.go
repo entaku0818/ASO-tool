@@ -38,14 +38,27 @@ func (h *RankingHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *RankingHandler) ListByKeyword(w http.ResponseWriter, r *http.Request) {
 	keywordID := chi.URLParam(r, "keywordID")
 
-	limit := 30
-	if l := r.URL.Query().Get("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
-			limit = parsed
+	var (
+		rankings []*model.RankingHistory
+		err      error
+	)
+
+	if d := r.URL.Query().Get("days"); d != "" {
+		days := 30
+		if parsed, parseErr := strconv.Atoi(d); parseErr == nil && parsed > 0 {
+			days = parsed
 		}
+		rankings, err = h.service.ListByKeywordDays(r.Context(), keywordID, days)
+	} else {
+		limit := 30
+		if l := r.URL.Query().Get("limit"); l != "" {
+			if parsed, parseErr := strconv.Atoi(l); parseErr == nil && parsed > 0 {
+				limit = parsed
+			}
+		}
+		rankings, err = h.service.ListByKeyword(r.Context(), keywordID, limit)
 	}
 
-	rankings, err := h.service.ListByKeyword(r.Context(), keywordID, limit)
 	if err != nil {
 		handleServiceError(w, err)
 		return

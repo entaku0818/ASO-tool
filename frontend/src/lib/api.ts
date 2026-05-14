@@ -118,8 +118,9 @@ export async function getKeywords(appId: string): Promise<Keyword[]> {
   return fetchApi<Keyword[]>(`/api/apps/${appId}/keywords`)
 }
 
-export async function getRankings(appId: string, keywordId: string): Promise<Ranking[]> {
-  return fetchApi<Ranking[]>(`/api/apps/${appId}/keywords/${keywordId}/rankings`)
+export async function getRankings(appId: string, keywordId: string, days?: number): Promise<Ranking[]> {
+  const query = days ? `?days=${days}` : ''
+  return fetchApi<Ranking[]>(`/api/apps/${appId}/keywords/${keywordId}/rankings${query}`)
 }
 
 export async function getLatestRanking(appId: string, keywordId: string): Promise<Ranking | null> {
