@@ -142,6 +142,11 @@ func main() {
 	licenseService := service.NewLicenseService(licenseRepo, userRepo, authService)
 	licenseHandler := handler.NewLicenseHandler(licenseService)
 
+	// App metadata versions
+	metadataRepo := repository.NewMetadataRepository(pool)
+	metadataService := service.NewMetadataService(metadataRepo)
+	metadataHandler := handler.NewMetadataHandler(metadataService)
+
 	// Public service
 	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
 	storeRankingRepo := repository.NewStoreRankingRepository(pool)
@@ -259,6 +264,13 @@ func main() {
 					r.Get("/{screenshotID}", screenshotHandler.Get)
 					r.Put("/{screenshotID}", screenshotHandler.Update)
 					r.Delete("/{screenshotID}", screenshotHandler.Delete)
+				})
+
+				// App metadata versions
+				r.Route("/{appID}/metadata", func(r chi.Router) {
+					r.Get("/", metadataHandler.List)
+					r.Put("/", metadataHandler.Upsert)
+					r.Delete("/{metadataID}", metadataHandler.Delete)
 				})
 
 				// App Store Connect credentials
