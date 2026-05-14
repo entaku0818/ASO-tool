@@ -645,6 +645,36 @@ export async function createCheckoutSession(planType: 'monthly' | 'yearly'): Pro
   })
 }
 
+export async function createLicenseCheckout(email: string): Promise<{ url: string }> {
+  return fetchApi<{ url: string }>('/api/licenses/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export type LicenseKey = {
+  id: string
+  key: string
+  email: string
+  user_id?: string
+  is_active: boolean
+  activated_at?: string
+  expires_at?: string
+  stripe_session_id?: string
+  created_at: string
+}
+
+export async function getAdminLicenses(): Promise<LicenseKey[]> {
+  return fetchApi<LicenseKey[]>('/api/admin/licenses')
+}
+
+export async function generateLicense(email: string): Promise<LicenseKey> {
+  return fetchApi<LicenseKey>('/api/licenses/generate', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
 export type TemplateStyle = {
   bg_color?: string
   bg_gradient_from?: string
