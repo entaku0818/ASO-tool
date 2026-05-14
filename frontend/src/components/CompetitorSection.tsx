@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import {
   Competitor,
+  KeywordGap,
   getCompetitors,
   createCompetitor,
   deleteCompetitor,
   updateCompetitorRankings,
   getCompetitorComparison,
+  getKeywordGap,
   CompetitorComparison,
 } from '@/lib/api'
 
@@ -20,6 +22,9 @@ type CompetitorSectionProps = {
 export function CompetitorSection({ appId, platform, selectedKeywordId }: CompetitorSectionProps) {
   const [competitors, setCompetitors] = useState<Competitor[]>([])
   const [comparison, setComparison] = useState<CompetitorComparison | null>(null)
+  const [gaps, setGaps] = useState<KeywordGap[]>([])
+  const [showGap, setShowGap] = useState(false)
+  const [isLoadingGap, setIsLoadingGap] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -87,6 +92,23 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
     }
   }
 
+  const handleShowGap = async () => {
+    if (showGap) {
+      setShowGap(false)
+      return
+    }
+    setIsLoadingGap(true)
+    try {
+      const data = await getKeywordGap(appId)
+      setGaps(data)
+      setShowGap(true)
+    } catch (e) {
+      console.error('Failed to fetch keyword gap:', e)
+    } finally {
+      setIsLoadingGap(false)
+    }
+  }
+
   const handleUpdateRankings = async () => {
     setIsUpdating(true)
     try {
@@ -125,6 +147,18 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
           <p className="text-sm text-gray-500">競合アプリの順位を比較</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleShowGap}
+            disabled={isLoadingGap || competitors.length === 0}
+            className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
+          >
+            {isLoadingGap ? '取得中...' : showGap ? 'ギャップ非表示' : 'キーワードギャップ'}
+            {!showGap && gaps.length > 0 && (
+              <span className="inline-flex items-center justify-center w-5 h-5 text-xs bg-white text-purple-700 rounded-full font-bold">
+                {gaps.length}
+              </span>
+            )}
+          </button>
           <button
             onClick={handleUpdateRankings}
             disabled={isUpdating || competitors.length === 0}
@@ -173,6 +207,43 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
               {isAdding ? '追加中...' : '競合アプリを追加'}
             </button>
           </div>
+        </div>
+      )}
+
+      {showGap && (
+        <div className="p-4 border-b bg-purple-50">
+          <h4 className="font-medium mb-1 text-purple-800">キーワードギャップ</h4>
+          <p className="text-xs text-purple-600 mb-3">競合が20位以内・自社が30位以下またはランク外のキーワード</p>
+          {gaps.length === 0 ? (
+            <p className="text-sm text-gray-500">ギャップキーワードはありません</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-purple-700">
+                    <th className="pb-2 pr-4">キーワード</th>
+                    <th className="pb-2 pr-4">国</th>
+                    <th className="pb-2 pr-4">競合アプリ</th>
+                    <th className="pb-2 pr-4">競合順位</th>
+                    <th className="pb-2">自社順位</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gaps.map((g) => (
+                    <tr key={g.keyword_id} className="border-t border-purple-100">
+                      <td className="py-1.5 pr-4 font-medium">{g.keyword}</td>
+                      <td className="py-1.5 pr-4 text-gray-500">{g.country}</td>
+                      <td className="py-1.5 pr-4 text-gray-600">{g.competitor_name}</td>
+                      <td className="py-1.5 pr-4 text-green-700 font-bold">{g.competitor_rank}位</td>
+                      <td className="py-1.5 text-red-600 font-bold">
+                        {g.our_rank === null ? '圏外' : `${g.our_rank}位`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

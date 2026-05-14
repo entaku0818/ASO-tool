@@ -268,6 +268,19 @@ export async function getCompetitorComparison(appId: string, keywordId: string):
   return fetchApi<CompetitorComparison>(`/api/apps/${appId}/keywords/${keywordId}/comparison`)
 }
 
+export type KeywordGap = {
+  keyword_id: string
+  keyword: string
+  country: string
+  competitor_name: string
+  competitor_rank: number
+  our_rank: number | null
+}
+
+export async function getKeywordGap(appId: string): Promise<KeywordGap[]> {
+  return fetchApi<KeywordGap[]>(`/api/apps/${appId}/competitors/keyword-gap`)
+}
+
 // App Store Connect Analytics
 export type ASCCredentials = {
   id: string
