@@ -18,6 +18,8 @@ import {
   refreshKeywordPopularity,
   getKeywordSuggestions,
   getCompetitorKeywordSuggestions,
+  getKeywordGap,
+  KeywordGap,
   translateKeyword,
   SearchAdsCredentials,
   KeywordPopularitySuggestion,
@@ -706,23 +708,38 @@ export default function AppDetailPage() {
     }
   }
 
-  const exportCSV = () => {
-    const header = 'キーワード,国,順位,人気スコア,最終更新'
-    const rows = keywords.map(k =>
-      [
+  const exportCSV = async () => {
+    let gaps: KeywordGap[] = []
+    try {
+      gaps = await getKeywordGap(appId)
+    } catch {
+      // proceed without gap data
+    }
+    const gapMap = new Map(gaps.map(g => [g.keyword_id, g]))
+
+    const header = 'キーワード,国,自社順位,人気スコア,競合名,競合順位,最終更新'
+    const rows = keywords.map(k => {
+      const gap = gapMap.get(k.id)
+      return [
         `"${k.keyword}"`,
         k.country,
         k.latestRank ?? '圏外',
         k.popularity_score ?? '',
+        gap ? `"${gap.competitor_name}"` : '',
+        gap ? gap.competitor_rank : '',
         k.popularity_fetched_at ? new Date(k.popularity_fetched_at).toLocaleDateString('ja-JP') : '',
       ].join(',')
-    )
+    })
     const csv = [header, ...rows].join('\n')
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
     a.download = `keywords_${appId}.csv`
     a.click()
+  }
+
+  const exportPDF = () => {
+    window.print()
   }
 
   if (appLoading) {
@@ -805,22 +822,30 @@ export default function AppDetailPage() {
             <p className="text-sm text-gray-500">クリックで順位推移を表示 / 翻訳ボタンで英語翻訳</p>
           </div>
           {keywords.length > 0 && (
-            isPro ? (
+            <div className="flex gap-2">
               <button
-                onClick={exportCSV}
-                className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1"
+                onClick={exportPDF}
+                className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1 print:hidden"
               >
-                ↓ CSVエクスポート
+                ↓ PDFエクスポート
               </button>
-            ) : (
-              <button
-                onClick={() => upgradeModal.open('CSVエクスポート')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-lg text-sm hover:bg-gray-200 transition-colors"
-              >
-                🔒 CSVエクスポート
-                <span className="text-blue-500 text-xs">Proで解除 →</span>
-              </button>
-            )
+              {isPro ? (
+                <button
+                  onClick={exportCSV}
+                  className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1"
+                >
+                  ↓ CSVエクスポート
+                </button>
+              ) : (
+                <button
+                  onClick={() => upgradeModal.open('CSVエクスポート')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                >
+                  🔒 CSVエクスポート
+                  <span className="text-blue-500 text-xs">Proで解除 →</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
 
