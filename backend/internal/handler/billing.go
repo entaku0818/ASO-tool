@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/entaku0818/aso-tool/backend/internal/middleware"
@@ -55,7 +56,7 @@ func (h *BillingHandler) Webhook(w http.ResponseWriter, r *http.Request) {
 	signature := r.Header.Get("Stripe-Signature")
 
 	if err := h.service.HandleWebhook(r.Context(), r.Body, signature); err != nil {
-		// Return 400 so Stripe retries on signature/parse errors, 200 on unknown events
+		log.Printf("webhook error: %v", err)
 		respondError(w, http.StatusBadRequest, "webhook processing failed")
 		return
 	}
