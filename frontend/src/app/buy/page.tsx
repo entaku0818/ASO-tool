@@ -62,13 +62,14 @@ export default function BuyPage() {
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 max-w-md mx-auto">
           <div className="text-center mb-6">
             <div className="text-5xl font-bold text-gray-900 mb-1">¥9,800</div>
-            <div className="text-gray-500">買い切り・永続ライセンス</div>
+            <div className="text-gray-500">年額・毎年自動更新</div>
           </div>
 
           <ul className="space-y-2 mb-8 text-sm text-gray-600">
             <li className="flex items-center gap-2"><span className="text-green-500">✓</span>1ライセンス = 1アカウント</li>
             <li className="flex items-center gap-2"><span className="text-green-500">✓</span>macOS 13 Ventura以降対応</li>
             <li className="flex items-center gap-2"><span className="text-green-500">✓</span>購入後すぐにメールでキーを送付</li>
+            <li className="flex items-center gap-2"><span className="text-green-500">✓</span>いつでも解約可能・残期間は利用可</li>
             <li className="flex items-center gap-2"><span className="text-green-500">✓</span>クレジットカード決済（Stripe）</li>
           </ul>
 
@@ -108,8 +109,12 @@ export default function BuyPage() {
             <p>購入後にダウンロードリンクをメールでお送りします。</p>
           </div>
           <div>
+            <p className="font-medium text-gray-800">解約はできますか？</p>
+            <p>いつでも解約できます。解約後はその年の有効期限まで引き続き利用できます。</p>
+          </div>
+          <div>
             <p className="font-medium text-gray-800">返金はできますか？</p>
-            <p>購入後7日以内であれば全額返金対応しています。サポートまでご連絡ください。</p>
+            <p>初回購入後7日以内であれば全額返金対応しています。サポートまでご連絡ください。</p>
           </div>
         </div>
       </div>

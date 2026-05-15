@@ -16,13 +16,29 @@ func NewLicenseRepository(pool *pgxpool.Pool) *LicenseRepository {
 	return &LicenseRepository{pool: pool}
 }
 
-func (r *LicenseRepository) Create(ctx context.Context, key, email string, stripeSessionID *string) (*model.LicenseKey, error) {
+func (r *LicenseRepository) Create(ctx context.Context, key, email string, stripeSessionID, stripeSubscriptionID *string) (*model.LicenseKey, error) {
 	query := `
-		INSERT INTO license_keys (key, email, stripe_session_id)
-		VALUES ($1, $2, $3)
+		INSERT INTO license_keys (key, email, stripe_session_id, stripe_subscription_id, expires_at)
+		VALUES ($1, $2, $3, $4, NOW() + INTERVAL '1 year')
 		RETURNING id, key, email, user_id, is_active, activated_at, expires_at, stripe_session_id, created_at
 	`
-	return r.scan(r.pool.QueryRow(ctx, query, key, email, stripeSessionID))
+	return r.scan(r.pool.QueryRow(ctx, query, key, email, stripeSessionID, stripeSubscriptionID))
+}
+
+func (r *LicenseRepository) ExtendBySubscription(ctx context.Context, subscriptionID string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE license_keys SET expires_at = NOW() + INTERVAL '1 year' WHERE stripe_subscription_id = $1`,
+		subscriptionID,
+	)
+	return err
+}
+
+func (r *LicenseRepository) DeactivateBySubscription(ctx context.Context, subscriptionID string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE license_keys SET is_active = false WHERE stripe_subscription_id = $1`,
+		subscriptionID,
+	)
+	return err
 }
 
 func (r *LicenseRepository) GetByKey(ctx context.Context, key string) (*model.LicenseKey, error) {

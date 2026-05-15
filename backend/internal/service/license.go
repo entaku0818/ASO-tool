@@ -50,7 +50,7 @@ func (s *LicenseService) Generate(ctx context.Context, req *model.GenerateLicens
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.Create(ctx, key, req.Email, req.StripeSessionID)
+	return s.repo.Create(ctx, key, req.Email, req.StripeSessionID, nil)
 }
 
 func (s *LicenseService) Activate(ctx context.Context, req *model.ActivateLicenseRequest) (*model.ActivateLicenseResponse, error) {
@@ -114,7 +114,7 @@ func (s *LicenseService) List(ctx context.Context) ([]*model.LicenseKey, error) 
 	return s.repo.List(ctx)
 }
 
-// CreateCheckoutSession creates a Stripe one-time payment session for a license key.
+// CreateCheckoutSession creates a Stripe subscription checkout session for a license key.
 func (s *LicenseService) CreateCheckoutSession(ctx context.Context, email string) (string, error) {
 	if stripe.Key == "" {
 		return "", model.ErrStripeKeyRequired
@@ -128,10 +128,12 @@ func (s *LicenseService) CreateCheckoutSession(ctx context.Context, email string
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{Price: stripe.String(s.priceLicense), Quantity: stripe.Int64(1)},
 		},
-		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
+		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
 		SuccessURL: stripe.String(s.frontendBaseURL + "/buy/success?session_id={CHECKOUT_SESSION_ID}"),
 		CancelURL:  stripe.String(s.frontendBaseURL + "/buy"),
-		Metadata:   map[string]string{"purchase_type": "license"},
+		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			Metadata: map[string]string{"purchase_type": "license"},
+		},
 	}
 
 	sess, err := stripeSession.New(params)
@@ -143,13 +145,17 @@ func (s *LicenseService) CreateCheckoutSession(ctx context.Context, email string
 
 // GenerateAndSendLicense generates a license key and sends it by email.
 // Called from the Stripe webhook after payment is confirmed.
-func (s *LicenseService) GenerateAndSendLicense(ctx context.Context, email, stripeSessionID string) (*model.LicenseKey, error) {
+func (s *LicenseService) GenerateAndSendLicense(ctx context.Context, email, stripeSessionID, stripeSubscriptionID string) (*model.LicenseKey, error) {
 	key, err := generateKey()
 	if err != nil {
 		return nil, err
 	}
 	sid := stripeSessionID
-	lk, err := s.repo.Create(ctx, key, email, &sid)
+	var subID *string
+	if stripeSubscriptionID != "" {
+		subID = &stripeSubscriptionID
+	}
+	lk, err := s.repo.Create(ctx, key, email, &sid, subID)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +163,16 @@ func (s *LicenseService) GenerateAndSendLicense(ctx context.Context, email, stri
 		log.Printf("warn: failed to send license email to %s: %v", email, sendErr)
 	}
 	return lk, nil
+}
+
+// ExtendLicense extends the expiry of a license by 1 year on subscription renewal.
+func (s *LicenseService) ExtendLicense(ctx context.Context, subscriptionID string) error {
+	return s.repo.ExtendBySubscription(ctx, subscriptionID)
+}
+
+// DeactivateBySubscription deactivates a license when its subscription is cancelled.
+func (s *LicenseService) DeactivateBySubscription(ctx context.Context, subscriptionID string) error {
+	return s.repo.DeactivateBySubscription(ctx, subscriptionID)
 }
 
 func generateKey() (string, error) {

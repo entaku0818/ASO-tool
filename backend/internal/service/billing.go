@@ -139,6 +139,8 @@ func (s *BillingService) HandleWebhook(ctx context.Context, body io.Reader, sign
 	switch event.Type {
 	case "checkout.session.completed":
 		return s.handleCheckoutCompleted(ctx, event)
+	case "invoice.payment_succeeded":
+		return s.handleInvoicePaymentSucceeded(ctx, event)
 	case "customer.subscription.updated":
 		return s.handleSubscriptionUpdated(ctx, event)
 	case "customer.subscription.deleted":
@@ -156,8 +158,12 @@ func (s *BillingService) handleCheckoutCompleted(ctx context.Context, event stri
 		return fmt.Errorf("parse checkout.session: %w", err)
 	}
 
-	// License key purchase (one-time payment)
-	if sess.Metadata["purchase_type"] == "license" {
+	// License key subscription purchase
+	subMeta := map[string]string{}
+	if sess.Subscription != nil {
+		subMeta = sess.Subscription.Metadata
+	}
+	if sess.Metadata["purchase_type"] == "license" || subMeta["purchase_type"] == "license" {
 		email := sess.CustomerEmail
 		if email == "" && sess.CustomerDetails != nil {
 			email = sess.CustomerDetails.Email
@@ -168,7 +174,11 @@ func (s *BillingService) handleCheckoutCompleted(ctx context.Context, event stri
 		if s.licenseService == nil {
 			return fmt.Errorf("license service not wired")
 		}
-		lk, err := s.licenseService.GenerateAndSendLicense(ctx, email, sess.ID)
+		subID := ""
+		if sess.Subscription != nil {
+			subID = sess.Subscription.ID
+		}
+		lk, err := s.licenseService.GenerateAndSendLicense(ctx, email, sess.ID, subID)
 		if err != nil {
 			return fmt.Errorf("generate license for %s: %w", email, err)
 		}
@@ -192,6 +202,32 @@ func (s *BillingService) handleCheckoutCompleted(ctx context.Context, event stri
 	}
 
 	log.Printf("info: user %s upgraded to pro (subscription: %s)", user.ID, subscriptionID)
+	return nil
+}
+
+// handleInvoicePaymentSucceeded extends license expiry by 1 year on renewal.
+func (s *BillingService) handleInvoicePaymentSucceeded(ctx context.Context, event stripe.Event) error {
+	var inv stripe.Invoice
+	if err := json.Unmarshal(event.Data.Raw, &inv); err != nil {
+		return fmt.Errorf("parse invoice: %w", err)
+	}
+	// Only handle license subscription renewals (not first payment — that is handled by checkout.session.completed)
+	if inv.BillingReason != stripe.InvoiceBillingReasonSubscriptionCycle {
+		return nil
+	}
+	if inv.Subscription == nil {
+		return nil
+	}
+	if inv.Subscription.Metadata["purchase_type"] != "license" {
+		return nil
+	}
+	if s.licenseService == nil {
+		return fmt.Errorf("license service not wired")
+	}
+	if err := s.licenseService.ExtendLicense(ctx, inv.Subscription.ID); err != nil {
+		return fmt.Errorf("extend license for subscription %s: %w", inv.Subscription.ID, err)
+	}
+	log.Printf("info: license extended for subscription %s", inv.Subscription.ID)
 	return nil
 }
 
@@ -223,6 +259,17 @@ func (s *BillingService) handleSubscriptionDeleted(ctx context.Context, event st
 	var sub stripe.Subscription
 	if err := json.Unmarshal(event.Data.Raw, &sub); err != nil {
 		return fmt.Errorf("parse subscription: %w", err)
+	}
+
+	// License subscription cancelled — deactivate license
+	if sub.Metadata["purchase_type"] == "license" {
+		if s.licenseService != nil {
+			if err := s.licenseService.DeactivateBySubscription(ctx, sub.ID); err != nil {
+				log.Printf("warn: failed to deactivate license for subscription %s: %v", sub.ID, err)
+			}
+		}
+		log.Printf("info: license deactivated for subscription %s", sub.ID)
+		return nil
 	}
 
 	user, err := s.userRepo.GetByStripeCustomerID(ctx, sub.Customer.ID)
