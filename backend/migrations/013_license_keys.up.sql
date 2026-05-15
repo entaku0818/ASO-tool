@@ -2,7 +2,7 @@ CREATE TABLE license_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     key VARCHAR(24) UNIQUE NOT NULL,
     email VARCHAR(255) NOT NULL,
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
     is_active BOOLEAN NOT NULL DEFAULT false,
     activated_at TIMESTAMPTZ,
     expires_at TIMESTAMPTZ,
