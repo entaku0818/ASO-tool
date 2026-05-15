@@ -128,7 +128,9 @@ func (s *BillingService) HandleWebhook(ctx context.Context, body io.Reader, sign
 			return fmt.Errorf("parse webhook payload: %w", err)
 		}
 	} else {
-		event, err = webhook.ConstructEvent(payload, signature, s.webhookSecret)
+		event, err = webhook.ConstructEventWithOptions(payload, signature, s.webhookSecret, webhook.ConstructEventOptions{
+			IgnoreAPIVersionMismatch: true,
+		})
 		if err != nil {
 			return fmt.Errorf("webhook signature verification failed: %w", err)
 		}
