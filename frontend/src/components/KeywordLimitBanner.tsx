@@ -46,7 +46,7 @@ export function KeywordLimitBanner({ appId, count, limit = 10, onUpgrade }: Keyw
     <>
     <div className={`flex items-start justify-between gap-3 px-4 py-3 rounded-xl border mb-4 ${
       atLimit
-        ? 'bg-red-50 border-red-200'
+        ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
         : 'bg-amber-50 border-amber-200'
     }`}>
       <div className="flex items-start gap-2 min-w-0">
@@ -54,10 +54,10 @@ export function KeywordLimitBanner({ appId, count, limit = 10, onUpgrade }: Keyw
         <div className="min-w-0">
           {atLimit ? (
             <>
-              <p className="text-sm font-semibold text-red-700">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-300">
                 キーワード登録が上限（{limit}件）に達しています
               </p>
-              <p className="text-xs text-red-600 mt-0.5">
+              <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
                 Pro プランにアップグレードすると無制限に登録できます。
               </p>
             </>
@@ -93,7 +93,7 @@ export function KeywordLimitBanner({ appId, count, limit = 10, onUpgrade }: Keyw
             </button>
             <button
               onClick={handleDismiss}
-              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors flex-shrink-0"
               aria-label="閉じる"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

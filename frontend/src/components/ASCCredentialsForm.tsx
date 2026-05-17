@@ -92,7 +92,7 @@ export function ASCCredentialsForm({ appId, existingCredentials, onSuccess }: Pr
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Issuer ID
         </label>
         <input
@@ -100,13 +100,13 @@ export function ASCCredentialsForm({ appId, existingCredentials, onSuccess }: Pr
           value={issuerId}
           onChange={(e) => setIssuerId(e.target.value)}
           placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Key ID
         </label>
         <input
@@ -114,35 +114,35 @@ export function ASCCredentialsForm({ appId, existingCredentials, onSuccess }: Pr
           value={keyId}
           onChange={(e) => setKeyId(e.target.value)}
           placeholder="XXXXXXXXXX"
-          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Private Key (.p8 file)
         </label>
         <input
           type="file"
           accept=".p8"
           onChange={handleFileChange}
-          className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         {existingCredentials && !privateKeyFile && (
-          <p className="text-xs text-gray-500 mt-1">Leave empty to keep existing key</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to keep existing key</p>
         )}
       </div>
 
       {error && (
-        <div className="text-red-600 text-sm">{error}</div>
+        <div className="text-red-600 dark:text-red-400 text-sm">{error}</div>
       )}
 
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-500 dark:bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
         >
           {isSubmitting ? 'Saving...' : 'Save'}
         </button>
@@ -153,7 +153,7 @@ export function ASCCredentialsForm({ appId, existingCredentials, onSuccess }: Pr
               type="button"
               onClick={handleValidate}
               disabled={validationStatus === 'validating'}
-              className="px-4 py-2 border rounded hover:bg-gray-50"
+              className="px-4 py-2 border rounded hover:bg-gray-50 dark:hover:bg-[#0d0f14] dark:border-gray-600 dark:text-gray-300"
             >
               {validationStatus === 'validating' ? 'Validating...' : 'Validate'}
             </button>
@@ -161,7 +161,7 @@ export function ASCCredentialsForm({ appId, existingCredentials, onSuccess }: Pr
               type="button"
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="px-4 py-2 text-red-600 border border-red-300 rounded hover:bg-red-50"
+              className="px-4 py-2 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               Delete
             </button>
@@ -170,10 +170,10 @@ export function ASCCredentialsForm({ appId, existingCredentials, onSuccess }: Pr
       </div>
 
       {validationStatus === 'valid' && (
-        <div className="text-green-600 text-sm">Credentials are valid</div>
+        <div className="text-green-600 dark:text-green-400 text-sm">Credentials are valid</div>
       )}
       {validationStatus === 'invalid' && (
-        <div className="text-red-600 text-sm">Credentials are invalid</div>
+        <div className="text-red-600 dark:text-red-400 text-sm">Credentials are invalid</div>
       )}
     </form>
   )

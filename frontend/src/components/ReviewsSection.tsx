@@ -20,12 +20,12 @@ function ReviewCard({ review }: { review: Review }) {
           <StarRating rating={review.rating} />
           <span className="font-medium">{review.author}</span>
         </div>
-        <span className="text-sm text-gray-500">{formatDateTime(review.posted_at)}</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">{formatDateTime(review.posted_at)}</span>
       </div>
       {review.title && <p className="font-medium mb-1">{review.title}</p>}
-      <p className="text-gray-700 text-sm">{review.content}</p>
+      <p className="text-gray-700 dark:text-gray-300 text-sm">{review.content}</p>
       {review.version && (
-        <p className="text-xs text-gray-400 mt-2">v{review.version}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">v{review.version}</p>
       )}
     </div>
   )
@@ -36,15 +36,15 @@ export function ReviewsSection({ appId }: { appId: string }) {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 p-4">
         <h3 className="text-lg font-semibold mb-4">レビュー</h3>
-        <p className="text-gray-500">読み込み中...</p>
+        <p className="text-gray-500 dark:text-gray-400">読み込み中...</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20">
       <div className="p-4 border-b">
         <h3 className="text-lg font-semibold">レビュー ({reviews.length}件)</h3>
         {stats && stats.rating_counts && (
@@ -53,7 +53,7 @@ export function ReviewsSection({ appId }: { appId: string }) {
               <StarRating rating={Math.round(stats.average_rating || 0)} />
               <span className="font-bold">{(stats.average_rating || 0).toFixed(1)}</span>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               {[5, 4, 3, 2, 1].map((r) => (
                 <span key={r} className="mr-2">
                   {r}★: {stats.rating_counts?.[r] || 0}
@@ -66,14 +66,14 @@ export function ReviewsSection({ appId }: { appId: string }) {
 
       <div className="p-4">
         {reviews.length === 0 ? (
-          <p className="text-gray-500">レビューがありません</p>
+          <p className="text-gray-500 dark:text-gray-400">レビューがありません</p>
         ) : (
           <div className="max-h-96 overflow-y-auto">
             {reviews.slice(0, 20).map((review) => (
               <ReviewCard key={review.id} review={review} />
             ))}
             {reviews.length > 20 && (
-              <p className="text-center text-gray-500 py-2">
+              <p className="text-center text-gray-500 dark:text-gray-400 py-2">
                 他 {reviews.length - 20} 件のレビュー
               </p>
             )}

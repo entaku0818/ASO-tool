@@ -272,7 +272,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
         const lineH = Math.round(W / 14)
         const maxW = W - PADDING * 2
         const lines: string[] = []
-        const isCJK = (ch: string) => /[\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch)
+        const isCJK = (ch: string) => /[　-鿿가-힯＀-￯]/.test(ch)
         const segments = caption.split(' ')
         let line = ''
         for (const seg of segments) {
@@ -465,11 +465,11 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       {/* Device + alignment */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">デバイス</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">デバイス</label>
           <select
             value={device.id}
             onChange={(e) => setDevice(DEVICE_PRESETS.find(d => d.id === e.target.value)!)}
-            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             {DEVICE_PRESETS.map(d => (
               <option key={d.id} value={d.id}>{d.label}</option>
@@ -477,8 +477,8 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">画像位置</label>
-          <div className="flex rounded-lg border overflow-hidden">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">画像位置</label>
+          <div className="flex rounded-lg border dark:border-gray-600 overflow-hidden">
             {(['center', 'bottom'] as ImageAlign[]).map((align) => (
               <button
                 key={align}
@@ -486,7 +486,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
                 className={`flex-1 py-2 text-sm transition-colors ${
                   imageAlign === align
                     ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#0d0f14]'
                 }`}
               >
                 {align === 'center' ? '中央' : '下寄せ'}
@@ -498,10 +498,10 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
 
       {/* Background */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">背景</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">背景</label>
 
         {/* Type selector */}
-        <div className="flex rounded-lg border overflow-hidden mb-3">
+        <div className="flex rounded-lg border dark:border-gray-600 overflow-hidden mb-3">
           {([
             { id: 'solid',    label: '単色' },
             { id: 'gradient', label: 'グラデーション' },
@@ -513,7 +513,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
               className={`flex-1 py-2 text-sm transition-colors ${
                 bgType === id
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#0d0f14]'
               }`}
             >
               {label}
@@ -526,13 +526,13 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
           <div className="flex gap-3 items-center">
             <div className="flex items-center gap-2">
               <input type="color" value={bgColor} onChange={e => setBgColor(e.target.value)}
-                className="h-9 w-14 border rounded cursor-pointer" />
-              <span className="text-xs text-gray-500">背景色</span>
+                className="h-9 w-14 border dark:border-gray-600 rounded cursor-pointer" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">背景色</span>
             </div>
             <div className="flex items-center gap-2">
               <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
-                className="h-9 w-14 border rounded cursor-pointer" />
-              <span className="text-xs text-gray-500">テキスト色</span>
+                className="h-9 w-14 border dark:border-gray-600 rounded cursor-pointer" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">テキスト色</span>
             </div>
           </div>
         )}
@@ -543,19 +543,19 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
             <div className="flex gap-3 items-center">
               <div className="flex items-center gap-2">
                 <input type="color" value={bgGradFrom} onChange={e => setBgGradFrom(e.target.value)}
-                  className="h-9 w-14 border rounded cursor-pointer" />
-                <span className="text-xs text-gray-500">開始色</span>
+                  className="h-9 w-14 border dark:border-gray-600 rounded cursor-pointer" />
+                <span className="text-xs text-gray-500 dark:text-gray-400">開始色</span>
               </div>
-              <span className="text-gray-400">→</span>
+              <span className="text-gray-400 dark:text-gray-500">→</span>
               <div className="flex items-center gap-2">
                 <input type="color" value={bgGradTo} onChange={e => setBgGradTo(e.target.value)}
-                  className="h-9 w-14 border rounded cursor-pointer" />
-                <span className="text-xs text-gray-500">終了色</span>
+                  className="h-9 w-14 border dark:border-gray-600 rounded cursor-pointer" />
+                <span className="text-xs text-gray-500 dark:text-gray-400">終了色</span>
               </div>
               <div className="flex items-center gap-2">
                 <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
-                  className="h-9 w-14 border rounded cursor-pointer" />
-                <span className="text-xs text-gray-500">テキスト色</span>
+                  className="h-9 w-14 border dark:border-gray-600 rounded cursor-pointer" />
+                <span className="text-xs text-gray-500 dark:text-gray-400">テキスト色</span>
               </div>
             </div>
             <div className="flex gap-2">
@@ -570,7 +570,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                     bgGradDir === id
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
                   {label}
@@ -602,8 +602,8 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
             </div>
             <div className="flex items-center gap-2">
               <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)}
-                className="h-9 w-14 border rounded cursor-pointer" />
-              <span className="text-xs text-gray-500">テキスト色</span>
+                className="h-9 w-14 border dark:border-gray-600 rounded cursor-pointer" />
+              <span className="text-xs text-gray-500 dark:text-gray-400">テキスト色</span>
             </div>
           </div>
         )}
@@ -611,15 +611,15 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
 
       {/* Image upload */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">スクリーンショット画像</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">スクリーンショット画像</label>
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
+          className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
         >
           {imageURL ? (
             <img src={imageURL} alt="preview" className="max-h-32 mx-auto object-contain" />
           ) : (
-            <div className="text-gray-400">
+            <div className="text-gray-400 dark:text-gray-500">
               <p className="text-sm">クリックして画像を選択</p>
               <p className="text-xs mt-1">PNG / JPG</p>
             </div>
@@ -631,7 +631,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       {/* Language captions */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">キャプション（言語ごと）</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">キャプション（言語ごと）</label>
           {/* Pro: 全言語一括生成ボタン */}
           {isPro && (
             <button
@@ -670,7 +670,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 selectedLang === l.code
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               {l.label}
@@ -680,7 +680,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
 
         {/* Skeleton shimmer (loading) */}
         {aiState === 'loading' ? (
-          <div className="w-full h-16 rounded-lg bg-gray-100 overflow-hidden relative">
+          <div className="w-full h-16 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-[shimmer_1.5s_infinite] bg-[length:200%_100%]" />
           </div>
         ) : (
@@ -689,13 +689,13 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
             onChange={(e) => setCaptions(prev => ({ ...prev, [selectedLang]: e.target.value }))}
             placeholder={`${LANGUAGES.find(l => l.code === selectedLang)?.label} のキャプションを入力`}
             rows={2}
-            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           />
         )}
 
         {/* Inline error banner */}
         {aiError && (
-          <p className="mt-1.5 text-sm bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-amber-700">
+          <p className="mt-1.5 text-sm bg-amber-50 dark:bg-yellow-900/20 border border-amber-200 rounded-lg px-3 py-2 text-amber-700 dark:text-yellow-400">
             {aiError}
           </p>
         )}
@@ -710,7 +710,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
                 className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                   aiSelected === c
                     ? 'border-purple-400 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-200 hover:bg-purple-50/50'
                 }`}
               >
                 <input
@@ -721,13 +721,13 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
                   onChange={() => setAiSelected(c)}
                   className="mt-0.5 accent-purple-600 flex-shrink-0"
                 />
-                <span className="text-sm text-gray-800">{c}</span>
+                <span className="text-sm text-gray-800 dark:text-gray-200">{c}</span>
               </label>
             ))}
             <div className="flex justify-between pt-1">
               <button
                 onClick={handleAiCancel}
-                className="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                className="px-4 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
                 キャンセル
               </button>
@@ -745,7 +745,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
         {/* AI generate / re-generate button row */}
         <div className="flex items-center justify-between mt-2 min-h-[28px]">
           {aiState === 'applied' && aiAppliedLang === selectedLang && (
-            <span className="text-xs text-green-600">✅ 適用しました</span>
+            <span className="text-xs text-green-600 dark:text-green-400">✅ 適用しました</span>
           )}
           <div className="ml-auto">
             {aiState === 'loading' ? (
@@ -771,8 +771,8 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
       {/* Preview */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">プレビュー</label>
-          <span className="text-xs text-gray-500">※ 実際のダウンロード画像は高解像度です</span>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">プレビュー</label>
+          <span className="text-xs text-gray-500 dark:text-gray-400">※ 実際のダウンロード画像は高解像度です</span>
         </div>
         <div
           className="rounded-xl p-4 flex flex-col items-center"
@@ -797,8 +797,8 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
               {imageURL ? (
                 <img src={imageURL} alt="screenshot" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400 text-xs">画像なし</span>
+                <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <span className="text-gray-400 dark:text-gray-500 text-xs">画像なし</span>
                 </div>
               )}
             </div>
@@ -813,7 +813,7 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
           <button
             key={l.code}
             onClick={() => downloadSingle(l.code)}
-            className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1"
+            className="px-3 py-1.5 bg-white dark:bg-[#12161e] border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-[#0d0f14] flex items-center gap-1 text-gray-900 dark:text-gray-100"
           >
             ↓ {l.label}
           </button>
@@ -824,17 +824,17 @@ export function ScreenshotGenerator({ appName, appId }: ScreenshotGeneratorProps
           <button
             onClick={downloadAll}
             disabled={isGenerating}
-            className="ml-auto px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+            className="ml-auto px-4 py-1.5 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center gap-1"
           >
             {isGenerating ? '生成中...' : '↓ ZIP一括DL'}
           </button>
         ) : (
           <button
             onClick={() => upgradeModal.open('多言語スクリーンショット一括生成')}
-            className="ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+            className="ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             🔒 ZIP一括DL
-            <span className="text-blue-500 text-xs">Proで解除 →</span>
+            <span className="text-blue-500 dark:text-blue-400 text-xs">Proで解除 →</span>
           </button>
         )}
       </div>

@@ -28,7 +28,7 @@ function CharCounter({ value, max }: { value: string; max: number }) {
   const len = value.length
   const over = len > max
   return (
-    <span className={`text-xs ${over ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+    <span className={`text-xs ${over ? 'text-red-500 font-bold' : 'text-gray-400 dark:text-gray-500'}`}>
       {len}/{max}
     </span>
   )
@@ -131,7 +131,7 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
     return (
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="text-sm font-medium text-gray-700">{label}</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
           <CharCounter value={form[key]} max={max} />
         </div>
         {multiline ? (
@@ -139,14 +139,14 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
             value={form[key]}
             onChange={(e) => setForm({ ...form, [key]: e.target.value })}
             rows={key === 'description' ? 6 : 3}
-            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
         ) : (
           <input
             type="text"
             value={form[key]}
             onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
         )}
       </div>
@@ -154,25 +154,25 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
   }
 
   if (isLoading) {
-    return <div className="text-gray-500">読み込み中...</div>
+    return <div className="text-gray-500 dark:text-gray-400">読み込み中...</div>
   }
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20">
         <div className="p-4 border-b">
           <h3 className="text-lg font-semibold">メタデータ管理</h3>
-          <p className="text-sm text-gray-500">App Storeのタイトル・説明文・キーワードを管理</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">App Storeのタイトル・説明文・キーワードを管理</p>
         </div>
 
         <div className="p-4 space-y-4">
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="text-sm font-medium text-gray-700 block mb-1">言語</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">言語</label>
               <select
                 value={selectedLocale}
                 onChange={(e) => setSelectedLocale(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 {LOCALES.map(l => (
                   <option key={l.value} value={l.value}>{l.label}</option>
@@ -180,13 +180,13 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
               </select>
             </div>
             <div className="flex-1">
-              <label className="text-sm font-medium text-gray-700 block mb-1">バージョンタグ</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">バージョンタグ</label>
               <input
                 type="text"
                 value={versionTag}
                 onChange={(e) => setVersionTag(e.target.value)}
                 placeholder="draft, v1.0, ..."
-                className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
             {savedId && (
               <button
                 onClick={() => handleDelete(savedId)}
-                className="px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50"
+                className="px-4 py-2 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
               >
                 削除
               </button>
@@ -209,7 +209,7 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
             >
               {isSaving ? '保存中...' : savedId ? '更新' : '保存'}
             </button>
@@ -218,26 +218,26 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
       </div>
 
       {versions.length > 0 && (
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20">
           <div className="p-4 border-b">
             <h4 className="font-medium">保存済みバージョン ({versions.length}件)</h4>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-[#0d0f14]">
               <tr>
-                <th className="py-2 px-4 text-left font-medium text-gray-600">言語</th>
-                <th className="py-2 px-4 text-left font-medium text-gray-600">タグ</th>
-                <th className="py-2 px-4 text-left font-medium text-gray-600">タイトル</th>
-                <th className="py-2 px-4 text-left font-medium text-gray-600">更新日時</th>
-                <th className="py-2 px-4 text-left font-medium text-gray-600"></th>
+                <th className="py-2 px-4 text-left font-medium text-gray-600 dark:text-gray-400">言語</th>
+                <th className="py-2 px-4 text-left font-medium text-gray-600 dark:text-gray-400">タグ</th>
+                <th className="py-2 px-4 text-left font-medium text-gray-600 dark:text-gray-400">タイトル</th>
+                <th className="py-2 px-4 text-left font-medium text-gray-600 dark:text-gray-400">更新日時</th>
+                <th className="py-2 px-4 text-left font-medium text-gray-600 dark:text-gray-400"></th>
               </tr>
             </thead>
             <tbody>
               {versions.map((v) => (
                 <tr
                   key={v.id}
-                  className={`border-t hover:bg-gray-50 cursor-pointer ${
-                    v.locale === selectedLocale && v.version_tag === versionTag ? 'bg-blue-50' : ''
+                  className={`border-t hover:bg-gray-50 dark:hover:bg-[#0d0f14] cursor-pointer ${
+                    v.locale === selectedLocale && v.version_tag === versionTag ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                   onClick={() => {
                     setSelectedLocale(v.locale)
@@ -246,8 +246,8 @@ export function MetadataSection({ appId }: MetadataSectionProps) {
                 >
                   <td className="py-2 px-4">{LOCALES.find(l => l.value === v.locale)?.label ?? v.locale}</td>
                   <td className="py-2 px-4 font-mono text-xs">{v.version_tag}</td>
-                  <td className="py-2 px-4 text-gray-700">{v.title ?? '-'}</td>
-                  <td className="py-2 px-4 text-gray-500">
+                  <td className="py-2 px-4 text-gray-700 dark:text-gray-300">{v.title ?? '-'}</td>
+                  <td className="py-2 px-4 text-gray-500 dark:text-gray-400">
                     {new Date(v.updated_at).toLocaleDateString('ja-JP')}
                   </td>
                   <td className="py-2 px-4">

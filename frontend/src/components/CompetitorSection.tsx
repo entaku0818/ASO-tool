@@ -125,10 +125,10 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
   }
 
   const getRankColor = (rank: number | null) => {
-    if (rank === null) return 'text-gray-500'
-    if (rank <= 10) return 'text-green-600'
-    if (rank <= 50) return 'text-yellow-600'
-    return 'text-red-600'
+    if (rank === null) return 'text-gray-500 dark:text-gray-400'
+    if (rank <= 10) return 'text-green-600 dark:text-green-400'
+    if (rank <= 50) return 'text-yellow-600 dark:text-yellow-400'
+    return 'text-red-600 dark:text-red-400'
   }
 
   const formatRank = (rank: number | null) => {
@@ -136,15 +136,15 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
   }
 
   if (isLoading) {
-    return <div className="text-gray-500">読み込み中...</div>
+    return <div className="text-gray-500 dark:text-gray-400">読み込み中...</div>
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20">
       <div className="p-4 border-b flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">競合アプリ ({competitors.length}件)</h3>
-          <p className="text-sm text-gray-500">競合アプリの順位を比較</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">競合アプリの順位を比較</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -154,7 +154,7 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
           >
             {isLoadingGap ? '取得中...' : showGap ? 'ギャップ非表示' : 'キーワードギャップ'}
             {!showGap && gaps.length > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 text-xs bg-white text-purple-700 rounded-full font-bold">
+              <span className="inline-flex items-center justify-center w-5 h-5 text-xs bg-white dark:bg-[#12161e] text-purple-700 rounded-full font-bold">
                 {gaps.length}
               </span>
             )}
@@ -168,7 +168,7 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
           </button>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-3 py-1.5 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600"
           >
             {showAddForm ? 'キャンセル' : '追加'}
           </button>
@@ -176,33 +176,33 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
       </div>
 
       {showAddForm && (
-        <div className="p-4 bg-gray-50 border-b">
+        <div className="p-4 bg-gray-50 dark:bg-[#0d0f14] border-b">
           <div className="space-y-3">
             <input
               type="text"
               value={newCompetitor.name}
               onChange={(e) => setNewCompetitor({ ...newCompetitor, name: e.target.value })}
               placeholder="アプリ名"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
             <input
               type="text"
               value={newCompetitor.bundleId}
               onChange={(e) => setNewCompetitor({ ...newCompetitor, bundleId: e.target.value })}
               placeholder="Bundle ID (例: com.example.app)"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
             <input
               type="text"
               value={newCompetitor.notes}
               onChange={(e) => setNewCompetitor({ ...newCompetitor, notes: e.target.value })}
               placeholder="メモ (任意)"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
             <button
               onClick={handleAdd}
               disabled={isAdding || !newCompetitor.name.trim() || !newCompetitor.bundleId.trim()}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
             >
               {isAdding ? '追加中...' : '競合アプリを追加'}
             </button>
@@ -215,7 +215,7 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
           <h4 className="font-medium mb-1 text-purple-800">キーワードギャップ</h4>
           <p className="text-xs text-purple-600 mb-3">競合が20位以内・自社が30位以下またはランク外のキーワード</p>
           {gaps.length === 0 ? (
-            <p className="text-sm text-gray-500">ギャップキーワードはありません</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">ギャップキーワードはありません</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -232,10 +232,10 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
                   {gaps.map((g) => (
                     <tr key={g.keyword_id} className="border-t border-purple-100">
                       <td className="py-1.5 pr-4 font-medium">{g.keyword}</td>
-                      <td className="py-1.5 pr-4 text-gray-500">{g.country}</td>
-                      <td className="py-1.5 pr-4 text-gray-600">{g.competitor_name}</td>
-                      <td className="py-1.5 pr-4 text-green-700 font-bold">{g.competitor_rank}位</td>
-                      <td className="py-1.5 text-red-600 font-bold">
+                      <td className="py-1.5 pr-4 text-gray-500 dark:text-gray-400">{g.country}</td>
+                      <td className="py-1.5 pr-4 text-gray-600 dark:text-gray-400">{g.competitor_name}</td>
+                      <td className="py-1.5 pr-4 text-green-700 dark:text-green-300 font-bold">{g.competitor_rank}位</td>
+                      <td className="py-1.5 text-red-600 dark:text-red-400 font-bold">
                         {g.our_rank === null ? '圏外' : `${g.our_rank}位`}
                       </td>
                     </tr>
@@ -248,21 +248,21 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
       )}
 
       {competitors.length === 0 ? (
-        <p className="p-4 text-gray-500">競合アプリが登録されていません</p>
+        <p className="p-4 text-gray-500 dark:text-gray-400">競合アプリが登録されていません</p>
       ) : (
         <>
           {comparison && selectedKeywordId && (
-            <div className="p-4 bg-blue-50 border-b">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b">
               <h4 className="font-medium mb-3">「{comparison.keyword}」の順位比較</h4>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                <div className="flex items-center justify-between p-2 bg-white dark:bg-[#12161e] rounded border dark:border-gray-700">
                   <span className="font-medium">あなたのアプリ</span>
                   <span className={`font-bold ${getRankColor(comparison.app_rank)}`}>
                     {formatRank(comparison.app_rank)}
                   </span>
                 </div>
                 {comparison.competitors.map((c) => (
-                  <div key={c.competitor_id} className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div key={c.competitor_id} className="flex items-center justify-between p-2 bg-white dark:bg-[#12161e] rounded border dark:border-gray-700">
                     <span>{c.competitor_name}</span>
                     <span className={`font-bold ${getRankColor(c.rank)}`}>
                       {formatRank(c.rank)}
@@ -274,20 +274,20 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
           )}
 
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-[#0d0f14]">
               <tr>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">アプリ名</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">Bundle ID</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">メモ</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600"></th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">アプリ名</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">Bundle ID</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">メモ</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400"></th>
               </tr>
             </thead>
             <tbody>
               {competitors.map((competitor) => (
-                <tr key={competitor.id} className="border-b hover:bg-gray-50">
+                <tr key={competitor.id} className="border-b hover:bg-gray-50 dark:hover:bg-[#0d0f14]">
                   <td className="py-3 px-4">{competitor.competitor_name}</td>
-                  <td className="py-3 px-4 text-sm text-gray-500">{competitor.competitor_bundle_id}</td>
-                  <td className="py-3 px-4 text-sm text-gray-500">{competitor.notes || '-'}</td>
+                  <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">{competitor.competitor_bundle_id}</td>
+                  <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">{competitor.notes || '-'}</td>
                   <td className="py-3 px-4">
                     <button
                       onClick={() => handleDelete(competitor.id)}

@@ -88,13 +88,13 @@ export function RankShareCard({ keyword, onClose }: RankShareCardProps) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        className="bg-white dark:bg-[#12161e] rounded-2xl shadow-2xl dark:shadow-black/20 w-full max-w-md overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="font-semibold text-gray-900">シェアする</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">シェアする</h2>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -107,15 +107,15 @@ export function RankShareCard({ keyword, onClose }: RankShareCardProps) {
 
           {/* Pattern selector */}
           <div>
-            <p className="text-xs font-medium text-gray-500 mb-2">シェアテキストを選ぶ</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">シェアテキストを選ぶ</p>
             <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
               {patterns.map((p, i) => (
                 <label
                   key={i}
                   className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors text-xs ${
                     selectedIdx === i
-                      ? 'border-blue-400 bg-blue-50'
-                      : 'border-gray-100 hover:border-blue-200'
+                      ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-700'
                   }`}
                 >
                   <input
@@ -125,11 +125,11 @@ export function RankShareCard({ keyword, onClose }: RankShareCardProps) {
                     onChange={() => setSelectedIdx(i)}
                     className="mt-0.5 accent-blue-600 flex-shrink-0"
                   />
-                  <span className="text-gray-700 whitespace-pre-line leading-relaxed">
+                  <span className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
                     {p.split('\n')[0]}{p.includes('\n') ? ' …' : ''}
                   </span>
                   {i === 0 && (
-                    <span className="ml-auto flex-shrink-0 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                    <span className="ml-auto flex-shrink-0 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full font-medium">
                       推奨
                     </span>
                   )}
@@ -152,7 +152,7 @@ export function RankShareCard({ keyword, onClose }: RankShareCardProps) {
             </button>
             <button
               onClick={handleCopyText}
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-semibold text-sm border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-semibold text-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#0d0f14] transition-colors"
             >
               {copied ? '✅ コピーしました' : '📋 テキストをコピー'}
             </button>

@@ -57,11 +57,11 @@ function ProgressDots({ step, total }: { step: number; total: number }) {
         <div
           key={i}
           className={`h-2 rounded-full transition-all ${
-            i < step ? 'bg-blue-600 w-8' : 'bg-gray-200 w-2'
+            i < step ? 'bg-blue-600 w-8' : 'bg-gray-200 dark:bg-gray-700 w-2'
           }`}
         />
       ))}
-      <span className="ml-2 text-xs text-gray-400">STEP {step} / {total}</span>
+      <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">STEP {step} / {total}</span>
     </div>
   )
 }
@@ -178,7 +178,7 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
   // ── Overlay wrapper ────────────────────────────────────────
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white dark:bg-[#12161e] rounded-2xl shadow-2xl dark:shadow-black/20 w-full max-w-md overflow-hidden">
         {/* Gradient bar */}
         <div className="h-1.5 bg-gradient-to-r from-blue-600 to-purple-600" />
 
@@ -187,36 +187,36 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
           {step === 1 && (
             <div className="text-center">
               <div className="text-5xl mb-4">🎯</div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">ASO Tool へようこそ！</h2>
-              <p className="text-sm text-gray-500 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">ASO Tool へようこそ！</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 あなたのアプリのキーワード順位を自動で追跡・分析します。
                 3ステップでセットアップが完了します。
               </p>
-              <div className="flex items-center justify-center gap-2 mb-8 text-xs text-gray-400">
+              <div className="flex items-center justify-center gap-2 mb-8 text-xs text-gray-400 dark:text-gray-500">
                 <span className="flex items-center gap-1">
                   <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">1</span>
                   アプリ登録
                 </span>
-                <span className="text-gray-300">→</span>
+                <span className="text-gray-300 dark:text-gray-600">→</span>
                 <span className="flex items-center gap-1">
-                  <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">2</span>
+                  <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center text-xs">2</span>
                   キーワード追加
                 </span>
-                <span className="text-gray-300">→</span>
+                <span className="text-gray-300 dark:text-gray-600">→</span>
                 <span className="flex items-center gap-1">
-                  <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">3</span>
+                  <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center text-xs">3</span>
                   完了
                 </span>
               </div>
               <button
                 onClick={handleStart}
-                className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors mb-3"
+                className="w-full py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors mb-3"
               >
                 アプリを登録して始める →
               </button>
               <button
                 onClick={handleSkip}
-                className="w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-full py-2 text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
               >
                 スキップして後で設定する
               </button>
@@ -227,49 +227,49 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
           {step === 2 && (
             <div>
               <ProgressDots step={1} total={3} />
-              <h2 className="text-lg font-bold text-gray-900 mb-1">アプリを登録する</h2>
-              <p className="text-sm text-gray-500 mb-5">アプリの情報を入力してください</p>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">アプリを登録する</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">アプリの情報を入力してください</p>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">アプリ名 *</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">アプリ名 *</label>
                   <input
                     type="text"
                     value={appName}
                     onChange={e => setAppName(e.target.value)}
                     placeholder="My App"
-                    className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Bundle ID *</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Bundle ID *</label>
                   <input
                     type="text"
                     value={bundleId}
                     onChange={e => setBundleId(e.target.value)}
                     placeholder="com.example.myapp"
-                    className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">プラットフォーム</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">プラットフォーム</label>
                   <select
                     value={platform}
                     onChange={e => setPlatform(e.target.value as 'ios' | 'android')}
-                    className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     <option value="ios">iOS</option>
                     <option value="android">Android</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">ストアURL（任意）</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">ストアURL（任意）</label>
                   <input
                     type="url"
                     value={storeUrl}
                     onChange={e => setStoreUrl(e.target.value)}
                     placeholder="https://apps.apple.com/jp/app/..."
-                    className="w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   />
                 </div>
               </div>
@@ -279,7 +279,7 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
               <button
                 onClick={handleCreateApp}
                 disabled={isCreatingApp || !appName.trim() || !bundleId.trim()}
-                className="w-full mt-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="w-full mt-5 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 transition-colors"
               >
                 {isCreatingApp ? '登録中...' : '次へ →'}
               </button>
@@ -290,8 +290,8 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
           {step === 3 && (
             <div>
               <ProgressDots step={2} total={3} />
-              <h2 className="text-lg font-bold text-gray-900 mb-1">キーワードを追加する</h2>
-              <p className="text-sm text-gray-500 mb-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">キーワードを追加する</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 よく使われるキーワードから選ぶか、直接入力してください（3つ以上推奨）
               </p>
 
@@ -303,8 +303,8 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
                     onClick={() => toggleChip(kw)}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                       selectedChips.includes(kw)
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
                     {kw}
@@ -320,12 +320,12 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
                   onChange={e => setCustomKeyword(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() } }}
                   placeholder="キーワードを入力..."
-                  className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 />
                 <button
                   onClick={addCustom}
                   disabled={!customKeyword.trim()}
-                  className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors"
+                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 transition-colors"
                 >
                   追加
                 </button>
@@ -334,8 +334,8 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
               {/* Selected */}
               {allKeywords.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">
-                    選択中: <span className={allKeywords.length >= 3 ? 'text-blue-600 font-semibold' : 'text-orange-500'}>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    選択中: <span className={allKeywords.length >= 3 ? 'text-blue-600 dark:text-blue-400 font-semibold' : 'text-orange-500'}>
                       {allKeywords.length}/3 以上
                     </span>
                   </p>
@@ -343,12 +343,12 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
                     {allKeywords.map(kw => (
                       <span
                         key={kw}
-                        className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                        className="flex items-center gap-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-sm"
                       >
                         {kw}
                         <button
                           onClick={() => removeKeyword(kw)}
-                          className="ml-0.5 text-blue-400 hover:text-blue-700 leading-none"
+                          className="ml-0.5 text-blue-400 dark:text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 leading-none"
                           aria-label={`${kw}を削除`}
                         >
                           ×
@@ -362,12 +362,12 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
               <button
                 onClick={handleFinish}
                 disabled={allKeywords.length < 3 || isAddingKeywords}
-                className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="w-full py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 transition-colors"
               >
                 {isAddingKeywords ? '登録中...' : '完了して順位を確認 →'}
               </button>
               {allKeywords.length < 3 && (
-                <p className="mt-2 text-center text-xs text-gray-400">
+                <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
                   あと {3 - allKeywords.length} 件追加してください
                 </p>
               )}
@@ -378,22 +378,22 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
           {step === 'done' && (
             <div className="text-center">
               <div className="text-5xl mb-4">✅</div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">セットアップ完了！</h2>
-              <p className="text-sm text-gray-500 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">セットアップ完了！</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 キーワード順位の追跡を開始しました。<br />
                 最初のデータは明日の朝に反映されます。
               </p>
 
-              <div className="bg-blue-50 rounded-xl p-4 mb-6 text-left">
-                <p className="text-xs font-semibold text-blue-700 mb-1">── Pro ならもっとできます ──</p>
-                <p className="text-sm text-gray-600">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 text-left">
+                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">── Pro ならもっとできます ──</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   競合アプリが使っているキーワードを逆引きして、上位表示のチャンスを見つけましょう。
                 </p>
               </div>
 
               <button
                 onClick={() => { setVisible(false); if (createdApp) onComplete(createdApp) }}
-                className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                className="w-full py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
               >
                 ダッシュボードへ →
               </button>
