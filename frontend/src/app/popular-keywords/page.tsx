@@ -84,6 +84,12 @@ const COUNTRY_NAMES: Record<string, string> = {
   gb: 'イギリス',
 }
 
+const SEED_KEYWORDS = [
+  'game', 'photo', 'music', 'chat', 'vpn', 'camera', 'map', 'weather',
+  'fitness', 'manga', 'video', 'shopping', 'finance', 'travel', 'food',
+  'news', 'book', 'study', 'sns', 'timer',
+]
+
 function KeywordsSection() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('jp')
@@ -160,9 +166,19 @@ function KeywordsSection() {
         {isSearching ? (
           <div className="flex items-center justify-center py-12 text-gray-500">検索中...</div>
         ) : !searchTerm.trim() ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
-            <span className="text-4xl">🔍</span>
-            <p>上の検索ボックスにキーワードを入力してください</p>
+          <div className="p-6">
+            <p className="text-xs text-gray-400 mb-3">よく検索されるワード</p>
+            <div className="flex flex-wrap gap-2">
+              {SEED_KEYWORDS.map(kw => (
+                <button
+                  key={kw}
+                  onClick={() => setSearchTerm(kw)}
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-blue-50 hover:text-blue-700 text-gray-700 rounded-full text-sm transition-colors"
+                >
+                  {kw}
+                </button>
+              ))}
+            </div>
           </div>
         ) : suggestions.length === 0 && hasSearched ? (
           <div className="flex items-center justify-center py-12 text-gray-500">サジェストが見つかりませんでした</div>
