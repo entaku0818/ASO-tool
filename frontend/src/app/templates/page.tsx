@@ -16,10 +16,10 @@ const CATEGORIES = [
 ]
 
 const CATEGORY_STYLES: Record<string, { badge: string; accent: string }> = {
-  game:      { badge: 'bg-purple-100 text-purple-700', accent: '#7C3AED' },
-  business:  { badge: 'bg-blue-100 text-blue-700',     accent: '#1D4ED8' },
-  education: { badge: 'bg-green-100 text-green-700',   accent: '#15803D' },
-  lifestyle: { badge: 'bg-orange-100 text-orange-700', accent: '#C2410C' },
+  game:      { badge: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400', accent: '#7C3AED' },
+  business:  { badge: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',         accent: '#1D4ED8' },
+  education: { badge: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',     accent: '#15803D' },
+  lifestyle: { badge: 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400', accent: '#C2410C' },
 }
 
 // ── グラデーションプレビューCSS生成 ──────────────────────────
@@ -50,7 +50,7 @@ function TemplateCard({
   const locked = template.is_pro && !isPro
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <div className="bg-white dark:bg-[#12161e] rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-black/20 hover:shadow-md transition-shadow overflow-hidden">
       {/* Thumbnail */}
       <div className="relative aspect-video overflow-hidden">
         <div className="w-full h-full" style={styleToCSS(template.style)} />
@@ -67,14 +67,14 @@ function TemplateCard({
         <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-2 ${catStyle.badge}`}>
           {CATEGORIES.find(c => c.id === template.category)?.label ?? template.category}
         </span>
-        <p className="font-semibold text-gray-900 text-sm mb-1">{template.name}</p>
-        <p className="text-xs text-gray-500 mb-4">{template.description}</p>
+        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">{template.name}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{template.description}</p>
 
-        <div className="border-t border-gray-100 pt-3 flex gap-2">
+        <div className="border-t border-gray-100 dark:border-gray-800 pt-3 flex gap-2">
           {locked ? (
             <button
               onClick={onUnlock}
-              className="w-full py-2 text-sm font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+              className="w-full py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
             >
               Pro でアンロック
             </button>
@@ -82,7 +82,7 @@ function TemplateCard({
             <>
               <button
                 onClick={() => onUse(template)}
-                className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex-1 py-2 text-sm font-semibold text-white bg-blue-600 dark:bg-blue-500 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 このテンプレートを使う →
               </button>
@@ -99,13 +99,13 @@ function SkeletonGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
-          <div className="aspect-video bg-gray-200" />
+        <div key={i} className="bg-white dark:bg-[#12161e] rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-black/20 overflow-hidden animate-pulse">
+          <div className="aspect-video bg-gray-200 dark:bg-gray-700" />
           <div className="p-4 space-y-3">
-            <div className="h-3 w-16 bg-gray-200 rounded-full" />
-            <div className="h-4 w-2/3 bg-gray-200 rounded" />
-            <div className="h-3 w-full bg-gray-100 rounded" />
-            <div className="h-9 w-full bg-gray-100 rounded-lg mt-2" />
+            <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-3 w-full bg-gray-100 dark:bg-gray-800 rounded" />
+            <div className="h-9 w-full bg-gray-100 dark:bg-gray-800 rounded-lg mt-2" />
           </div>
         </div>
       ))}
@@ -167,8 +167,8 @@ export default function TemplatesPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">テンプレートライブラリ</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">テンプレートライブラリ</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             App Store スクリーンショット用テンプレートを選んで始めよう
           </p>
         </div>
@@ -182,8 +182,8 @@ export default function TemplatesPage() {
             onClick={() => setSelectedCategory(cat.id)}
             className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
               selectedCategory === cat.id
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {cat.label}
@@ -202,15 +202,15 @@ export default function TemplatesPage() {
           </div>
           {/* ソフトバナー */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white rounded-2xl shadow-2xl px-8 py-7 max-w-sm w-full text-center border border-gray-100">
+            <div className="bg-white dark:bg-[#12161e] rounded-2xl shadow-2xl px-8 py-7 max-w-sm w-full text-center border border-gray-100 dark:border-gray-800">
               <div className="text-3xl mb-3">🔒</div>
-              <h3 className="font-bold text-gray-900 text-lg mb-2">ログインが必要です</h3>
-              <p className="text-sm text-gray-500 mb-5">
+              <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">ログインが必要です</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
                 テンプレートライブラリを利用するにはアカウントが必要です。
               </p>
               <button
                 onClick={() => router.push('/login')}
-                className="w-full py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                className="w-full py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
               >
                 ログインする →
               </button>
@@ -219,11 +219,11 @@ export default function TemplatesPage() {
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-20">
-          <p className="text-red-500">{error}</p>
+          <p className="text-red-500 dark:text-red-400">{error}</p>
         </div>
       ) : templates.length === 0 ? (
         <div className="flex items-center justify-center py-20">
-          <p className="text-gray-500">テンプレートがありません</p>
+          <p className="text-gray-500 dark:text-gray-400">テンプレートがありません</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

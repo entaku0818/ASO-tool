@@ -53,11 +53,11 @@ export default function SharePage({ searchParams }: Props) {
     return (
       <div className="max-w-lg mx-auto text-center py-24">
         <div className="text-5xl mb-4">🔍</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">URLが正しくありません</h2>
-        <p className="text-gray-500 mb-6 text-sm">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">URLが正しくありません</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
           このリンクは無効か、必要な情報が不足しています。
         </p>
-        <Link href="/" className="text-blue-600 hover:underline text-sm">
+        <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
           トップページへ →
         </Link>
       </div>
@@ -101,20 +101,20 @@ export default function SharePage({ searchParams }: Props) {
           { label: '達成順位', value: `#${toRank}`, sub: keyword },
           { label: '開始順位', value: `#${fromRank}`, sub: '→ 達成' },
         ].map(item => (
-          <div key={item.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
-            <p className="text-xs text-gray-400 mb-1">{item.label}</p>
-            <p className="text-2xl font-black text-gray-900">{item.value}</p>
-            <p className="text-xs text-gray-500 mt-1 truncate">{item.sub}</p>
+          <div key={item.label} className="bg-white dark:bg-[#12161e] rounded-xl shadow-sm dark:shadow-black/20 border border-gray-100 dark:border-gray-800 p-4 text-center">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{item.label}</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-gray-100">{item.value}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{item.sub}</p>
           </div>
         ))}
       </div>
 
       {/* ── CTA ────────────────────────────────────────────── */}
-      <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-7 text-center">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">
+      <div className="mt-8 bg-white dark:bg-[#12161e] rounded-2xl shadow-sm dark:shadow-black/20 border border-gray-100 dark:border-gray-800 px-8 py-7 text-center">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           あなたのアプリも上位表示を狙えます
         </h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           ASO Tool でキーワード順位を自動追跡・分析。<br />
           無料プランでも今すぐ始められます。
         </p>
@@ -125,7 +125,7 @@ export default function SharePage({ searchParams }: Props) {
         >
           無料で始める →
         </Link>
-        <p className="text-xs text-gray-400 mt-3">クレジットカード不要・登録30秒</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">クレジットカード不要・登録30秒</p>
       </div>
 
       {/* ── 機能紹介 ────────────────────────────────────────── */}
@@ -135,10 +135,10 @@ export default function SharePage({ searchParams }: Props) {
           { icon: '🔍', title: '競合分析', desc: '競合アプリのキーワード戦略を逆引き' },
           { icon: '✨', title: 'AI キャプション生成', desc: 'スクリーンショット用テキストを AI が自動生成' },
         ].map(f => (
-          <div key={f.title} className="bg-white rounded-xl border border-gray-100 p-4">
+          <div key={f.title} className="bg-white dark:bg-[#12161e] rounded-xl border border-gray-100 dark:border-gray-800 p-4">
             <div className="text-2xl mb-2">{f.icon}</div>
-            <p className="font-semibold text-gray-900 text-sm mb-1">{f.title}</p>
-            <p className="text-xs text-gray-500">{f.desc}</p>
+            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">{f.title}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{f.desc}</p>
           </div>
         ))}
       </div>
@@ -166,7 +166,7 @@ export default function SharePage({ searchParams }: Props) {
       })()}
 
       {/* ── フッター ────────────────────────────────────────── */}
-      <p className="text-center text-xs text-gray-400 mt-8 mb-4">
+      <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-8 mb-4">
         © ASO Tool — App Store Optimization Platform
       </p>
     </div>

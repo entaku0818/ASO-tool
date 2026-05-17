@@ -38,7 +38,7 @@ import { useUpgradeModal } from '@/hooks/useUpgradeModal'
 
 function PopularityBar({ score, fetchedAt }: { score?: number; fetchedAt?: string }) {
   if (score === undefined || score === null) {
-    return <span className="text-gray-400">−</span>
+    return <span className="text-gray-400 dark:text-gray-500">−</span>
   }
   const filled = score
   const empty = 5 - score
@@ -51,7 +51,7 @@ function PopularityBar({ score, fetchedAt }: { score?: number; fetchedAt?: strin
         <span key={`f${i}`} className="text-orange-400">●</span>
       ))}
       {Array.from({ length: empty }).map((_, i) => (
-        <span key={`e${i}`} className="text-gray-300">●</span>
+        <span key={`e${i}`} className="text-gray-300 dark:text-gray-600">●</span>
       ))}
     </span>
   )
@@ -59,15 +59,15 @@ function PopularityBar({ score, fetchedAt }: { score?: number; fetchedAt?: strin
 
 function DifficultyBadge({ popularityScore }: { popularityScore?: number }) {
   if (popularityScore === undefined || popularityScore === null) {
-    return <span className="text-gray-400">−</span>
+    return <span className="text-gray-400 dark:text-gray-500">−</span>
   }
   if (popularityScore <= 1) {
-    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">低</span>
+    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300">低</span>
   }
   if (popularityScore <= 3) {
-    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">中</span>
+    return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400">中</span>
   }
-  return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">高</span>
+  return <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400">高</span>
 }
 
 function KeywordRow({
@@ -84,16 +84,16 @@ function KeywordRow({
   onTranslate: (text: string) => void
 }) {
   const rankColor = keyword.latestRank === null
-    ? 'text-gray-500'
+    ? 'text-gray-500 dark:text-gray-400'
     : keyword.latestRank <= 10
-    ? 'text-green-600'
+    ? 'text-green-600 dark:text-green-400'
     : keyword.latestRank <= 50
-    ? 'text-yellow-600'
-    : 'text-red-600'
+    ? 'text-yellow-600 dark:text-yellow-400'
+    : 'text-red-600 dark:text-red-400'
 
   return (
     <tr
-      className={`border-b cursor-pointer ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+      className={`border-b dark:border-gray-700 cursor-pointer ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
       onClick={onToggle}
     >
       <td className="py-3 px-4">
@@ -103,7 +103,7 @@ function KeywordRow({
             checked={isSelected}
             onChange={onToggle}
             onClick={(e) => e.stopPropagation()}
-            className="rounded border-gray-300 text-blue-600"
+            className="rounded border-gray-300 dark:border-gray-600 text-blue-600"
           />
           {keyword.keyword}
         </div>
@@ -125,7 +125,7 @@ function KeywordRow({
               e.stopPropagation()
               onTranslate(keyword.keyword)
             }}
-            className="text-blue-500 hover:text-blue-700 text-xs"
+            className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-xs"
             title="英語に翻訳"
           >
             翻訳
@@ -135,7 +135,7 @@ function KeywordRow({
               e.stopPropagation()
               onDelete()
             }}
-            className="text-red-500 hover:text-red-700 text-sm"
+            className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm"
           >
             削除
           </button>
@@ -163,31 +163,31 @@ function RisingKeywordsSection({ appId }: { appId: string }) {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow mt-6">
-        <div className="p-4 border-b">
+      <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 mt-6">
+        <div className="p-4 border-b dark:border-gray-700">
           <h3 className="text-lg font-semibold">急上昇キーワード</h3>
-          <p className="text-sm text-gray-500">過去7日間で順位が上昇したキーワード</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">過去7日間で順位が上昇したキーワード</p>
         </div>
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 dark:bg-[#0d0f14]">
             <tr>
-              <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
-              <th className="py-3 px-4 text-left font-medium text-gray-600">国</th>
-              <th className="py-3 px-4 text-right font-medium text-gray-600">現在順位</th>
-              <th className="py-3 px-4 text-right font-medium text-gray-600">以前の順位</th>
-              <th className="py-3 px-4 text-right font-medium text-gray-600">上昇幅</th>
-              <th className="py-3 px-4 text-right font-medium text-gray-600"></th>
+              <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">キーワード</th>
+              <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">国</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600 dark:text-gray-400">現在順位</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600 dark:text-gray-400">以前の順位</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600 dark:text-gray-400">上昇幅</th>
+              <th className="py-3 px-4 text-right font-medium text-gray-600 dark:text-gray-400"></th>
             </tr>
           </thead>
           <tbody>
             {keywords.map((kw) => (
-              <tr key={kw.keyword_id} className="border-b hover:bg-gray-50">
-                <td className="py-3 px-4 font-medium text-gray-900">{kw.keyword}</td>
-                <td className="py-3 px-4 text-gray-500">{kw.country}</td>
-                <td className="py-3 px-4 text-right font-bold text-green-600">{kw.current_rank}位</td>
-                <td className="py-3 px-4 text-right text-gray-500">{kw.previous_rank}位</td>
+              <tr key={kw.keyword_id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{kw.keyword}</td>
+                <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{kw.country}</td>
+                <td className="py-3 px-4 text-right font-bold text-green-600 dark:text-green-400">{kw.current_rank}位</td>
+                <td className="py-3 px-4 text-right text-gray-500 dark:text-gray-400">{kw.previous_rank}位</td>
                 <td className="py-3 px-4 text-right">
-                  <span className="inline-flex items-center gap-1 text-green-600 font-bold">
+                  <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 font-bold">
                     ▲ {kw.improvement}
                   </span>
                 </td>
@@ -237,7 +237,7 @@ function MultiRankingChartSection({
     : `${selectedKeywords.length}件のキーワード比較`
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-6">
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 p-4 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">{title}</h3>
         <div className="flex gap-1">
@@ -247,8 +247,8 @@ function MultiRankingChartSection({
               onClick={() => setDays(opt.value)}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                 days === opt.value
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               {opt.label}
@@ -257,7 +257,7 @@ function MultiRankingChartSection({
         </div>
       </div>
       {isLoading ? (
-        <p className="text-gray-500 text-sm">読み込み中...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">読み込み中...</p>
       ) : (
         <RankingChart keywords={data} />
       )}
@@ -355,30 +355,30 @@ function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onP
   }
 
   return (
-    <div className="bg-white rounded-lg shadow mb-6">
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 mb-6">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full p-4 flex items-center justify-between text-left"
       >
         <div>
           <h3 className="text-lg font-semibold">Search Ads 設定</h3>
-          <p className="text-sm text-gray-500">キーワード人気スコア取得のための認証情報</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">キーワード人気スコア取得のための認証情報</p>
         </div>
-        <span className="text-gray-400">{isOpen ? '▲' : '▼'}</span>
+        <span className="text-gray-400 dark:text-gray-500">{isOpen ? '▲' : '▼'}</span>
       </button>
 
       {isOpen && (
-        <div className="border-t p-4">
+        <div className="border-t dark:border-gray-700 p-4">
           {isLoadingCreds ? (
-            <p className="text-gray-500">読み込み中...</p>
+            <p className="text-gray-500 dark:text-gray-400">読み込み中...</p>
           ) : (
             <>
               {credentials && (
-                <div className="mb-4 p-3 bg-green-50 rounded-lg flex items-center justify-between">
+                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-green-800 font-medium">認証情報が設定されています</p>
-                    <p className="text-xs text-green-600">Client ID: {credentials.client_id}</p>
-                    <p className="text-xs text-green-600">Adam ID: {credentials.adam_id}</p>
+                    <p className="text-sm text-green-800 dark:text-green-300 font-medium">認証情報が設定されています</p>
+                    <p className="text-xs text-green-600 dark:text-green-400">Client ID: {credentials.client_id}</p>
+                    <p className="text-xs text-green-600 dark:text-green-400">Adam ID: {credentials.adam_id}</p>
                   </div>
                   <button
                     onClick={handleRefresh}
@@ -392,67 +392,67 @@ function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onP
 
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client ID</label>
                   <input
                     type="text"
                     value={clientId}
                     onChange={(e) => setClientId(e.target.value)}
                     placeholder="APPLE_CLIENT_ID"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Team ID</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Team ID</label>
                   <input
                     type="text"
                     value={teamId}
                     onChange={(e) => setTeamId(e.target.value)}
                     placeholder="APPLE_TEAM_ID"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Key ID</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Key ID</label>
                   <input
                     type="text"
                     value={keyId}
                     onChange={(e) => setKeyId(e.target.value)}
                     placeholder="SEARCHADS_KEY_ID"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Adam ID（iTunes数値ID）</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Adam ID（iTunes数値ID）</label>
                   <input
                     type="number"
                     value={adamId}
                     onChange={(e) => setAdamId(e.target.value)}
                     placeholder="123456789"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Org ID（任意）</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Org ID（任意）</label>
                   <input
                     type="text"
                     value={orgId}
                     onChange={(e) => setOrgId(e.target.value)}
                     placeholder="組織ID"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   秘密鍵 (.p8 ファイルの内容をBase64エンコード)
-                  {credentials && <span className="text-gray-400 ml-1">（変更する場合のみ入力）</span>}
+                  {credentials && <span className="text-gray-400 dark:text-gray-500 ml-1">（変更する場合のみ入力）</span>}
                 </label>
                 <textarea
                   value={privateKey}
                   onChange={(e) => setPrivateKey(e.target.value)}
                   placeholder="Base64エンコードされた .p8 ファイルの内容"
                   rows={3}
-                  className="w-full px-3 py-2 border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-mono bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -460,7 +460,7 @@ function SearchAdsSection({ appId, onPopularityRefreshed }: { appId: string; onP
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
                 >
                   {isSaving ? '保存中...' : '保存'}
                 </button>
@@ -502,16 +502,16 @@ function KeywordSuggestionsSection({ appId, onAddKeyword }: { appId: string; onA
   }
 
   return (
-    <div className="bg-white rounded-lg shadow mt-6">
-      <div className="p-4 border-b flex items-center justify-between">
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 mt-6">
+      <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">キーワード提案</h3>
-          <p className="text-sm text-gray-500">Apple Search Ads によるキーワード候補（人気スコア付き）</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Apple Search Ads によるキーワード候補（人気スコア付き）</p>
         </div>
         <button
           onClick={handleFetch}
           disabled={isLoading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
         >
           {isLoading ? '取得中...' : '提案を取得'}
         </button>
@@ -519,29 +519,29 @@ function KeywordSuggestionsSection({ appId, onAddKeyword }: { appId: string; onA
 
       {hasLoaded && (
         suggestions.length === 0 ? (
-          <p className="p-4 text-gray-500">提案が見つかりませんでした</p>
+          <p className="p-4 text-gray-500 dark:text-gray-400">提案が見つかりませんでした</p>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-[#0d0f14]">
               <tr>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">人気スコア</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600"></th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">キーワード</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">人気スコア</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400"></th>
               </tr>
             </thead>
             <tbody>
               {suggestions
                 .sort((a, b) => b.popularityScore - a.popularityScore)
                 .map((s) => (
-                  <tr key={s.text} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-900">{s.text}</td>
+                  <tr key={s.text} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{s.text}</td>
                     <td className="py-3 px-4">
                       <PopularityBar score={s.popularityScore} />
                     </td>
                     <td className="py-3 px-4">
                       <button
                         onClick={() => onAddKeyword(s.text)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
                       >
                         追加
                       </button>
@@ -582,25 +582,25 @@ function CompetitorKeywordsSection({ appId, onAddKeyword }: { appId: string; onA
   }
 
   return (
-    <div className="bg-white rounded-lg shadow mt-6">
-      <div className="p-4 border-b">
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 mt-6">
+      <div className="p-4 border-b dark:border-gray-700">
         <h3 className="text-lg font-semibold">競合キーワード逆引き</h3>
-        <p className="text-sm text-gray-500">競合アプリのAdam IDを入力して、そのアプリが上位表示されているキーワードを取得</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">競合アプリのAdam IDを入力して、そのアプリが上位表示されているキーワードを取得</p>
       </div>
-      <div className="p-4 border-b bg-gray-50">
+      <div className="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0d0f14]">
         <div className="flex gap-2">
           <input
             type="number"
             value={adamId}
             onChange={(e) => setAdamId(e.target.value)}
             placeholder="競合アプリのAdam ID（例: 123456789）"
-            className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             onKeyDown={(e) => e.key === 'Enter' && handleFetch()}
           />
           <button
             onClick={handleFetch}
             disabled={isLoading || !adamId}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
           >
             {isLoading ? '取得中...' : '取得'}
           </button>
@@ -608,29 +608,29 @@ function CompetitorKeywordsSection({ appId, onAddKeyword }: { appId: string; onA
       </div>
       {hasLoaded && (
         suggestions.length === 0 ? (
-          <p className="p-4 text-gray-500">キーワードが見つかりませんでした</p>
+          <p className="p-4 text-gray-500 dark:text-gray-400">キーワードが見つかりませんでした</p>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-[#0d0f14]">
               <tr>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">人気</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">難易度</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600"></th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">キーワード</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">人気</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">難易度</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400"></th>
               </tr>
             </thead>
             <tbody>
               {suggestions
                 .sort((a, b) => b.popularityScore - a.popularityScore)
                 .map((s) => (
-                  <tr key={s.text} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-900">{s.text}</td>
+                  <tr key={s.text} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{s.text}</td>
                     <td className="py-3 px-4"><PopularityBar score={s.popularityScore} /></td>
                     <td className="py-3 px-4"><DifficultyBadge popularityScore={s.popularityScore} /></td>
                     <td className="py-3 px-4">
                       <button
                         onClick={() => onAddKeyword(s.text)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm"
                       >
                         追加
                       </button>
@@ -746,10 +746,10 @@ export default function AppDetailPage() {
   if (appLoading) {
     return (
       <div>
-        <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
+        <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
           &larr; ダッシュボードに戻る
         </Link>
-        <p className="text-gray-600">読み込み中...</p>
+        <p className="text-gray-600 dark:text-gray-400">読み込み中...</p>
       </div>
     )
   }
@@ -757,10 +757,10 @@ export default function AppDetailPage() {
   if (appError || !app) {
     return (
       <div>
-        <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
+        <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
           &larr; ダッシュボードに戻る
         </Link>
-        <p className="text-red-600">アプリが見つかりません</p>
+        <p className="text-red-600 dark:text-red-400">アプリが見つかりません</p>
       </div>
     )
   }
@@ -773,17 +773,17 @@ export default function AppDetailPage() {
 
   return (
     <div>
-      <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
+      <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
         &larr; ダッシュボードに戻る
       </Link>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">{app.name}</h2>
-            <p className="text-gray-500">{app.bundle_id}</p>
+            <p className="text-gray-500 dark:text-gray-400">{app.bundle_id}</p>
           </div>
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+          <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-full text-sm">
             {app.platform.toUpperCase()}
           </span>
         </div>
@@ -792,7 +792,7 @@ export default function AppDetailPage() {
             href={app.store_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline text-sm mt-2 inline-block"
+            className="text-blue-600 dark:text-blue-400 hover:underline text-sm mt-2 inline-block"
           >
             ストアページを開く
           </a>
@@ -816,54 +816,54 @@ export default function AppDetailPage() {
           .map((k) => ({ id: k.id, keyword: k.keyword }))}
       />
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b flex items-center justify-between">
+      <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20">
+        <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">キーワード順位 ({keywords.length}件)</h3>
-            <p className="text-sm text-gray-500">クリックで順位推移を表示 / 翻訳ボタンで英語翻訳</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">クリックで順位推移を表示 / 翻訳ボタンで英語翻訳</p>
           </div>
           {keywords.length > 0 && (
             <div className="flex gap-2">
               <button
                 onClick={exportPDF}
-                className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1 print:hidden"
+                className="px-3 py-1.5 bg-white dark:bg-[#12161e] border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-1 print:hidden"
               >
                 ↓ PDFエクスポート
               </button>
               {isPro ? (
                 <button
                   onClick={exportCSV}
-                  className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1"
+                  className="px-3 py-1.5 bg-white dark:bg-[#12161e] border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-1"
                 >
                   ↓ CSVエクスポート
                 </button>
               ) : (
                 <button
                   onClick={() => upgradeModal.open('CSVエクスポート')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   🔒 CSVエクスポート
-                  <span className="text-blue-500 text-xs">Proで解除 →</span>
+                  <span className="text-blue-500 dark:text-blue-400 text-xs">Proで解除 →</span>
                 </button>
               )}
             </div>
           )}
         </div>
 
-        <div className="p-4 border-b bg-gray-50">
+        <div className="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0d0f14]">
           <div className="flex gap-2">
             <input
               type="text"
               value={newKeyword}
               onChange={(e) => setNewKeyword(e.target.value)}
               placeholder="新しいキーワード"
-              className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
             />
             <button
               onClick={() => handleAddKeyword()}
               disabled={isAdding || !newKeyword.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {isAdding ? '追加中...' : '追加'}
             </button>
@@ -874,8 +874,8 @@ export default function AppDetailPage() {
             const limit = 10
             if (count >= limit) {
               return (
-                <div className="mt-2 flex items-center justify-between px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm">
-                  <span className="text-red-700 font-medium">🔒 上限到達 {count} / {limit}件</span>
+                <div className="mt-2 flex items-center justify-between px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-sm">
+                  <span className="text-red-700 dark:text-red-400 font-medium">🔒 上限到達 {count} / {limit}件</span>
                   <button
                     onClick={() => upgradeModal.open('キーワード上限')}
                     className="text-xs font-semibold text-white bg-red-500 hover:bg-red-600 px-2.5 py-1 rounded-lg transition-colors"
@@ -887,13 +887,13 @@ export default function AppDetailPage() {
             }
             if (count >= 8) {
               return (
-                <p className="mt-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                <p className="mt-2 px-3 py-1.5 bg-amber-50 dark:bg-yellow-900/20 border border-amber-200 dark:border-yellow-700 rounded-lg text-sm text-amber-700 dark:text-yellow-400">
                   ⚠️ 残り {limit - count} 件で上限です（{count} / {limit}件）
                 </p>
               )
             }
             return (
-              <p className="mt-2 text-xs text-gray-400 text-right">{count} / {limit}件</p>
+              <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 text-right">{count} / {limit}件</p>
             )
           })()}
         </div>
@@ -910,19 +910,19 @@ export default function AppDetailPage() {
         )}
 
         {keywordsLoading ? (
-          <p className="p-4 text-gray-500">読み込み中...</p>
+          <p className="p-4 text-gray-500 dark:text-gray-400">読み込み中...</p>
         ) : keywords.length === 0 ? (
-          <p className="p-4 text-gray-500">キーワードが登録されていません</p>
+          <p className="p-4 text-gray-500 dark:text-gray-400">キーワードが登録されていません</p>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-[#0d0f14]">
               <tr>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">国</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">順位</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">人気</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">難易度</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600"></th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">キーワード</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">国</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">順位</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">人気</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">難易度</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400"></th>
               </tr>
             </thead>
             <tbody>
@@ -961,13 +961,13 @@ export default function AppDetailPage() {
               <CompetitorKeywordsSection appId={appId} onAddKeyword={() => {}} />
             </div>
             {/* Lock overlay */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 rounded-lg">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 dark:bg-[#12161e]/70 rounded-lg">
               <span className="text-3xl mb-2">🔒</span>
-              <p className="font-semibold text-gray-800 mb-1">競合キーワード逆引き</p>
-              <p className="text-sm text-gray-500 mb-4">Proプランで利用できます</p>
+              <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">競合キーワード逆引き</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Proプランで利用できます</p>
               <button
                 onClick={() => upgradeModal.open('競合キーワード逆引き')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 Proで解除 →
               </button>
@@ -985,10 +985,10 @@ export default function AppDetailPage() {
       </div>
 
       <div className="mt-6">
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-4 border-b">
+        <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20">
+          <div className="p-4 border-b dark:border-gray-700">
             <h3 className="text-lg font-semibold">スクリーンショット生成</h3>
-            <p className="text-sm text-gray-500">デバイスフレーム合成・多言語一括生成</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">デバイスフレーム合成・多言語一括生成</p>
           </div>
           <div className="p-4">
             <ScreenshotGenerator appName={app.name} appId={appId} />
@@ -1007,18 +1007,18 @@ export default function AppDetailPage() {
       {/* Translate modal */}
       {translateModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40" onClick={() => setTranslateModal(null)}>
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-[#12161e] rounded-xl shadow-xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">キーワード翻訳（英語）</h3>
             <div className="mb-3">
-              <p className="text-sm text-gray-500">元のキーワード</p>
-              <p className="font-medium text-gray-900">{translateModal.text}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">元のキーワード</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">{translateModal.text}</p>
             </div>
             <div className="mb-4">
-              <p className="text-sm text-gray-500">翻訳結果</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">翻訳結果</p>
               {isTranslating ? (
-                <p className="text-gray-400">翻訳中...</p>
+                <p className="text-gray-400 dark:text-gray-500">翻訳中...</p>
               ) : (
-                <p className="font-medium text-blue-700 text-lg">{translateModal.result}</p>
+                <p className="font-medium text-blue-700 dark:text-blue-300 text-lg">{translateModal.result}</p>
               )}
             </div>
             {!isTranslating && translateModal.result && (
@@ -1028,20 +1028,20 @@ export default function AppDetailPage() {
                     handleAddKeyword(translateModal.result)
                     setTranslateModal(null)
                   }}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                  className="flex-1 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-700"
                 >
                   キーワードとして追加
                 </button>
                 <button
                   onClick={() => setTranslateModal(null)}
-                  className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50"
+                  className="px-4 py-2 border dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300"
                 >
                   閉じる
                 </button>
               </div>
             )}
             {!isTranslating && !translateModal.result && (
-              <button onClick={() => setTranslateModal(null)} className="w-full px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">
+              <button onClick={() => setTranslateModal(null)} className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300">
                 閉じる
               </button>
             )}

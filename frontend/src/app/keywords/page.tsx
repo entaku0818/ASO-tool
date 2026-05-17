@@ -40,7 +40,7 @@ export default function KeywordsPage() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">キーワード検索結果</h2>
         </div>
-        <p className="text-gray-600">読み込み中...</p>
+        <p className="text-gray-600 dark:text-gray-400">読み込み中...</p>
       </div>
     )
   }
@@ -52,51 +52,51 @@ export default function KeywordsPage() {
         <button
           onClick={handleTriggerUpdate}
           disabled={isUpdating}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+          className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
         >
           {isUpdating ? '更新中...' : '全て更新'}
         </button>
       </div>
 
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         各キーワードで検索したときのApp Storeランキングを表示します。クリックで詳細へ。
       </p>
 
       {keywords.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6 text-center">
-          <p className="text-gray-600">キーワードが登録されていません</p>
-          <p className="text-sm text-gray-500 mt-2">
+        <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 p-6 text-center">
+          <p className="text-gray-600 dark:text-gray-400">キーワードが登録されていません</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             アプリにキーワードを追加すると自動的に登録されます
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-gray-800">
               <tr>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">キーワード</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">国</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">プラットフォーム</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-600">登録日</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">キーワード</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">国</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">プラットフォーム</th>
+                <th className="py-3 px-4 text-left font-medium text-gray-600 dark:text-gray-400">登録日</th>
               </tr>
             </thead>
             <tbody>
               {keywords.map((keyword) => (
                 <tr
                   key={keyword.id}
-                  className="border-b cursor-pointer hover:bg-blue-50"
+                  className="border-b dark:border-gray-700 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
                   onClick={() => router.push(`/keywords/${keyword.id}`)}
                 >
-                  <td className="py-3 px-4 font-medium text-blue-600">{keyword.keyword}</td>
-                  <td className="py-3 px-4 text-gray-500">{keyword.country.toUpperCase()}</td>
+                  <td className="py-3 px-4 font-medium text-blue-600 dark:text-blue-400">{keyword.keyword}</td>
+                  <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{keyword.country.toUpperCase()}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      keyword.platform === 'ios' ? 'bg-gray-100 text-gray-700' : 'bg-green-100 text-green-700'
+                      keyword.platform === 'ios' ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                     }`}>
                       {keyword.platform === 'ios' ? 'iOS' : 'Android'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-gray-500 text-sm">
+                  <td className="py-3 px-4 text-gray-500 dark:text-gray-400 text-sm">
                     {new Date(keyword.created_at).toLocaleDateString('ja-JP')}
                   </td>
                 </tr>

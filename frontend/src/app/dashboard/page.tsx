@@ -61,7 +61,7 @@ function AppSidebar({
                 e.stopPropagation()
                 onDeleteApp(app)
               }}
-              className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 text-gray-500 dark:text-gray-400 hover:text-red-400 transition-opacity"
               title="削除"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +90,7 @@ function CountryFlag({ country }: { country: string }) {
 
 function RankBadge({ rank }: { rank: number | null }) {
   if (rank === null) {
-    return <span className="text-gray-400"># -</span>
+    return <span className="text-gray-400 dark:text-gray-500"># -</span>
   }
 
   const color = rank <= 10
@@ -108,7 +108,7 @@ function ChartIcon({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="ml-2 p-1 text-gray-400 hover:text-blue-500 transition-colors"
+      className="ml-2 p-1 text-gray-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
       title="順位履歴を表示"
     >
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,12 +120,12 @@ function ChartIcon({ onClick }: { onClick: () => void }) {
 
 function RankingChart({ rankings }: { rankings: Ranking[] }) {
   if (rankings.length === 0) {
-    return <p className="text-gray-500 text-center py-8">データがありません</p>
+    return <p className="text-gray-500 dark:text-gray-400 text-center py-8">データがありません</p>
   }
 
   const validRankings = rankings.filter(r => r.rank !== null)
   if (validRankings.length === 0) {
-    return <p className="text-gray-500 text-center py-8">順位データがありません</p>
+    return <p className="text-gray-500 dark:text-gray-400 text-center py-8">順位データがありません</p>
   }
 
   const maxRank = Math.max(...validRankings.map(r => r.rank!))
@@ -177,7 +177,7 @@ function RankingChart({ rankings }: { rankings: Ranking[] }) {
       </svg>
 
       {/* Date labels */}
-      <div className="flex justify-between px-10 text-xs text-gray-500 mt-2">
+      <div className="flex justify-between px-10 text-xs text-gray-500 dark:text-gray-400 mt-2">
         <span>{new Date(validRankings[0].recorded_at).toLocaleDateString('ja-JP')}</span>
         <span>{new Date(validRankings[validRankings.length - 1].recorded_at).toLocaleDateString('ja-JP')}</span>
       </div>
@@ -202,10 +202,10 @@ function RankingModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-[#12161e] rounded-lg p-6 max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">順位履歴: {keyword}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -213,7 +213,7 @@ function RankingModal({
         </div>
 
         {isLoading ? (
-          <p className="text-gray-500 text-center py-8">読み込み中...</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8">読み込み中...</p>
         ) : (
           <RankingChart rankings={rankings} />
         )}
@@ -223,14 +223,14 @@ function RankingModal({
           <div className="mt-4 max-h-40 overflow-y-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-gray-500">
+                <tr className="border-b text-gray-500 dark:text-gray-400">
                   <th className="text-left py-2">日付</th>
                   <th className="text-right py-2">順位</th>
                 </tr>
               </thead>
               <tbody>
                 {[...rankings].reverse().slice(0, 10).map(r => (
-                  <tr key={r.id} className="border-b border-gray-100">
+                  <tr key={r.id} className="border-b border-gray-100 dark:border-gray-800">
                     <td className="py-2">{new Date(r.recorded_at).toLocaleDateString('ja-JP')}</td>
                     <td className="text-right py-2">{r.rank ?? '-'}</td>
                   </tr>
@@ -275,10 +275,10 @@ function AddAppModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-[#12161e] rounded-lg p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold">アプリを追加</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -287,35 +287,35 @@ function AddAppModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">アプリ名</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">アプリ名</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="My App"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bundle ID</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bundle ID</label>
             <input
               type="text"
               value={bundleId}
               onChange={(e) => setBundleId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="com.example.myapp"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">プラットフォーム</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">プラットフォーム</label>
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value as 'ios' | 'android')}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="ios">iOS</option>
               <option value="android">Android</option>
@@ -323,12 +323,12 @@ function AddAppModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ストアURL (任意)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ストアURL (任意)</label>
             <input
               type="url"
               value={storeUrl}
               onChange={(e) => setStoreUrl(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="https://apps.apple.com/..."
             />
           </div>
@@ -337,14 +337,14 @@ function AddAppModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !name.trim() || !bundleId.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {isSubmitting ? '追加中...' : '追加'}
             </button>
@@ -369,7 +369,7 @@ function KeywordTable({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">読み込み中...</p>
+        <p className="text-gray-500 dark:text-gray-400">読み込み中...</p>
       </div>
     )
   }
@@ -377,7 +377,7 @@ function KeywordTable({
   if (keywords.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">キーワードが登録されていません</p>
+        <p className="text-gray-500 dark:text-gray-400">キーワードが登録されていません</p>
       </div>
     )
   }
@@ -386,7 +386,7 @@ function KeywordTable({
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-200 text-left text-sm text-gray-500">
+          <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-sm text-gray-500 dark:text-gray-400">
             <th className="pb-3 font-medium">Keyword</th>
             <th className="pb-3 font-medium">Store</th>
             <th className="pb-3 font-medium">Position</th>
@@ -394,14 +394,14 @@ function KeywordTable({
         </thead>
         <tbody>
           {keywords.map((keyword) => (
-            <tr key={keyword.id} className="border-b border-gray-100 hover:bg-gray-50">
+            <tr key={keyword.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
               <td className="py-4">
                 <span className="font-medium">{keyword.keyword}</span>
               </td>
               <td className="py-4">
                 <div className="flex items-center gap-2">
                   <CountryFlag country={keyword.country} />
-                  <span className="text-sm text-gray-500">{keyword.country.toUpperCase()}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{keyword.country.toUpperCase()}</span>
                 </div>
               </td>
               <td className="py-4">
@@ -484,7 +484,7 @@ export default function Home() {
   if (appsLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-600">読み込み中...</p>
+        <p className="text-gray-600 dark:text-gray-400">読み込み中...</p>
       </div>
     )
   }
@@ -492,7 +492,7 @@ export default function Home() {
   if (appsError) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-red-600">エラー: {appsError.message}</p>
+        <p className="text-red-600 dark:text-red-400">エラー: {appsError.message}</p>
       </div>
     )
   }
@@ -500,10 +500,10 @@ export default function Home() {
   if (apps.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4">
-        <p className="text-gray-600">アプリが登録されていません</p>
+        <p className="text-gray-600 dark:text-gray-400">アプリが登録されていません</p>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700"
         >
           アプリを追加
         </button>
@@ -538,10 +538,10 @@ export default function Home() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-xl font-bold">{selectedApp?.name}</h1>
-              <p className="text-sm text-gray-500">{selectedApp?.bundle_id}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedApp?.bundle_id}</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {keywords.length} keywords
               </span>
             </div>
