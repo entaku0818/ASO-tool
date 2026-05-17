@@ -14,6 +14,8 @@ import {
 import {
   getPopularKeywords,
   PopularKeyword,
+  getAppStoreSuggestions,
+  AppStoreKeywordSuggestion,
   getAppRankings,
   AppRankingEntry,
   getAppRankingTrend,
@@ -83,154 +85,103 @@ const COUNTRY_NAMES: Record<string, string> = {
 }
 
 function KeywordsSection() {
-  const [keywords, setKeywords] = useState<PopularKeyword[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const [selectedCountry, setSelectedCountry] = useState('jp')
-  const [selectedPlatform, setSelectedPlatform] = useState('ios')
-  const [selectedLimit, setSelectedLimit] = useState(100)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState('jp')
+  const [suggestions, setSuggestions] = useState<AppStoreKeywordSuggestion[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
 
   useEffect(() => {
-    fetchKeywords()
-  }, [selectedCountry, selectedPlatform, selectedLimit])
+    if (!searchTerm.trim()) {
+      setSuggestions([])
+      setHasSearched(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      fetchSuggestions(searchTerm.trim())
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm, selectedCountry])
 
-  const fetchKeywords = async () => {
-    setIsLoading(true)
-    setError(null)
+  const fetchSuggestions = async (term: string) => {
+    setIsSearching(true)
     try {
-      const data = await getPopularKeywords(selectedCountry, selectedPlatform, selectedLimit)
-      setKeywords(data)
+      const data = await getAppStoreSuggestions(term, selectedCountry)
+      setSuggestions(data)
+      setHasSearched(true)
     } catch (err) {
-      setError('データの取得に失敗しました')
-      console.error('Error fetching popular keywords:', err)
+      console.error('Error fetching suggestions:', err)
     } finally {
-      setIsLoading(false)
+      setIsSearching(false)
     }
   }
-
-  const filteredKeywords = keywords.filter(kw =>
-    kw.keyword.toLowerCase().includes(searchTerm.toLowerCase())
-  )
 
   const selectedCountryData = COUNTRIES.find(c => c.code === selectedCountry)
 
   return (
-    <>
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">国</label>
-            <select
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {COUNTRIES.map(country => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">プラットフォーム</label>
-            <select
-              value={selectedPlatform}
-              onChange={(e) => setSelectedPlatform(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {PLATFORMS.map(platform => (
-                <option key={platform.value} value={platform.value}>
-                  {platform.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">表示件数</label>
-            <select
-              value={selectedLimit}
-              onChange={(e) => setSelectedLimit(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {LIMITS.map(limit => (
-                <option key={limit} value={limit}>{limit}件</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">検索</label>
+    <div className="space-y-4">
+      {/* Search bar */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex gap-3">
+          <div className="flex-1">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="キーワードを検索..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="キーワードを入力（例: photo, game, music...）"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+              autoFocus
             />
+            <p className="text-xs text-gray-400 mt-1">Apple App Store の検索サジェストをリアルタイムで取得します</p>
+          </div>
+          <div>
+            <select
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+              className="h-[50px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
       {/* Results */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {selectedCountryData?.flag} {selectedCountryData?.name} - {selectedPlatform.toUpperCase()}
-            </h2>
-            <span className="text-sm text-gray-500">{filteredKeywords.length}件のキーワード</span>
-          </div>
+        <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {searchTerm ? `「${searchTerm}」のサジェスト — ${selectedCountryData?.flag} ${selectedCountryData?.name}` : 'キーワードを入力して検索'}
+          </h2>
+          {hasSearched && <span className="text-sm text-gray-500">{suggestions.length}件</span>}
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-gray-500">読み込み中...</div>
+        {isSearching ? (
+          <div className="flex items-center justify-center py-12 text-gray-500">検索中...</div>
+        ) : !searchTerm.trim() ? (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
+            <span className="text-4xl">🔍</span>
+            <p>上の検索ボックスにキーワードを入力してください</p>
           </div>
-        ) : error ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-red-500">{error}</div>
-          </div>
-        ) : filteredKeywords.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-gray-500">キーワードが見つかりませんでした</div>
-          </div>
+        ) : suggestions.length === 0 && hasSearched ? (
+          <div className="flex items-center justify-center py-12 text-gray-500">サジェストが見つかりませんでした</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b text-left text-sm font-medium text-gray-500">
-                  <th className="px-6 py-3">#</th>
-                  <th className="px-6 py-3">キーワード</th>
-                  <th className="px-6 py-3 text-right">追跡数</th>
-                  <th className="px-6 py-3 text-right">検索結果数</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredKeywords.map((keyword, index) => (
-                  <tr
-                    key={`${keyword.keyword}-${index}`}
-                    className="border-b hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-gray-900">{keyword.keyword}</span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{keyword.tracking_count}</td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{keyword.results_count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul className="divide-y divide-gray-100">
+            {suggestions.map((s, i) => (
+              <li
+                key={s.term}
+                className="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 cursor-pointer"
+                onClick={() => setSearchTerm(s.term)}
+              >
+                <span className="text-gray-400 text-sm w-6 text-right">{i + 1}</span>
+                <span className="text-gray-800">{s.term}</span>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
-    </>
+    </div>
   )
 }
 

@@ -195,6 +195,7 @@ func main() {
 		// Public API - no authentication required
 		r.Route("/public", func(r chi.Router) {
 			r.Get("/popular-keywords", publicHandler.GetPopularKeywords)
+			r.Get("/keyword-suggestions", publicHandler.GetKeywordSuggestions)
 			r.Get("/app-rankings", publicHandler.GetAppRanking)
 			r.Get("/app-ranking-trend", publicHandler.GetAppRankingTrend)
 			r.Get("/app-ranking-countries", publicHandler.GetAppRankingCountries)

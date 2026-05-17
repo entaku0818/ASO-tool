@@ -449,6 +449,18 @@ export async function getPopularKeywords(country: string = 'jp', platform: strin
   return response.json()
 }
 
+export type AppStoreKeywordSuggestion = {
+  term: string
+}
+
+export async function getAppStoreSuggestions(term: string, country: string = 'jp'): Promise<AppStoreKeywordSuggestion[]> {
+  const response = await fetch(`${API_BASE_URL}/api/public/keyword-suggestions?term=${encodeURIComponent(term)}&country=${country}`)
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  return response.json()
+}
+
 export type RankingTrendPoint = {
   date: string
   rank: number

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
+	"github.com/entaku0818/aso-tool/backend/internal/scraper"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 )
 
@@ -18,6 +19,34 @@ func NewPublicHandler(popularKeywordsService *service.PopularKeywordsService, ap
 	return &PublicHandler{
 		popularKeywordsService: popularKeywordsService,
 		appRankingService:      appRankingService,
+	}
+}
+
+// GetKeywordSuggestions proxies Apple App Store search hints API.
+// Query params: term (required), country (default: jp)
+func (h *PublicHandler) GetKeywordSuggestions(w http.ResponseWriter, r *http.Request) {
+	term := r.URL.Query().Get("term")
+	if term == "" {
+		http.Error(w, "term is required", http.StatusBadRequest)
+		return
+	}
+	country := r.URL.Query().Get("country")
+	if country == "" {
+		country = "jp"
+	}
+
+	suggestions, err := scraper.FetchKeywordSuggestions(r.Context(), term, country)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	if suggestions == nil {
+		suggestions = []scraper.KeywordSuggestion{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(suggestions); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
