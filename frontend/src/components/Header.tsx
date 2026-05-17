@@ -11,7 +11,7 @@ export function Header() {
   const router = useRouter()
 
   // Public pages that don't require authentication
-  const publicPages = ['/login', '/popular-keywords', '/buy', '/buy/success']
+  const publicPages = ['/', '/login', '/popular-keywords', '/buy', '/buy/success']
   const isPublicPage = publicPages.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export function Header() {
             </Link>
             {user ? (
               <>
-                <Link href="/" className="text-gray-600 hover:text-gray-900">
+                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
                   Dashboard
                 </Link>
                 <Link href="/keywords" className="text-gray-600 hover:text-gray-900">
@@ -94,7 +94,7 @@ export function Header() {
           ASO Tool
         </Link>
         <nav className="flex items-center gap-6">
-          <Link href="/" className="text-gray-600 hover:text-gray-900">
+          <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
             Dashboard
           </Link>
           <Link href="/keywords" className="text-gray-600 hover:text-gray-900">
