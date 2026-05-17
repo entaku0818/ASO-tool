@@ -449,6 +449,24 @@ export async function getPopularKeywords(country: string = 'jp', platform: strin
   return response.json()
 }
 
+export type CachedKeyword = {
+  keyword: string
+  country: string
+  genre: string
+  popularity: number
+  fetched_at: string
+}
+
+export async function getKeywordCache(country: string = 'jp', genre: string = '', limit: number = 100): Promise<CachedKeyword[]> {
+  const params = new URLSearchParams({ country, limit: String(limit) })
+  if (genre) params.set('genre', genre)
+  const response = await fetch(`${API_BASE_URL}/api/public/keyword-search?${params}`)
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  return response.json()
+}
+
 export type AppStoreKeywordSuggestion = {
   term: string
 }

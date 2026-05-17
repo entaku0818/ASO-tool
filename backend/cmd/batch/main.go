@@ -10,6 +10,7 @@ import (
 
 	"github.com/entaku0818/aso-tool/backend/internal/notification"
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
+	"github.com/entaku0818/aso-tool/backend/internal/scraper"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,6 +28,9 @@ var migration009 string
 
 //go:embed migrations/010_search_ads.up.sql
 var migration010 string
+
+//go:embed migrations/015_public_keyword_cache.up.sql
+var migration015 string
 
 func main() {
 	ctx := context.Background()
@@ -100,6 +104,8 @@ func main() {
 	storeRankingRepo := repository.NewStoreRankingRepository(pool)
 	appRankingService := service.NewAppRankingService(storeRankingRepo)
 
+	keywordCacheRepo := repository.NewPublicKeywordCacheRepository(pool)
+
 	rankingChangeService := service.NewRankingChangeService(
 		rankingRepo,
 		keywordRepo,
@@ -138,6 +144,10 @@ func main() {
 		tracked, errs := runTrackedKeywordsUpdate(ctx, scraperService)
 		result.TrackedKeywords = tracked
 		result.Errors = append(result.Errors, errs...)
+	case "keyword-cache":
+		cached, errs := runKeywordCacheUpdate(ctx, keywordCacheRepo)
+		result.KeywordsUpdated = cached
+		result.Errors = append(result.Errors, errs...)
 	case "all":
 		apps, keywords, errs := runRankingsUpdate(ctx, scraperService)
 		result.AppsProcessed = apps
@@ -156,8 +166,12 @@ func main() {
 		for _, e := range storeErrs {
 			result.Errors = append(result.Errors, e.Error())
 		}
+
+		cached, cacheErrs := runKeywordCacheUpdate(ctx, keywordCacheRepo)
+		result.KeywordsUpdated += cached
+		result.Errors = append(result.Errors, cacheErrs...)
 	default:
-		sendFailureAndExit(fmt.Sprintf("Unknown job: %s. Use: migrate, seed, rankings, store-rankings, tracked-keywords, or all", job))
+		sendFailureAndExit(fmt.Sprintf("Unknown job: %s. Use: migrate, seed, rankings, store-rankings, tracked-keywords, keyword-cache, or all", job))
 	}
 
 	result.EndTime = time.Now()
@@ -252,6 +266,7 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
 		{"008_create_analytics", migration008},
 		{"009_create_store_rankings", migration009},
 		{"010_search_ads", migration010},
+		{"015_public_keyword_cache", migration015},
 	}
 
 	for _, m := range migrations {
@@ -266,6 +281,78 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
 	}
 
 	log.Println("All migrations completed")
+}
+
+// seedApps are popular apps used to generate keyword suggestions from Search Ads API.
+var seedApps = []struct {
+	adamID int64
+	genre  string
+}{
+	{1130383480, "social"},    // LINE
+	{835599320, "social"},     // TikTok
+	{389801252, "video"},      // YouTube
+	{525895022, "navigation"}, // Google Maps
+	{310633997, "social"},     // WhatsApp
+	{284882215, "social"},     // Facebook
+	{544007664, "photo"},      // CamScanner
+	{1480637954, "shopping"},  // Shein
+}
+
+var seedCountries = []string{"jp", "us", "gb", "de", "fr", "kr", "tw", "au"}
+
+func runKeywordCacheUpdate(ctx context.Context, cacheRepo *repository.PublicKeywordCacheRepository) (int, []string) {
+	log.Println("Starting keyword cache update...")
+	var errors []string
+
+	clientID := os.Getenv("ADMIN_ASA_CLIENT_ID")
+	teamID := os.Getenv("ADMIN_ASA_TEAM_ID")
+	keyID := os.Getenv("ADMIN_ASA_KEY_ID")
+	privateKeyPEM := os.Getenv("ADMIN_ASA_PRIVATE_KEY")
+	orgID := os.Getenv("ADMIN_ASA_ORG_ID")
+
+	if clientID == "" || teamID == "" || keyID == "" || privateKeyPEM == "" {
+		log.Println("Keyword cache: ADMIN_ASA_* env vars not set, skipping")
+		return 0, nil
+	}
+
+	client, err := scraper.NewSearchAdsClient(clientID, teamID, keyID, []byte(privateKeyPEM), orgID)
+	if err != nil {
+		errors = append(errors, fmt.Sprintf("keyword cache: failed to create Search Ads client: %v", err))
+		return 0, errors
+	}
+
+	total := 0
+	for _, country := range seedCountries {
+		for _, app := range seedApps {
+			results, err := client.GetKeywordPopularity(ctx, app.adamID, nil, 100)
+			if err != nil {
+				log.Printf("Keyword cache: country=%s adamID=%d error: %v", country, app.adamID, err)
+				errors = append(errors, fmt.Sprintf("keyword cache %s/%d: %v", country, app.adamID, err))
+				continue
+			}
+
+			entries := make([]repository.PublicKeywordCacheEntry, 0, len(results))
+			for _, kp := range results {
+				entries = append(entries, repository.PublicKeywordCacheEntry{
+					Keyword:    kp.Text,
+					Country:    country,
+					Genre:      app.genre,
+					Popularity: kp.PopularityScore * 20, // 0–5 → 0–100
+				})
+			}
+
+			if err := cacheRepo.UpsertMany(ctx, entries); err != nil {
+				log.Printf("Keyword cache upsert error: %v", err)
+				errors = append(errors, fmt.Sprintf("keyword cache upsert %s/%d: %v", country, app.adamID, err))
+				continue
+			}
+			total += len(entries)
+			log.Printf("Keyword cache: country=%s genre=%s adamID=%d saved %d keywords", country, app.genre, app.adamID, len(entries))
+		}
+	}
+
+	log.Printf("Keyword cache update complete: %d entries saved", total)
+	return total, errors
 }
 
 func runSeed(ctx context.Context, pool *pgxpool.Pool) {

@@ -12,8 +12,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import {
-  getPopularKeywords,
-  PopularKeyword,
   getAppStoreSuggestions,
   AppStoreKeywordSuggestion,
   getAppRankings,
@@ -22,6 +20,8 @@ import {
   RankingTrendPoint,
   getAppRankingCountries,
   CountryRankPoint,
+  getKeywordCache,
+  CachedKeyword,
 } from '@/lib/api'
 
 const COUNTRIES = [
@@ -90,12 +90,40 @@ const SEED_KEYWORDS = [
   'news', 'book', 'study', 'sns', 'timer',
 ]
 
+const ASA_GENRES = [
+  { value: '', label: '全ジャンル' },
+  { value: 'social', label: 'SNS・コミュニケーション' },
+  { value: 'video', label: '動画' },
+  { value: 'navigation', label: 'ナビ・地図' },
+  { value: 'photo', label: '写真' },
+  { value: 'shopping', label: 'ショッピング' },
+]
+
+function PopularityBar({ value }: { value: number }) {
+  const pct = Math.min(100, Math.max(0, value))
+  const color = pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : pct >= 20 ? 'bg-yellow-500' : 'bg-gray-400'
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs font-mono text-gray-600 dark:text-gray-400 w-8 text-right">{pct}</span>
+    </div>
+  )
+}
+
 function KeywordsSection() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('jp')
   const [suggestions, setSuggestions] = useState<AppStoreKeywordSuggestion[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+
+  // Cached popularity state
+  const [cachedKeywords, setCachedKeywords] = useState<CachedKeyword[]>([])
+  const [cacheCountry, setCacheCountry] = useState('jp')
+  const [cacheGenre, setCacheGenre] = useState('')
+  const [isCacheLoading, setIsCacheLoading] = useState(false)
 
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -109,6 +137,10 @@ function KeywordsSection() {
     return () => clearTimeout(timer)
   }, [searchTerm, selectedCountry])
 
+  useEffect(() => {
+    fetchCachedKeywords()
+  }, [cacheCountry, cacheGenre])
+
   const fetchSuggestions = async (term: string) => {
     setIsSearching(true)
     try {
@@ -119,6 +151,18 @@ function KeywordsSection() {
       console.error('Error fetching suggestions:', err)
     } finally {
       setIsSearching(false)
+    }
+  }
+
+  const fetchCachedKeywords = async () => {
+    setIsCacheLoading(true)
+    try {
+      const data = await getKeywordCache(cacheCountry, cacheGenre, 100)
+      setCachedKeywords(data)
+    } catch (err) {
+      console.error('Error fetching keyword cache:', err)
+    } finally {
+      setIsCacheLoading(false)
     }
   }
 
@@ -154,7 +198,7 @@ function KeywordsSection() {
         </div>
       </div>
 
-      {/* Results */}
+      {/* Suggestion Results */}
       <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 overflow-hidden">
         <div className="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0d0f14] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -195,6 +239,81 @@ function KeywordsSection() {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      {/* ASA Popularity Cache Table */}
+      <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 overflow-hidden">
+        <div className="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0d0f14]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">ASA 人気キーワード</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Apple Search Ads の人気スコア（0–100）</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={cacheCountry}
+                onChange={(e) => setCacheCountry(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {COUNTRIES.map(c => (
+                  <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                ))}
+              </select>
+              <select
+                value={cacheGenre}
+                onChange={(e) => setCacheGenre(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {ASA_GENRES.map(g => (
+                  <option key={g.value} value={g.value}>{g.label}</option>
+                ))}
+              </select>
+              {isCacheLoading && <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
+            </div>
+          </div>
+        </div>
+
+        {isCacheLoading && cachedKeywords.length === 0 ? (
+          <div className="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">読み込み中...</div>
+        ) : cachedKeywords.length === 0 ? (
+          <div className="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+            データがありません（バッチジョブ実行後に表示されます）
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-[#0d0f14] border-b dark:border-gray-700 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-4 py-3 w-8">#</th>
+                  <th className="px-4 py-3">キーワード</th>
+                  <th className="px-4 py-3">ジャンル</th>
+                  <th className="px-4 py-3 min-w-[180px]">人気スコア</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {cachedKeywords.map((kw, i) => (
+                  <tr key={`${kw.keyword}-${kw.genre}`} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <td className="px-4 py-2 text-gray-400 dark:text-gray-500 text-xs">{i + 1}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => setSearchTerm(kw.keyword)}
+                        className="font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400"
+                      >
+                        {kw.keyword}
+                      </button>
+                    </td>
+                    <td className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                      {ASA_GENRES.find(g => g.value === kw.genre)?.label ?? kw.genre}
+                    </td>
+                    <td className="px-4 py-2">
+                      <PopularityBar value={kw.popularity} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

@@ -13,13 +13,41 @@ import (
 type PublicHandler struct {
 	popularKeywordsService *service.PopularKeywordsService
 	appRankingService      *service.AppRankingService
+	keywordCacheRepo       *repository.PublicKeywordCacheRepository
 }
 
-func NewPublicHandler(popularKeywordsService *service.PopularKeywordsService, appRankingService *service.AppRankingService) *PublicHandler {
+func NewPublicHandler(popularKeywordsService *service.PopularKeywordsService, appRankingService *service.AppRankingService, keywordCacheRepo *repository.PublicKeywordCacheRepository) *PublicHandler {
 	return &PublicHandler{
 		popularKeywordsService: popularKeywordsService,
 		appRankingService:      appRankingService,
+		keywordCacheRepo:       keywordCacheRepo,
 	}
+}
+
+// GetKeywordCache returns popular keywords with ASA popularity scores.
+// Query params: country (default: jp), genre (optional), limit (default: 100)
+func (h *PublicHandler) GetKeywordCache(w http.ResponseWriter, r *http.Request) {
+	country := r.URL.Query().Get("country")
+	if country == "" {
+		country = "jp"
+	}
+	genre := r.URL.Query().Get("genre")
+	limit := 100
+	if l, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil && l > 0 {
+		limit = l
+	}
+
+	entries, err := h.keywordCacheRepo.Search(r.Context(), country, genre, limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if entries == nil {
+		entries = []repository.PublicKeywordCacheEntry{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(entries)
 }
 
 // GetKeywordSuggestions proxies Apple App Store search hints API.

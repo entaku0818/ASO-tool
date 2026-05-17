@@ -152,7 +152,8 @@ func main() {
 	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
 	storeRankingRepo := repository.NewStoreRankingRepository(pool)
 	appRankingService := service.NewAppRankingService(storeRankingRepo)
-	publicHandler := handler.NewPublicHandler(popularKeywordsService, appRankingService)
+	keywordCacheRepo := repository.NewPublicKeywordCacheRepository(pool)
+	publicHandler := handler.NewPublicHandler(popularKeywordsService, appRankingService, keywordCacheRepo)
 
 	// Router setup
 	r := chi.NewRouter()
@@ -196,6 +197,7 @@ func main() {
 		r.Route("/public", func(r chi.Router) {
 			r.Get("/popular-keywords", publicHandler.GetPopularKeywords)
 			r.Get("/keyword-suggestions", publicHandler.GetKeywordSuggestions)
+			r.Get("/keyword-search", publicHandler.GetKeywordCache)
 			r.Get("/app-rankings", publicHandler.GetAppRanking)
 			r.Get("/app-ranking-trend", publicHandler.GetAppRankingTrend)
 			r.Get("/app-ranking-countries", publicHandler.GetAppRankingCountries)
