@@ -69,7 +69,7 @@ export function Header() {
             ASO Tool
           </Link>
           <nav className="flex items-center gap-4">
-            <Link href="/popular-keywords" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+            <Link href="/popular-keywords" className="hidden sm:block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
               人気キーワード
             </Link>
             {user ? (
