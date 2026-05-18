@@ -94,9 +94,14 @@ export function Header() {
                 </div>
               </>
             ) : (
-              <Link href="/login" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                Login
-              </Link>
+              <>
+                <Link href="/login" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                  Login
+                </Link>
+                <Link href="/popular-keywords" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                  無料で試す
+                </Link>
+              </>
             )}
             <ThemeToggle />
           </nav>

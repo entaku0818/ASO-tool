@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 
 const FEATURES = [
@@ -160,6 +161,61 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Free Tool Spotlight ── */}
+      <section className="bg-white dark:bg-[#12161e] py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            <div className="flex-1">
+              <span className="inline-block px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full mb-4 uppercase tracking-wide">
+                登録不要・完全無料
+              </span>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                まずは無料ツールで<br />キーワード調査を体験
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+                App Store のキーワードサジェストをリアルタイムで取得。
+                アカウント登録不要で今すぐ使えます。
+              </p>
+              <ul className="space-y-2 mb-8">
+                {[
+                  'App Store 検索サジェストをリアルタイム取得',
+                  '日本・アメリカ・中国など7カ国対応',
+                  'App Store ランキングも無料で確認',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-green-500 flex-shrink-0">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/popular-keywords"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors"
+              >
+                無料ツールを使ってみる →
+              </Link>
+            </div>
+            <div className="flex-1 w-full">
+              <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xl dark:shadow-black/40">
+                <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-400" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                  <div className="w-3 h-3 rounded-full bg-green-400" />
+                  <span className="ml-2 text-xs text-gray-400">aso-tool.entaku.app/popular-keywords</span>
+                </div>
+                <Image
+                  src="/screenshot-keyword-search.png"
+                  alt="キーワード検索機能のスクリーンショット"
+                  width={760}
+                  height={480}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Pain → Solution ── */}
       <section className="bg-gray-50 dark:bg-[#0d0f14] py-20 px-4">
         <div className="max-w-4xl mx-auto">
@@ -284,7 +340,7 @@ export default function HomePage() {
             <Link href="/buy" className="hover:text-white transition-colors">購入</Link>
             <Link href="/login" className="hover:text-white transition-colors">ログイン</Link>
           </div>
-          <span>© 2025 ASO Tool</span>
+          <span>© 2026 ASO Tool</span>
         </div>
       </footer>
     </div>
