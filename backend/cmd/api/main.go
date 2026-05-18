@@ -187,6 +187,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		// Public routes
 		r.Post("/auth/login", authHandler.Login)
+		r.Post("/auth/register", authHandler.Register)
 		r.Post("/licenses/activate", licenseHandler.Activate)
 		r.Post("/licenses/checkout", licenseHandler.CreateCheckout)
 

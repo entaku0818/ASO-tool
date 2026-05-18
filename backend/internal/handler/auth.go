@@ -79,3 +79,39 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	respondJSON(w, http.StatusCreated, user)
 }
+
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	var req model.CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if _, err := h.authService.CreateUser(r.Context(), &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	resp, err := h.authService.Login(r.Context(), &model.LoginRequest{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, struct {
+		Token string `json:"token"`
+		User  struct {
+			*model.User
+			IsPro bool `json:"is_pro"`
+		} `json:"user"`
+	}{
+		Token: resp.Token,
+		User: struct {
+			*model.User
+			IsPro bool `json:"is_pro"`
+		}{User: resp.User, IsPro: resp.User.IsPro()},
+	})
+}

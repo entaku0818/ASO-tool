@@ -742,6 +742,19 @@ export async function generateCaptions(
   })
 }
 
+export async function register(email: string, password: string, name: string): Promise<{ token: string; user: { id: string; email: string; name: string; is_pro: boolean } }> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name }),
+  })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || '登録に失敗しました')
+  }
+  return response.json()
+}
+
 export async function generateCaptionsBulk(
   appId: string,
   keywords: string[],

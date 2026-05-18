@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import Image from 'next/image'
 import {
   LineChart,
@@ -85,9 +86,10 @@ const COUNTRY_NAMES: Record<string, string> = {
 }
 
 const SEED_KEYWORDS = [
-  'game', 'photo', 'music', 'chat', 'vpn', 'camera', 'map', 'weather',
-  'fitness', 'manga', 'video', 'shopping', 'finance', 'travel', 'food',
-  'news', 'book', 'study', 'sns', 'timer',
+  'ゲーム', '写真', '音楽', '動画', '家計簿', 'ダイエット', '勉強', '天気',
+  '地図', 'ニュース', 'カメラ', 'マンガ', '英語', 'レシピ', '節約', '睡眠',
+  'game', 'photo', 'music', 'chat', 'camera', 'map', 'weather',
+  'fitness', 'manga', 'video', 'shopping', 'finance', 'travel',
 ]
 
 const ASA_GENRES = [
@@ -277,8 +279,10 @@ function KeywordsSection() {
         {isCacheLoading && cachedKeywords.length === 0 ? (
           <div className="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">読み込み中...</div>
         ) : cachedKeywords.length === 0 ? (
-          <div className="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">
-            データがありません（バッチジョブ実行後に表示されます）
+          <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
+            <div className="text-4xl">🔍</div>
+            <p className="text-gray-700 dark:text-gray-300 font-medium">まだデータが準備中です</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">上の検索ボックスでキーワードを入力すると、リアルタイムでサジェストを確認できます</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -782,6 +786,32 @@ export default function PopularKeywordsPage() {
         {activeTab === 'rankings' && <AppRankingSection />}
         {activeTab === 'trend' && <RankingTrendSection />}
         {activeTab === 'countries' && <CountryComparisonSection />}
+      </div>
+
+      {/* Signup CTA */}
+      <div className="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+            自分のアプリのASO管理もはじめませんか？
+          </h2>
+          <p className="text-blue-100 mb-8 text-base sm:text-lg">
+            キーワード順位追跡・競合分析・レビュー管理をすべて一箇所で。無料で始められます。
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/signup"
+              className="inline-block px-8 py-3 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors text-base"
+            >
+              無料アカウントを作成
+            </Link>
+            <Link
+              href="/login"
+              className="inline-block px-8 py-3 border border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-colors text-base"
+            >
+              ログイン
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
