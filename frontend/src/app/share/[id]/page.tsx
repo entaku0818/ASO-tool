@@ -146,7 +146,7 @@ export default function SharePage({ searchParams }: Props) {
       {/* ── Xでシェア ───────────────────────────────────────── */}
       {(() => {
         const tweetText = `「${keyword}」で #${toRank} 位達成！#${fromRank}位から+${improvement}位改善 🎉 #ASO #AppStore`
-        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(`https://aso-tool.app/share/${searchParams.kw ?? ''}`)}`
+        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(`https://aso-tool.entaku.app/share/${searchParams.kw ?? ''}`)}`
         return (
           <div className="mt-6 text-center">
             <a

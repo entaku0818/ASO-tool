@@ -171,7 +171,7 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
             disabled={isLoading}
             className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isLoading ? '処理中...' : checkoutError ? 'もう一度試す' : '7日間 無料トライアルを開始'}
+            {isLoading ? '処理中...' : checkoutError ? 'もう一度試す' : 'Proプランを始める'}
           </button>
           <button
             onClick={onClose}
