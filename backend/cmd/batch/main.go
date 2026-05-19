@@ -32,6 +32,9 @@ var migration010 string
 //go:embed migrations/015_public_keyword_cache.up.sql
 var migration015 string
 
+//go:embed migrations/016_search_keyword_reports.up.sql
+var migration016 string
+
 func main() {
 	ctx := context.Background()
 	startTime := time.Now()
@@ -267,6 +270,7 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool) {
 		{"009_create_store_rankings", migration009},
 		{"010_search_ads", migration010},
 		{"015_public_keyword_cache", migration015},
+		{"016_search_keyword_reports", migration016},
 	}
 
 	for _, m := range migrations {

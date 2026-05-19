@@ -2,6 +2,26 @@ package model
 
 import "time"
 
+type ASCReportRequest struct {
+	ID        string    `json:"id"`
+	AppID     string    `json:"app_id"`
+	RequestID string    `json:"request_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type ASCSearchKeyword struct {
+	ID          string    `json:"id"`
+	AppID       string    `json:"app_id"`
+	Date        time.Time `json:"date"`
+	Keyword     string    `json:"keyword"`
+	Impressions int       `json:"impressions"`
+	PageViews   int       `json:"page_views"`
+	Installs    int       `json:"installs"`
+	FetchedAt   time.Time `json:"fetched_at"`
+}
+
 type ASCAnalytics struct {
 	ID             string    `json:"id"`
 	AppID          string    `json:"app_id"`

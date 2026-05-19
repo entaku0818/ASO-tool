@@ -23,6 +23,11 @@ import {
   translateKeyword,
   SearchAdsCredentials,
   KeywordPopularitySuggestion,
+  fetchSearchKeywords,
+  pollSearchKeywords,
+  getSearchKeywords,
+  ASCReportRequest,
+  ASCSearchKeyword,
 } from '@/lib/api'
 import { useToast } from '@/components/Toast'
 import { ReviewsSection } from '@/components/ReviewsSection'
@@ -260,6 +265,136 @@ function MultiRankingChartSection({
         <p className="text-gray-500 dark:text-gray-400 text-sm">読み込み中...</p>
       ) : (
         <RankingChart keywords={data} />
+      )}
+    </div>
+  )
+}
+
+function SearchKeywordsSection({ appId }: { appId: string }) {
+  const { showToast } = useToast()
+  const [isOpen, setIsOpen] = useState(false)
+  const [keywords, setKeywords] = useState<ASCSearchKeyword[]>([])
+  const [reportReq, setReportReq] = useState<ASCReportRequest | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    setIsLoading(true)
+    getSearchKeywords(appId)
+      .then(setKeywords)
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
+  }, [appId, isOpen])
+
+  const handleFetch = async () => {
+    setIsFetching(true)
+    try {
+      const req = await fetchSearchKeywords(appId)
+      setReportReq(req)
+      if (req.status === 'ready') {
+        const updated = await getSearchKeywords(appId)
+        setKeywords(updated)
+        showToast('キーワードレポートを取得しました', 'success')
+      } else {
+        showToast('レポートを作成しました。数分後に「更新確認」してください', 'success')
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'レポート取得に失敗しました', 'error')
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
+  const handlePoll = async () => {
+    setIsFetching(true)
+    try {
+      const req = await pollSearchKeywords(appId)
+      setReportReq(req)
+      if (req.status === 'ready') {
+        const updated = await getSearchKeywords(appId)
+        setKeywords(updated)
+        showToast('データを取得しました', 'success')
+      } else {
+        showToast('まだ準備中です。しばらくしてから再度お試しください', 'info')
+      }
+    } catch {
+      showToast('更新確認に失敗しました', 'error')
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
+  return (
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 mb-6">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-4 flex items-center justify-between text-left"
+      >
+        <div>
+          <h3 className="text-lg font-semibold">流入キーワードレポート</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">App Store経由で流入しているキーワードのインプレッション・インストール数</p>
+        </div>
+        <span className="text-gray-400">{isOpen ? '▲' : '▼'}</span>
+      </button>
+
+      {isOpen && (
+        <div className="p-4 border-t dark:border-gray-700">
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={handleFetch}
+              disabled={isFetching}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+            >
+              {isFetching ? '処理中...' : 'レポートを取得'}
+            </button>
+            {reportReq?.status === 'pending' && (
+              <button
+                onClick={handlePoll}
+                disabled={isFetching}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                更新確認
+              </button>
+            )}
+          </div>
+
+          {reportReq && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              ステータス: <span className={reportReq.status === 'ready' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}>{reportReq.status === 'ready' ? '完了' : '処理中'}</span>
+              {' · '}{new Date(reportReq.updated_at).toLocaleString('ja-JP')}
+            </p>
+          )}
+
+          {isLoading ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">読み込み中...</p>
+          ) : keywords.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">データがありません。「レポートを取得」ボタンで取得してください。</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 dark:text-gray-400 border-b dark:border-gray-700">
+                    <th className="pb-2 pr-4">キーワード</th>
+                    <th className="pb-2 pr-4 text-right">インプレッション</th>
+                    <th className="pb-2 pr-4 text-right">ページビュー</th>
+                    <th className="pb-2 text-right">インストール</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {keywords.map((k) => (
+                    <tr key={k.id} className="border-b dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="py-2 pr-4 font-medium">{k.keyword}</td>
+                      <td className="py-2 pr-4 text-right text-gray-600 dark:text-gray-300">{k.impressions.toLocaleString()}</td>
+                      <td className="py-2 pr-4 text-right text-gray-600 dark:text-gray-300">{k.page_views.toLocaleString()}</td>
+                      <td className="py-2 text-right text-gray-600 dark:text-gray-300">{k.installs.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
@@ -803,6 +938,10 @@ export default function AppDetailPage() {
         <div className="mb-6">
           <AnalyticsSection appId={appId} platform={app.platform} />
         </div>
+      )}
+
+      {app.platform === 'ios' && (
+        <SearchKeywordsSection appId={appId} />
       )}
 
       {app.platform === 'ios' && (

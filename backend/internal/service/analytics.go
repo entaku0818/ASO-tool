@@ -12,12 +12,13 @@ import (
 )
 
 type AnalyticsService struct {
-	credentialsRepo *repository.ASCCredentialsRepository
-	analyticsRepo   *repository.AnalyticsRepository
-	appVersionRepo  *repository.AppVersionRepository
-	rankingRepo     *repository.RankingRepository
-	reviewRepo      *repository.ReviewRepository
-	appRepo         *repository.AppRepository
+	credentialsRepo   *repository.ASCCredentialsRepository
+	analyticsRepo     *repository.AnalyticsRepository
+	appVersionRepo    *repository.AppVersionRepository
+	rankingRepo       *repository.RankingRepository
+	reviewRepo        *repository.ReviewRepository
+	appRepo           *repository.AppRepository
+	searchKeywordRepo *repository.SearchKeywordReportRepository
 }
 
 func NewAnalyticsService(
@@ -27,14 +28,16 @@ func NewAnalyticsService(
 	rankingRepo *repository.RankingRepository,
 	reviewRepo *repository.ReviewRepository,
 	appRepo *repository.AppRepository,
+	searchKeywordRepo *repository.SearchKeywordReportRepository,
 ) *AnalyticsService {
 	return &AnalyticsService{
-		credentialsRepo: credentialsRepo,
-		analyticsRepo:   analyticsRepo,
-		appVersionRepo:  appVersionRepo,
-		rankingRepo:     rankingRepo,
-		reviewRepo:      reviewRepo,
-		appRepo:         appRepo,
+		credentialsRepo:   credentialsRepo,
+		analyticsRepo:     analyticsRepo,
+		appVersionRepo:    appVersionRepo,
+		rankingRepo:       rankingRepo,
+		reviewRepo:        reviewRepo,
+		appRepo:           appRepo,
+		searchKeywordRepo: searchKeywordRepo,
 	}
 }
 
@@ -373,4 +376,111 @@ func (s *AnalyticsService) GetSummary(ctx context.Context, userID, appID string,
 	startDate := endDate.AddDate(0, 0, -days)
 
 	return s.analyticsRepo.GetSummary(ctx, appID, startDate, endDate)
+}
+
+// FetchSearchKeywords triggers a new ASC Analytics Report request for search term data.
+func (s *AnalyticsService) FetchSearchKeywords(ctx context.Context, userID, appID string) (*model.ASCReportRequest, error) {
+	app, err := s.appRepo.Get(ctx, userID, appID)
+	if err != nil {
+		return nil, err
+	}
+	if app.Platform != model.PlatformIOS {
+		return nil, model.ErrIOSOnly
+	}
+
+	creds, err := s.credentialsRepo.GetByAppID(ctx, appID)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := crypto.Decrypt(creds.PrivateKeyEncrypted, creds.EncryptionNonce)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := appstoreconnect.NewClient(appstoreconnect.Config{
+		IssuerID:      creds.IssuerID,
+		KeyID:         creds.KeyID,
+		PrivateKeyPEM: privateKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ascApp, err := client.GetAppByBundleID(ctx, app.BundleID)
+	if err != nil {
+		return nil, err
+	}
+
+	requestID, err := client.CreateAnalyticsReportRequest(ctx, ascApp.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.searchKeywordRepo.CreateReportRequest(ctx, appID, requestID); err != nil {
+		return nil, err
+	}
+
+	// Attempt to resolve immediately; if not ready yet, return pending status
+	entries, err := client.GetSearchTermsFromRequest(ctx, requestID)
+	if err == nil && len(entries) > 0 {
+		_ = s.searchKeywordRepo.SaveSearchKeywords(ctx, appID, entries)
+		_ = s.searchKeywordRepo.UpdateReportRequestStatus(ctx, appID, requestID, "ready")
+	}
+
+	return s.searchKeywordRepo.GetLatestReportRequest(ctx, appID)
+}
+
+// PollSearchKeywords checks a pending report request and downloads results when ready.
+func (s *AnalyticsService) PollSearchKeywords(ctx context.Context, userID, appID string) (*model.ASCReportRequest, error) {
+	_, err := s.appRepo.Get(ctx, userID, appID)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := s.searchKeywordRepo.GetLatestReportRequest(ctx, appID)
+	if err != nil {
+		return nil, err
+	}
+	if req.Status != "pending" {
+		return req, nil
+	}
+
+	creds, err := s.credentialsRepo.GetByAppID(ctx, appID)
+	if err != nil {
+		return req, nil
+	}
+
+	privateKey, err := crypto.Decrypt(creds.PrivateKeyEncrypted, creds.EncryptionNonce)
+	if err != nil {
+		return req, nil
+	}
+
+	client, err := appstoreconnect.NewClient(appstoreconnect.Config{
+		IssuerID:      creds.IssuerID,
+		KeyID:         creds.KeyID,
+		PrivateKeyPEM: privateKey,
+	})
+	if err != nil {
+		return req, nil
+	}
+
+	entries, err := client.GetSearchTermsFromRequest(ctx, req.RequestID)
+	if err != nil || len(entries) == 0 {
+		return req, nil
+	}
+
+	_ = s.searchKeywordRepo.SaveSearchKeywords(ctx, appID, entries)
+	_ = s.searchKeywordRepo.UpdateReportRequestStatus(ctx, appID, req.RequestID, "ready")
+	req.Status = "ready"
+	return req, nil
+}
+
+// GetSearchKeywords retrieves stored search keyword data.
+func (s *AnalyticsService) GetSearchKeywords(ctx context.Context, userID, appID string, days int) ([]*model.ASCSearchKeyword, error) {
+	_, err := s.appRepo.Get(ctx, userID, appID)
+	if err != nil {
+		return nil, err
+	}
+	return s.searchKeywordRepo.GetSearchKeywords(ctx, appID, days)
 }

@@ -109,9 +109,10 @@ func main() {
 	ascCredentialsRepo := repository.NewASCCredentialsRepository(pool)
 	analyticsRepo := repository.NewAnalyticsRepository(pool)
 	appVersionRepo := repository.NewAppVersionRepository(pool)
+	searchKeywordRepo := repository.NewSearchKeywordReportRepository(pool)
 	analyticsService := service.NewAnalyticsService(
 		ascCredentialsRepo, analyticsRepo, appVersionRepo,
-		rankingRepo, reviewRepo, appRepo,
+		rankingRepo, reviewRepo, appRepo, searchKeywordRepo,
 	)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsService)
 
@@ -306,6 +307,9 @@ func main() {
 					r.Get("/correlation", analyticsHandler.GetAnalyticsWithCorrelation)
 					r.Get("/summary", analyticsHandler.GetSummary)
 					r.Post("/fetch", analyticsHandler.TriggerFetch)
+					r.Get("/search-keywords", analyticsHandler.GetSearchKeywords)
+					r.Post("/search-keywords/fetch", analyticsHandler.FetchSearchKeywords)
+					r.Post("/search-keywords/poll", analyticsHandler.PollSearchKeywords)
 				})
 
 				r.Get("/{appID}/keywords/{keywordID}/comparison", competitorHandler.GetComparison)

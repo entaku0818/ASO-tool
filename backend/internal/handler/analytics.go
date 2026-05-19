@@ -193,6 +193,58 @@ func (h *AnalyticsHandler) TriggerFetch(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// FetchSearchKeywords handles POST /apps/{appID}/analytics/search-keywords/fetch
+func (h *AnalyticsHandler) FetchSearchKeywords(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	appID := chi.URLParam(r, "appID")
+
+	req, err := h.service.FetchSearchKeywords(r.Context(), userID, appID)
+	if err != nil {
+		handleAnalyticsError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, req)
+}
+
+// PollSearchKeywords handles POST /apps/{appID}/analytics/search-keywords/poll
+func (h *AnalyticsHandler) PollSearchKeywords(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	appID := chi.URLParam(r, "appID")
+
+	req, err := h.service.PollSearchKeywords(r.Context(), userID, appID)
+	if err != nil {
+		handleAnalyticsError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, req)
+}
+
+// GetSearchKeywords handles GET /apps/{appID}/analytics/search-keywords
+func (h *AnalyticsHandler) GetSearchKeywords(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	appID := chi.URLParam(r, "appID")
+
+	days := 90
+	if d := r.URL.Query().Get("days"); d != "" {
+		if n, err := strconv.Atoi(d); err == nil && n > 0 {
+			days = n
+		}
+	}
+
+	keywords, err := h.service.GetSearchKeywords(r.Context(), userID, appID, days)
+	if err != nil {
+		handleAnalyticsError(w, err)
+		return
+	}
+
+	if keywords == nil {
+		keywords = []*model.ASCSearchKeyword{}
+	}
+	respondJSON(w, http.StatusOK, keywords)
+}
+
 func handleAnalyticsError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, model.ErrNotFound):

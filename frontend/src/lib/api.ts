@@ -418,6 +418,38 @@ export async function triggerAnalyticsFetch(appId: string): Promise<{ message: s
   return fetchApi(`/api/apps/${appId}/analytics/fetch`, { method: 'POST' })
 }
 
+export type ASCReportRequest = {
+  id: string
+  app_id: string
+  request_id: string
+  status: 'pending' | 'ready' | 'failed'
+  created_at: string
+  updated_at: string
+}
+
+export type ASCSearchKeyword = {
+  id: string
+  app_id: string
+  date: string
+  keyword: string
+  impressions: number
+  page_views: number
+  installs: number
+  fetched_at: string
+}
+
+export async function fetchSearchKeywords(appId: string): Promise<ASCReportRequest> {
+  return fetchApi<ASCReportRequest>(`/api/apps/${appId}/analytics/search-keywords/fetch`, { method: 'POST' })
+}
+
+export async function pollSearchKeywords(appId: string): Promise<ASCReportRequest> {
+  return fetchApi<ASCReportRequest>(`/api/apps/${appId}/analytics/search-keywords/poll`, { method: 'POST' })
+}
+
+export async function getSearchKeywords(appId: string, days: number = 90): Promise<ASCSearchKeyword[]> {
+  return fetchApi<ASCSearchKeyword[]>(`/api/apps/${appId}/analytics/search-keywords?days=${days}`)
+}
+
 // Public API (no authentication required)
 export type AppRankingEntry = {
   rank: number
