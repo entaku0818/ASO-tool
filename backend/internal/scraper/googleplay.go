@@ -240,6 +240,157 @@ func (s *GooglePlayScraper) enrichAppFromHTML(html string, app *AppInfo) {
 	}
 }
 
+// gpCategoryMap maps iTunes-style category names to Google Play collection names
+var gpCategoryMap = map[string]string{
+	"topfreeapplications":     "topselling_free",
+	"toppaidapplications":     "topselling_paid",
+	"topgrossingapplications": "topgrossing",
+	"newfreeapplications":     "new_free",
+	"newpaidapplications":     "new_paid",
+}
+
+var gpDocIDRe = regexp.MustCompile(`data-docid="([a-zA-Z0-9_.]+)"`)
+var gpHrefRe = regexp.MustCompile(`/store/apps/details\?id=([a-zA-Z0-9_.]+)`)
+var gpIconRe = regexp.MustCompile(`<img[^>]+src="(https://play-lh\.googleusercontent\.com/[^"?]+)"`)
+var gpNameRe = regexp.MustCompile(`<span[^>]*class="[^"]*DdYX5[^"]*"[^>]*>([^<]+)</span>`)
+var gpDevRe = regexp.MustCompile(`<div[^>]*class="[^"]*KoLSrc[^"]*"[^>]*>([^<]+)</div>`)
+
+// FetchSuggestions fetches Google Play keyword suggestions via the Android Market API.
+func (s *GooglePlayScraper) FetchSuggestions(ctx context.Context, term, country string) ([]KeywordSuggestion, error) {
+	if country == "" {
+		country = "jp"
+	}
+	apiURL := fmt.Sprintf(
+		"https://market.android.com/suggest/SuggRequest?json=1&c=3&query=%s&hl=%s&gl=%s",
+		url.QueryEscape(term),
+		url.QueryEscape(country),
+		url.QueryEscape(strings.ToUpper(country)),
+	)
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetch suggestions: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("suggestions API returned %d", resp.StatusCode)
+	}
+
+	var raw []struct {
+		S string `json:"s"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return nil, fmt.Errorf("decode suggestions: %w", err)
+	}
+
+	result := make([]KeywordSuggestion, 0, len(raw))
+	for _, r := range raw {
+		if r.S != "" {
+			result = append(result, KeywordSuggestion{Term: r.S})
+		}
+	}
+	return result, nil
+}
+
+// FetchTopChart fetches top apps from a Google Play collection page via HTML scraping.
+func (s *GooglePlayScraper) FetchTopChart(ctx context.Context, country, category string, limit int) ([]AppRankingEntry, error) {
+	if country == "" {
+		country = "jp"
+	}
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+	gpCategory, ok := gpCategoryMap[category]
+	if !ok {
+		gpCategory = "topselling_free"
+	}
+
+	collectionURL := fmt.Sprintf(
+		"https://play.google.com/store/apps/collection/%s?hl=ja&gl=%s",
+		gpCategory,
+		strings.ToUpper(country),
+	)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", collectionURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+	req.Header.Set("Accept-Language", "ja-JP,ja;q=0.9,en;q=0.8")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetch top chart: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("google play returned %d for %s", resp.StatusCode, gpCategory)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseGooglePlayChart(string(body), limit)
+}
+
+func parseGooglePlayChart(html string, limit int) ([]AppRankingEntry, error) {
+	// Try data-docid (SSR pages), fall back to href pattern
+	matches := gpDocIDRe.FindAllStringSubmatch(html, -1)
+	if len(matches) == 0 {
+		matches = gpHrefRe.FindAllStringSubmatch(html, -1)
+	}
+
+	seen := make(map[string]bool)
+	entries := []AppRankingEntry{}
+
+	iconMatches := gpIconRe.FindAllStringSubmatch(html, -1)
+	nameMatches := gpNameRe.FindAllStringSubmatch(html, -1)
+	devMatches := gpDevRe.FindAllStringSubmatch(html, -1)
+
+	for i, match := range matches {
+		if len(match) < 2 {
+			continue
+		}
+		bundleID := match[1]
+		if seen[bundleID] || bundleID == "" {
+			continue
+		}
+		seen[bundleID] = true
+
+		entry := AppRankingEntry{
+			Rank:     len(entries) + 1,
+			AppID:    bundleID,
+			StoreURL: fmt.Sprintf("https://play.google.com/store/apps/details?id=%s", bundleID),
+		}
+		if i < len(iconMatches) && len(iconMatches[i]) > 1 {
+			entry.IconURL = iconMatches[i][1]
+		}
+		if i < len(nameMatches) && len(nameMatches[i]) > 1 {
+			entry.Name = strings.TrimSpace(nameMatches[i][1])
+		}
+		if i < len(devMatches) && len(devMatches[i]) > 1 {
+			entry.Developer = strings.TrimSpace(devMatches[i][1])
+		}
+
+		entries = append(entries, entry)
+		if len(entries) >= limit {
+			break
+		}
+	}
+
+	return entries, nil
+}
+
 // parseRating parses rating string to float
 func parseRating(s string) float64 {
 	s = strings.TrimSpace(s)

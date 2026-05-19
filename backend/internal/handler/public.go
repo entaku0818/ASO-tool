@@ -50,8 +50,8 @@ func (h *PublicHandler) GetKeywordCache(w http.ResponseWriter, r *http.Request) 
 	_ = json.NewEncoder(w).Encode(entries)
 }
 
-// GetKeywordSuggestions proxies Apple App Store search hints API.
-// Query params: term (required), country (default: jp)
+// GetKeywordSuggestions proxies App Store or Google Play search suggestions.
+// Query params: term (required), country (default: jp), platform (default: ios)
 func (h *PublicHandler) GetKeywordSuggestions(w http.ResponseWriter, r *http.Request) {
 	term := r.URL.Query().Get("term")
 	if term == "" {
@@ -62,8 +62,18 @@ func (h *PublicHandler) GetKeywordSuggestions(w http.ResponseWriter, r *http.Req
 	if country == "" {
 		country = "jp"
 	}
+	platform := r.URL.Query().Get("platform")
 
-	suggestions, err := scraper.FetchKeywordSuggestions(r.Context(), term, country)
+	var suggestions []scraper.KeywordSuggestion
+	var err error
+
+	if platform == "android" {
+		gps := scraper.NewGooglePlayScraper()
+		suggestions, err = gps.FetchSuggestions(r.Context(), term, country)
+	} else {
+		suggestions, err = scraper.FetchKeywordSuggestions(r.Context(), term, country)
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -112,11 +122,13 @@ func (h *PublicHandler) GetPopularKeywords(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// GetAppRanking returns App Store rankings from iTunes RSS Feed
+// GetAppRanking returns App Store or Google Play rankings.
+// Query params: country, ranking_type, genre_id, limit, platform (ios|android)
 func (h *PublicHandler) GetAppRanking(w http.ResponseWriter, r *http.Request) {
 	country := r.URL.Query().Get("country")
 	rankingType := r.URL.Query().Get("ranking_type")
 	genreID := r.URL.Query().Get("genre_id")
+	platform := r.URL.Query().Get("platform")
 	limitStr := r.URL.Query().Get("limit")
 
 	if country == "" {
@@ -133,10 +145,22 @@ func (h *PublicHandler) GetAppRanking(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	entries, err := h.appRankingService.GetRanking(r.Context(), country, rankingType, genreID, limit)
+	var entries []scraper.AppRankingEntry
+	var err error
+
+	if platform == "android" {
+		gps := scraper.NewGooglePlayScraper()
+		entries, err = gps.FetchTopChart(r.Context(), country, rankingType, limit)
+	} else {
+		entries, err = h.appRankingService.GetRanking(r.Context(), country, rankingType, genreID, limit)
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	if entries == nil {
+		entries = []scraper.AppRankingEntry{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

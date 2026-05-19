@@ -35,11 +35,6 @@ const COUNTRIES = [
   { code: 'kr', name: '韓国', flag: '🇰🇷' },
 ]
 
-const PLATFORMS = [
-  { value: 'ios', label: 'iOS' },
-  { value: 'android', label: 'Android' },
-]
-
 const LIMITS = [100, 500, 1000]
 
 const RANKING_TYPES = [
@@ -114,14 +109,20 @@ function PopularityBar({ value }: { value: number }) {
   )
 }
 
+const PLATFORMS = [
+  { value: 'ios', label: '🍎 App Store' },
+  { value: 'android', label: '🤖 Google Play' },
+]
+
 function KeywordsSection() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('jp')
+  const [selectedPlatform, setSelectedPlatform] = useState('ios')
   const [suggestions, setSuggestions] = useState<AppStoreKeywordSuggestion[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
-  // Cached popularity state
+  // Cached popularity state (iOS only)
   const [cachedKeywords, setCachedKeywords] = useState<CachedKeyword[]>([])
   const [cacheCountry, setCacheCountry] = useState('jp')
   const [cacheGenre, setCacheGenre] = useState('')
@@ -137,16 +138,16 @@ function KeywordsSection() {
       fetchSuggestions(searchTerm.trim())
     }, 300)
     return () => clearTimeout(timer)
-  }, [searchTerm, selectedCountry])
+  }, [searchTerm, selectedCountry, selectedPlatform])
 
   useEffect(() => {
-    fetchCachedKeywords()
-  }, [cacheCountry, cacheGenre])
+    if (selectedPlatform === 'ios') fetchCachedKeywords()
+  }, [cacheCountry, cacheGenre, selectedPlatform])
 
   const fetchSuggestions = async (term: string) => {
     setIsSearching(true)
     try {
-      const data = await getAppStoreSuggestions(term, selectedCountry)
+      const data = await getAppStoreSuggestions(term, selectedCountry, selectedPlatform)
       setSuggestions(data)
       setHasSearched(true)
     } catch (err) {
@@ -172,6 +173,23 @@ function KeywordsSection() {
 
   return (
     <div className="space-y-4">
+      {/* Platform toggle */}
+      <div className="flex gap-2">
+        {PLATFORMS.map(p => (
+          <button
+            key={p.value}
+            onClick={() => { setSelectedPlatform(p.value); setSearchTerm(''); setSuggestions([]); setHasSearched(false) }}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors border ${
+              selectedPlatform === p.value
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white dark:bg-[#12161e] text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       {/* Search bar */}
       <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 p-6">
         <div className="flex gap-3">
@@ -180,11 +198,13 @@ function KeywordsSection() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="キーワードを入力（例: photo, game, music...）"
+              placeholder={selectedPlatform === 'android' ? 'キーワードを入力（例: ゲーム, 写真, 天気...）' : 'キーワードを入力（例: photo, game, music...）'}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
               autoFocus
             />
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Apple App Store の検索サジェストをリアルタイムで取得します</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {selectedPlatform === 'android' ? 'Google Play の検索サジェストをリアルタイムで取得します' : 'Apple App Store の検索サジェストをリアルタイムで取得します'}
+            </p>
           </div>
           <div>
             <select
@@ -244,8 +264,13 @@ function KeywordsSection() {
         )}
       </div>
 
-      {/* ASA Popularity Cache Table */}
-      <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 overflow-hidden">
+      {/* ASA Popularity Cache Table — iOS only */}
+      {selectedPlatform === 'android' && (
+        <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+          Google Play のキーワード人気スコアは現在準備中です。上の検索ボックスでサジェストを確認できます。
+        </div>
+      )}
+      {selectedPlatform === 'ios' && <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 overflow-hidden">
         <div className="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0d0f14]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -319,29 +344,38 @@ function KeywordsSection() {
             </table>
           </div>
         )}
-      </div>
+      </div>}
     </div>
   )
 }
+
+const ANDROID_RANKING_TYPES = [
+  { value: 'topfreeapplications', label: '無料トップ' },
+  { value: 'toppaidapplications', label: '有料トップ' },
+  { value: 'topgrossingapplications', label: '収益トップ' },
+]
 
 function AppRankingSection() {
   const [rankings, setRankings] = useState<AppRankingEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const [selectedPlatform, setSelectedPlatform] = useState('ios')
   const [selectedCountry, setSelectedCountry] = useState('jp')
   const [selectedRankingType, setSelectedRankingType] = useState('topfreeapplications')
   const [selectedGenre, setSelectedGenre] = useState('')
 
+  const rankingTypes = selectedPlatform === 'android' ? ANDROID_RANKING_TYPES : RANKING_TYPES
+
   useEffect(() => {
     fetchRankings()
-  }, [selectedCountry, selectedRankingType, selectedGenre])
+  }, [selectedCountry, selectedRankingType, selectedGenre, selectedPlatform])
 
   const fetchRankings = async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await getAppRankings(selectedCountry, selectedRankingType, selectedGenre, 100)
+      const data = await getAppRankings(selectedCountry, selectedRankingType, selectedPlatform === 'android' ? '' : selectedGenre, 100, selectedPlatform)
       setRankings(data)
     } catch (err) {
       setError('ランキングの取得に失敗しました')
@@ -352,14 +386,31 @@ function AppRankingSection() {
   }
 
   const selectedCountryData = COUNTRIES.find(c => c.code === selectedCountry)
-  const selectedRankingTypeData = RANKING_TYPES.find(r => r.value === selectedRankingType)
+  const selectedRankingTypeData = rankingTypes.find(r => r.value === selectedRankingType)
   const selectedGenreData = GENRES.find(g => g.id === selectedGenre)
 
   return (
     <>
+      {/* Platform toggle */}
+      <div className="flex gap-2 mb-4">
+        {PLATFORMS.map(p => (
+          <button
+            key={p.value}
+            onClick={() => { setSelectedPlatform(p.value); setSelectedRankingType('topfreeapplications') }}
+            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors border ${
+              selectedPlatform === p.value
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white dark:bg-[#12161e] text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       {/* Ranking type sub-tabs */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-        {RANKING_TYPES.map(type => (
+        {rankingTypes.map(type => (
           <button
             key={type.value}
             onClick={() => setSelectedRankingType(type.value)}
@@ -392,6 +443,7 @@ function AppRankingSection() {
             </select>
           </div>
 
+          {selectedPlatform === 'ios' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ジャンル</label>
             <select
@@ -404,6 +456,7 @@ function AppRankingSection() {
               ))}
             </select>
           </div>
+          )}
         </div>
       </div>
 
@@ -412,8 +465,8 @@ function AppRankingSection() {
         <div className="px-6 py-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-[#0d0f14]">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {selectedCountryData?.flag} {selectedCountryData?.name} — {selectedRankingTypeData?.label}
-              {selectedGenreData?.id && ` / ${selectedGenreData.name}`}
+              {selectedPlatform === 'android' ? '🤖 Google Play' : '🍎 App Store'} — {selectedCountryData?.flag} {selectedCountryData?.name} — {selectedRankingTypeData?.label}
+              {selectedPlatform === 'ios' && selectedGenreData?.id && ` / ${selectedGenreData.name}`}
             </h2>
             <span className="text-sm text-gray-500 dark:text-gray-400">{rankings.length}件</span>
           </div>

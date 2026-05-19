@@ -423,8 +423,9 @@ export async function getAppRankings(
   rankingType: string = 'topfreeapplications',
   genreID: string = '',
   limit: number = 100,
+  platform: string = 'ios',
 ): Promise<AppRankingEntry[]> {
-  const params = new URLSearchParams({ country, ranking_type: rankingType, limit: String(limit) })
+  const params = new URLSearchParams({ country, ranking_type: rankingType, limit: String(limit), platform })
   if (genreID) params.set('genre_id', genreID)
   const response = await fetch(`${API_BASE_URL}/api/public/app-rankings?${params}`)
   if (!response.ok) {
@@ -471,8 +472,9 @@ export type AppStoreKeywordSuggestion = {
   term: string
 }
 
-export async function getAppStoreSuggestions(term: string, country: string = 'jp'): Promise<AppStoreKeywordSuggestion[]> {
-  const response = await fetch(`${API_BASE_URL}/api/public/keyword-suggestions?term=${encodeURIComponent(term)}&country=${country}`)
+export async function getAppStoreSuggestions(term: string, country: string = 'jp', platform: string = 'ios'): Promise<AppStoreKeywordSuggestion[]> {
+  const params = new URLSearchParams({ term, country, platform })
+  const response = await fetch(`${API_BASE_URL}/api/public/keyword-suggestions?${params}`)
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`)
   }
