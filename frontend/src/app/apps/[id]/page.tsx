@@ -23,6 +23,7 @@ import {
   translateKeyword,
   SearchAdsCredentials,
   KeywordPopularitySuggestion,
+  getAppStoreSuggestions,
   fetchSearchKeywords,
   pollSearchKeywords,
   getSearchKeywords,
@@ -265,6 +266,154 @@ function MultiRankingChartSection({
         <p className="text-gray-500 dark:text-gray-400 text-sm">読み込み中...</p>
       ) : (
         <RankingChart keywords={data} />
+      )}
+    </div>
+  )
+}
+
+function KeywordRecommendSection({
+  appId,
+  platform,
+  existingKeywords,
+  onAdded,
+}: {
+  appId: string
+  platform: string
+  existingKeywords: string[]
+  onAdded: () => void
+}) {
+  const { showToast } = useToast()
+  const [isOpen, setIsOpen] = useState(false)
+  const [suggestions, setSuggestions] = useState<{ text: string; score?: number }[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [addingSet, setAddingSet] = useState<Set<string>>(new Set())
+
+  const load = async () => {
+    setIsLoading(true)
+    try {
+      // Try Search Ads suggestions first
+      const searchAdsSuggestions = await getKeywordSuggestions(appId, 30).catch(() => null)
+      if (searchAdsSuggestions && searchAdsSuggestions.length > 0) {
+        const existing = new Set(existingKeywords.map((k) => k.toLowerCase()))
+        setSuggestions(
+          searchAdsSuggestions
+            .filter((s) => !existing.has(s.text.toLowerCase()))
+            .map((s) => ({ text: s.text, score: s.popularityScore }))
+            .slice(0, 20)
+        )
+        return
+      }
+      // Fallback: use public Apple suggestion API with existing keywords as seeds
+      const seeds = existingKeywords.slice(0, 5)
+      if (seeds.length === 0) {
+        setSuggestions([])
+        return
+      }
+      const results = await Promise.allSettled(
+        seeds.map((seed) => getAppStoreSuggestions(seed, 'jp', platform === 'android' ? 'android' : 'ios'))
+      )
+      const existing = new Set(existingKeywords.map((k) => k.toLowerCase()))
+      const seen = new Set<string>()
+      const merged: { text: string }[] = []
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          for (const s of r.value) {
+            const lower = s.term.toLowerCase()
+            if (!existing.has(lower) && !seen.has(lower)) {
+              seen.add(lower)
+              merged.push({ text: s.term })
+            }
+          }
+        }
+      }
+      setSuggestions(merged.slice(0, 20))
+    } catch {
+      setSuggestions([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isOpen && suggestions.length === 0) load()
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAdd = async (keyword: string) => {
+    setAddingSet((prev) => new Set(prev).add(keyword))
+    try {
+      await createKeyword(appId, keyword)
+      setSuggestions((prev) => prev.filter((s) => s.text !== keyword))
+      onAdded()
+      showToast(`「${keyword}」を登録しました`, 'success')
+    } catch {
+      showToast('登録に失敗しました', 'error')
+    } finally {
+      setAddingSet((prev) => {
+        const next = new Set(prev)
+        next.delete(keyword)
+        return next
+      })
+    }
+  }
+
+  const popularityLabel = (score?: number) => {
+    if (score === undefined) return null
+    if (score >= 4) return <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">高</span>
+    if (score >= 2) return <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">中</span>
+    return <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">低</span>
+  }
+
+  return (
+    <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20 mb-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-4 flex items-center justify-between text-left"
+      >
+        <div>
+          <h3 className="text-lg font-semibold">おすすめキーワード</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">登録していない関連キーワードの提案</p>
+        </div>
+        <span className="text-gray-400">{isOpen ? '▲' : '▼'}</span>
+      </button>
+
+      {isOpen && (
+        <div className="p-4 border-t dark:border-gray-700">
+          <div className="flex justify-between items-center mb-3">
+            <p className="text-xs text-gray-400">クリックで追加</p>
+            <button
+              onClick={load}
+              disabled={isLoading}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+            >
+              更新
+            </button>
+          </div>
+
+          {isLoading ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">読み込み中...</p>
+          ) : suggestions.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {existingKeywords.length === 0
+                ? 'キーワードを1つ以上登録してから提案を取得できます'
+                : '提案がありません'}
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {suggestions.map((s) => (
+                <button
+                  key={s.text}
+                  onClick={() => handleAdd(s.text)}
+                  disabled={addingSet.has(s.text)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-full text-sm hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-40 transition-colors"
+                >
+                  <span className="text-blue-600 dark:text-blue-400 font-bold text-base leading-none">+</span>
+                  <span>{s.text}</span>
+                  {popularityLabel(s.score)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
@@ -953,6 +1102,13 @@ export default function AppDetailPage() {
         selectedKeywords={keywords
           .filter((k) => selectedKeywordIds.has(k.id))
           .map((k) => ({ id: k.id, keyword: k.keyword }))}
+      />
+
+      <KeywordRecommendSection
+        appId={appId}
+        platform={app.platform}
+        existingKeywords={keywords.map((k) => k.keyword)}
+        onAdded={refetch}
       />
 
       <div className="bg-white dark:bg-[#12161e] rounded-lg shadow dark:shadow-black/20">
