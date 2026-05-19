@@ -83,6 +83,19 @@ export async function getApps(): Promise<App[]> {
   return fetchApi<App[]>('/api/apps')
 }
 
+export type AppInfo = {
+  name: string
+  bundle_id: string
+  developer: string
+  store_url: string
+  icon_url: string
+  platform: string
+}
+
+export async function fetchAppInfo(bundleId: string, platform: string = 'ios', country: string = 'jp'): Promise<AppInfo> {
+  return fetchApi<AppInfo>(`/api/scraper/app-info?bundle_id=${encodeURIComponent(bundleId)}&platform=${platform}&country=${country}`)
+}
+
 export async function getApp(id: string): Promise<App> {
   return fetchApi<App>(`/api/apps/${id}`)
 }

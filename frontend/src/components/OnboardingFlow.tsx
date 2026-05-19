@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createApp, createKeyword, App, CreateAppRequest } from '@/lib/api'
+import { createApp, createKeyword, fetchAppInfo, App, CreateAppRequest } from '@/lib/api'
 
 // ── localStorage helpers ──────────────────────────────────────
 const LS_COMPLETED  = 'onboarding_completed'
@@ -75,21 +75,54 @@ interface OnboardingFlowProps {
 }
 
 // ── Main component ────────────────────────────────────────────
-export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss }: OnboardingFlowProps) {
+export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss, forceShow }: OnboardingFlowProps & { forceShow?: boolean }) {
   const [step, setStep] = useState<1 | 2 | 3 | 'done'>(() => {
     const s = savedStep()
     return (s === 2 || s === 3 ? s : 1) as 1 | 2
   })
-  const [visible, setVisible] = useState(shouldShowOnboarding(userCreatedAt, appsCount))
+  const [visible, setVisible] = useState(forceShow || shouldShowOnboarding(userCreatedAt, appsCount))
 
   // Step 2 state
   const [appName, setAppName]     = useState('')
   const [bundleId, setBundleId]   = useState('')
   const [platform, setPlatform]   = useState<'ios' | 'android'>('ios')
   const [storeUrl, setStoreUrl]   = useState('')
+  const [urlInput, setUrlInput]   = useState('')
+  const [isFetchingInfo, setIsFetchingInfo] = useState(false)
+  const [fetchInfoError, setFetchInfoError] = useState('')
   const [isCreatingApp, setIsCreatingApp] = useState(false)
   const [appError, setAppError]   = useState('')
   const [createdApp, setCreatedApp] = useState<App | null>(null)
+
+  // Auto-extract bundle ID from store URL
+  const handleUrlInput = async (url: string) => {
+    setUrlInput(url)
+    setFetchInfoError('')
+    if (!url.trim()) return
+
+    // Extract App Store numeric ID: /id1234567890
+    const iosMatch = url.match(/\/id(\d+)/)
+    // Extract Google Play package: ?id=com.example.app
+    const androidMatch = url.match(/[?&]id=([a-zA-Z0-9_.]+)/)
+
+    const detectedPlatform = iosMatch ? 'ios' : androidMatch ? 'android' : null
+    const extractedId = iosMatch?.[1] ?? androidMatch?.[1] ?? null
+
+    if (!extractedId || !detectedPlatform) return
+
+    setIsFetchingInfo(true)
+    try {
+      const info = await fetchAppInfo(extractedId, detectedPlatform)
+      setAppName(info.name || appName)
+      setBundleId(info.bundle_id || extractedId)
+      setStoreUrl(url)
+      setPlatform(detectedPlatform as 'ios' | 'android')
+    } catch {
+      setFetchInfoError('アプリ情報の取得に失敗しました。手動で入力してください。')
+    } finally {
+      setIsFetchingInfo(false)
+    }
+  }
 
   // Step 3 state
   const [selectedChips, setSelectedChips] = useState<string[]>([])
@@ -228,7 +261,26 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
             <div>
               <ProgressDots step={1} total={3} />
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">アプリを登録する</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">アプリの情報を入力してください</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">ストアのURLを貼り付けると自動で情報を取得します</p>
+
+              {/* URL auto-fill */}
+              <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
+                <label className="block text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">
+                  ストアURL（App Store / Google Play）
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={urlInput}
+                    onChange={e => handleUrlInput(e.target.value)}
+                    placeholder="https://apps.apple.com/jp/app/.../id..."
+                    className="flex-1 px-3 py-2 text-sm border border-blue-200 dark:border-blue-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                  />
+                  {isFetchingInfo && <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin self-center flex-shrink-0" />}
+                </div>
+                {fetchInfoError && <p className="text-xs text-red-500 mt-1">{fetchInfoError}</p>}
+                {bundleId && !fetchInfoError && <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">✓ アプリ情報を取得しました</p>}
+              </div>
 
               <div className="space-y-3">
                 <div>
@@ -261,16 +313,6 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
                     <option value="ios">iOS</option>
                     <option value="android">Android</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">ストアURL（任意）</label>
-                  <input
-                    type="url"
-                    value={storeUrl}
-                    onChange={e => setStoreUrl(e.target.value)}
-                    placeholder="https://apps.apple.com/jp/app/..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-                  />
                 </div>
               </div>
 

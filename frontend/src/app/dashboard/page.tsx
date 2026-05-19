@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useApps } from '@/hooks/useApps'
 import { useKeywords, KeywordWithRanking } from '@/hooks/useKeywords'
 import { useSelectedApp } from '@/hooks/useSelectedApp'
@@ -418,7 +419,7 @@ function KeywordTable({
   )
 }
 
-export default function Home() {
+function HomeContent() {
   const { apps, isLoading: appsLoading, error: appsError, refetch } = useApps()
   const { selectedApp, setSelectedApp } = useSelectedApp(apps, appsLoading)
   const { keywords, isLoading: keywordsLoading } = useKeywords(selectedApp?.id || '')
@@ -426,6 +427,8 @@ export default function Home() {
   const { user } = useAuth()
   const isPro = user?.is_pro ?? false
   const upgradeModal = useUpgradeModal()
+  const searchParams = useSearchParams()
+  const isNewUser = searchParams.get('new') === '1'
 
   const [modalKeyword, setModalKeyword] = useState<KeywordWithRanking | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -434,9 +437,9 @@ export default function Home() {
 
   useEffect(() => {
     if (!appsLoading && user) {
-      setShowOnboarding(shouldShowOnboarding(user.created_at, apps.length))
+      setShowOnboarding(isNewUser || shouldShowOnboarding(user.created_at, apps.length))
     }
-  }, [appsLoading, user, apps.length])
+  }, [appsLoading, user, apps.length, isNewUser])
 
   const handleShowHistory = (keyword: KeywordWithRanking) => {
     setModalKeyword(keyword)
@@ -581,6 +584,7 @@ export default function Home() {
         <OnboardingFlow
           userCreatedAt={user.created_at}
           appsCount={apps.length}
+          forceShow={isNewUser}
           onComplete={(newApp) => {
             setShowOnboarding(false)
             refetch()
@@ -589,5 +593,13 @@ export default function Home() {
         />
       )}
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><p className="text-gray-600 dark:text-gray-400">読み込み中...</p></div>}>
+      <HomeContent />
+    </Suspense>
   )
 }

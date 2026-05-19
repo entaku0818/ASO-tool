@@ -31,7 +31,7 @@ export default function SignupPage() {
       localStorage.setItem('auth_token', token)
       // Trigger auth context refresh via login
       await login(email, password)
-      router.push('/dashboard')
+      router.push('/dashboard?new=1')
     } catch (err) {
       setError(err instanceof Error ? err.message : '登録に失敗しました')
     } finally {
