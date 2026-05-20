@@ -249,18 +249,31 @@ function KeywordsSection() {
         ) : suggestions.length === 0 && hasSearched ? (
           <div className="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">サジェストが見つかりませんでした</div>
         ) : (
-          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-            {suggestions.map((s, i) => (
-              <li
-                key={s.term}
-                className="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                onClick={() => setSearchTerm(s.term)}
+          <>
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              {suggestions.map((s, i) => (
+                <li
+                  key={s.term}
+                  className="flex items-center gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                  onClick={() => setSearchTerm(s.term)}
+                >
+                  <span className="text-gray-400 dark:text-gray-500 text-sm w-6 text-right">{i + 1}</span>
+                  <span className="text-gray-800 dark:text-gray-200">{s.term}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t dark:border-gray-700 px-6 py-4 bg-blue-50 dark:bg-blue-900/10 flex items-center justify-between gap-4">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <span className="font-semibold">「{searchTerm}」</span>の順位を毎日自動追跡できます
+              </p>
+              <Link
+                href="/signup"
+                className="flex-shrink-0 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
               >
-                <span className="text-gray-400 dark:text-gray-500 text-sm w-6 text-right">{i + 1}</span>
-                <span className="text-gray-800 dark:text-gray-200">{s.term}</span>
-              </li>
-            ))}
-          </ul>
+                無料で追跡する →
+              </Link>
+            </div>
+          </>
         )}
       </div>
 
@@ -797,6 +810,50 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'countries', label: '国別比較' },
 ]
 
+function StickySignupBar() {
+  const [visible, setVisible] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    if (dismissed) return
+    // Show after 20 seconds or after scroll
+    const timer = setTimeout(() => setVisible(true), 20000)
+    const onScroll = () => {
+      if (window.scrollY > 400) { setVisible(true); window.removeEventListener('scroll', onScroll) }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { clearTimeout(timer); window.removeEventListener('scroll', onScroll) }
+  }, [dismissed])
+
+  if (!visible || dismissed) return null
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#12161e] border-t border-gray-200 dark:border-gray-700 shadow-2xl dark:shadow-black/40 px-4 py-3">
+      <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">自分のアプリのキーワード順位を毎日追跡しませんか？</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">無料プランで1アプリ・10キーワードまでずっと無料</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link
+            href="/signup"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            無料で始める
+          </Link>
+          <button
+            onClick={() => setDismissed(true)}
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PopularKeywordsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('keywords')
 
@@ -866,6 +923,8 @@ export default function PopularKeywordsPage() {
           </div>
         </div>
       </div>
+
+      <StickySignupBar />
     </div>
   )
 }
