@@ -47,24 +47,24 @@ const PAIN_POINTS = [
 
 const FAQS = [
   {
-    q: '購入後はどうすれば使えますか？',
+    q: 'Webダッシュボードの無料プランでできることは？',
+    a: '無料プランでは1アプリ・10キーワードまで登録でき、毎日の順位追跡・App Storeアナリティクス連携・キーワード提案などが使えます。登録不要の人気キーワードページも無料です。',
+  },
+  {
+    q: 'WebダッシュボードのProプランとmacOSアプリの違いは？',
+    a: 'Webダッシュボード（Pro）はブラウザで使えるSaaSで、¥1,650/月〜のサブスクリプションです。macOSアプリは¥9,800/年の買い切りで、Dock・メニューバーからアクセスできるネイティブアプリです。機能は共通していますが、使い方の好みで選べます。',
+  },
+  {
+    q: 'macOSアプリ購入後はどうすれば使えますか？',
     a: '購入完了後、入力したメールアドレスにライセンスキーが届きます。macOS アプリを起動してキーとメールアドレスを入力するとすぐにアクティベートできます。',
   },
   {
-    q: 'アプリはどこからダウンロードできますか？',
-    a: '購入後にダウンロードリンクをメールでお送りします。macOS 13 Ventura 以降に対応しています。',
-  },
-  {
     q: '解約・返金はできますか？',
-    a: 'いつでも解約できます。解約後はその年の有効期限まで引き続き利用できます。初回購入後7日以内であれば全額返金対応しています。',
+    a: 'Webダッシュボード Proはいつでも解約でき、解約後は期間終了まで利用可能です。macOSアプリは初回購入後7日以内であれば全額返金対応しています。',
   },
   {
     q: '1ライセンスで複数台使えますか？',
-    a: '1ライセンスは1アカウント（1人）に対して発行されます。複数台のMacにインストールして同一アカウントで利用可能です。',
-  },
-  {
-    q: '無料で試せる機能はありますか？',
-    a: '人気キーワードページ（/popular-keywords）は登録なしで無料でご利用いただけます。App Store のキーワードサジェストやランキングデータを確認できます。',
+    a: 'macOSアプリは1ライセンス（1アカウント）で複数台のMacにインストールして利用可能です。Webダッシュボードはブラウザからどこでもアクセスできます。',
   },
 ]
 
@@ -121,23 +121,23 @@ export default function HomePage() {
           </h1>
           <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
             順位追跡・競合ギャップ分析・メタデータ管理をひとつに。
-            macOS ネイティブアプリで毎朝の ASO 作業を10分で完結。
+            無料で始めて、必要に応じてアップグレード。
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/buy"
+              href="/signup"
               className="w-full sm:w-auto px-8 py-4 bg-blue-500 hover:bg-blue-400 text-white rounded-xl font-bold text-lg transition-colors shadow-lg shadow-blue-500/30"
             >
-              今すぐ購入 ¥9,800/年 →
+              無料で始める →
             </Link>
             <Link
-              href="/popular-keywords"
+              href="/buy"
               className="w-full sm:w-auto px-8 py-4 border border-white/30 text-white hover:bg-white/10 rounded-xl font-semibold text-lg transition-colors"
             >
-              無料ツールを試す
+              macOSアプリを購入 ¥9,800/年
             </Link>
           </div>
-          <p className="mt-4 text-sm text-slate-400">7日間返金保証 · 月額費用なし · クレジットカード決済</p>
+          <p className="mt-4 text-sm text-slate-400">クレジットカード不要で無料スタート · Stripe 決済対応</p>
         </div>
       </section>
 
@@ -146,8 +146,8 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap justify-center gap-x-10 gap-y-3 text-sm text-gray-500 dark:text-gray-400">
             {[
+              { icon: '🆓', text: '無料プランあり' },
               { icon: '🔄', text: '毎日自動更新' },
-              { icon: '💳', text: '買い切り（年額）' },
               { icon: '🔒', text: 'Stripe 決済' },
               { icon: '↩️', text: '7日間返金保証' },
               { icon: '🍎', text: 'macOS 13+対応' },
@@ -264,35 +264,84 @@ export default function HomePage() {
 
       {/* ── Pricing ── */}
       <section className="bg-gray-50 dark:bg-[#0d0f14] py-20 px-4">
-        <div className="max-w-md mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">シンプルな料金</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-10">プランは1つ。全機能を使えます</p>
-          <div className="bg-white dark:bg-[#12161e] rounded-2xl shadow-xl dark:shadow-black/40 border border-gray-200 dark:border-gray-700 p-8">
-            <div className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-1">¥9,800</div>
-            <div className="text-gray-500 dark:text-gray-400 mb-6">年額 · 毎年自動更新</div>
-            <ul className="space-y-3 text-sm text-left text-gray-600 dark:text-gray-400 mb-8">
-              {[
-                '全機能アンロック',
-                '1ライセンス = 1アカウント',
-                '複数台Mac にインストール可',
-                'macOS 13 Ventura 以降対応',
-                '購入後すぐにメールでキーを送付',
-                'いつでも解約可・残期間は利用可',
-                '7日間全額返金保証',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <span className="text-green-500 dark:text-green-400 flex-shrink-0">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/buy"
-              className="block w-full py-4 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 text-white rounded-xl font-bold text-lg text-center transition-colors"
-            >
-              今すぐ購入する →
-            </Link>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">決済は Stripe で安全に処理されます</p>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">料金プラン</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-12">Webダッシュボードは無料スタート。macOSアプリは買い切り。</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+
+            {/* Web Plan */}
+            <div className="bg-white dark:bg-[#12161e] rounded-2xl shadow dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+              <div className="p-8 flex-1">
+                <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3">🌐 Webダッシュボード</p>
+                <div className="mb-1">
+                  <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">¥0</span>
+                  <span className="text-gray-500 dark:text-gray-400 ml-2">無料で始められます</span>
+                </div>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Proプランは ¥1,650/月〜（年払い）</p>
+                <ul className="space-y-2.5 text-sm text-gray-600 dark:text-gray-400 mb-8">
+                  {[
+                    { text: '1アプリ・10キーワードまで無料', pro: false },
+                    { text: 'キーワード順位の毎日追跡', pro: false },
+                    { text: 'App Store アナリティクス連携', pro: false },
+                    { text: '競合キーワードギャップ分析', pro: true },
+                    { text: 'アプリ・キーワード数 無制限', pro: true },
+                    { text: 'CSVエクスポート', pro: true },
+                  ].map(({ text, pro }) => (
+                    <li key={text} className="flex items-center gap-2">
+                      <span className={`flex-shrink-0 ${pro ? 'text-purple-500' : 'text-green-500'}`}>✓</span>
+                      <span>{text}</span>
+                      {pro && <span className="ml-auto text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-1.5 py-0.5 rounded font-medium">Pro</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="px-8 pb-8">
+                <Link
+                  href="/signup"
+                  className="block w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-center transition-colors"
+                >
+                  無料で始める →
+                </Link>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">クレジットカード不要</p>
+              </div>
+            </div>
+
+            {/* macOS Plan */}
+            <div className="bg-white dark:bg-[#12161e] rounded-2xl shadow dark:shadow-black/20 border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+              <div className="p-8 flex-1">
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">🍎 macOSネイティブアプリ</p>
+                <div className="mb-1">
+                  <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">¥9,800</span>
+                  <span className="text-gray-500 dark:text-gray-400 ml-2">/ 年</span>
+                </div>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">毎年自動更新 · 7日間返金保証</p>
+                <ul className="space-y-2.5 text-sm text-gray-600 dark:text-gray-400 mb-8">
+                  {[
+                    '全機能アンロック',
+                    'Dock・メニューバーから即アクセス',
+                    '複数台Macにインストール可',
+                    'macOS 13 Ventura 以降対応',
+                    '購入後すぐメールでキーを送付',
+                    'いつでも解約可（残期間は利用可）',
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <span className="text-green-500 flex-shrink-0">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="px-8 pb-8">
+                <Link
+                  href="/buy"
+                  className="block w-full py-3.5 bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-xl font-bold text-center transition-colors"
+                >
+                  今すぐ購入する →
+                </Link>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">Stripe で安全に決済</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -313,19 +362,19 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-blue-600 to-blue-800 py-24 px-4 text-center text-white">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-4xl font-bold mb-4">ASO 作業を今日から変えよう</h2>
-          <p className="text-blue-100 mb-10 text-lg">7日間返金保証付き。まずは試してみてください。</p>
+          <p className="text-blue-100 mb-10 text-lg">まずは無料で。必要になったらいつでもアップグレード。</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/buy"
+              href="/signup"
               className="w-full sm:w-auto px-10 py-4 bg-white text-blue-700 hover:bg-blue-50 rounded-xl font-bold text-lg transition-colors shadow-lg"
             >
-              今すぐ購入 ¥9,800/年 →
+              無料で始める →
             </Link>
             <Link
-              href="/popular-keywords"
+              href="/buy"
               className="w-full sm:w-auto px-10 py-4 border border-white/40 text-white hover:bg-white/10 rounded-xl font-semibold text-lg transition-colors"
             >
-              無料ツールを試す
+              macOSアプリを購入
             </Link>
           </div>
         </div>
