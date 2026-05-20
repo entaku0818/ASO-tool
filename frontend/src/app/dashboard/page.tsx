@@ -429,11 +429,13 @@ function HomeContent() {
   const upgradeModal = useUpgradeModal()
   const searchParams = useSearchParams()
   const isNewUser = searchParams.get('new') === '1'
+  const isJustUpgraded = searchParams.get('upgraded') === '1'
 
   const [modalKeyword, setModalKeyword] = useState<KeywordWithRanking | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [isAddingApp, setIsAddingApp] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showUpgradedBanner, setShowUpgradedBanner] = useState(isJustUpgraded)
 
   useEffect(() => {
     if (!appsLoading && user) {
@@ -538,6 +540,20 @@ function HomeContent() {
       />
       <div className="flex-1 overflow-y-auto">
         <div className="p-6">
+          {showUpgradedBanner && (
+            <div className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 flex items-center justify-between text-white">
+              <div>
+                <p className="font-bold text-sm">✦ Proプランへようこそ！</p>
+                <p className="text-xs opacity-80 mt-0.5">競合逆引き・無制限キーワード・CSVエクスポートが使えるようになりました</p>
+              </div>
+              <button
+                onClick={() => setShowUpgradedBanner(false)}
+                className="text-white/60 hover:text-white text-lg leading-none ml-4 flex-shrink-0"
+              >
+                ×
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-xl font-bold">{selectedApp?.name}</h1>
@@ -590,6 +606,10 @@ function HomeContent() {
             refetch()
           }}
           onDismiss={() => setShowOnboarding(false)}
+          onUpgradeClick={user.is_pro ? undefined : () => {
+            setShowOnboarding(false)
+            upgradeModal.open('onboarding')
+          }}
         />
       )}
     </div>

@@ -72,10 +72,11 @@ interface OnboardingFlowProps {
   appsCount: number
   onComplete: (newApp: App) => void
   onDismiss: () => void
+  onUpgradeClick?: () => void
 }
 
 // ── Main component ────────────────────────────────────────────
-export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss, forceShow }: OnboardingFlowProps & { forceShow?: boolean }) {
+export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss, forceShow, onUpgradeClick }: OnboardingFlowProps & { forceShow?: boolean }) {
   const [step, setStep] = useState<1 | 2 | 3 | 'done'>(() => {
     const s = savedStep()
     return (s === 2 || s === 3 ? s : 1) as 1 | 2
@@ -421,21 +422,38 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
             <div className="text-center">
               <div className="text-5xl mb-4">✅</div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">セットアップ完了！</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
                 キーワード順位の追跡を開始しました。<br />
                 最初のデータは明日の朝に反映されます。
               </p>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 text-left">
-                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">── Pro ならもっとできます ──</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  競合アプリが使っているキーワードを逆引きして、上位表示のチャンスを見つけましょう。
-                </p>
-              </div>
+              {onUpgradeClick && (
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 mb-4 text-left">
+                  <p className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-2">✦ Pro でできること</p>
+                  <ul className="space-y-1.5 mb-4">
+                    {[
+                      '競合アプリのキーワードを逆引き',
+                      'アプリ・キーワード数が無制限',
+                      'CSVエクスポートで分析を効率化',
+                    ].map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <span className="text-green-500 flex-shrink-0">✓</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={onUpgradeClick}
+                    className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+                  >
+                    Proにアップグレード — ¥1,650/月〜
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => { setVisible(false); if (createdApp) onComplete(createdApp) }}
-                className="w-full py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                className={`w-full py-3 rounded-xl font-semibold transition-colors ${onUpgradeClick ? 'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm' : 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600'}`}
               >
                 ダッシュボードへ →
               </button>
