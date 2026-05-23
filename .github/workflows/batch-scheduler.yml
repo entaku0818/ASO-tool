@@ -15,6 +15,7 @@ on:
           - rankings
           - store-rankings
           - tracked-keywords
+          - keyword-cache
           - migrate
           - seed
 
@@ -60,7 +61,7 @@ jobs:
               --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
               --region asia-northeast1 \
               --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
-              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" \
+              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},ADMIN_ASA_CLIENT_ID=${{ secrets.ADMIN_ASA_CLIENT_ID }},ADMIN_ASA_TEAM_ID=${{ secrets.ADMIN_ASA_TEAM_ID }},ADMIN_ASA_KEY_ID=${{ secrets.ADMIN_ASA_KEY_ID }},ADMIN_ASA_PRIVATE_KEY=${{ secrets.ADMIN_ASA_PRIVATE_KEY }},ADMIN_ASA_ORG_ID=${{ secrets.ADMIN_ASA_ORG_ID }}" \
               --memory 512Mi \
               --cpu 1 \
               --task-timeout 30m \
@@ -71,7 +72,7 @@ jobs:
               --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
               --region asia-northeast1 \
               --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
-              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" \
+              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},ADMIN_ASA_CLIENT_ID=${{ secrets.ADMIN_ASA_CLIENT_ID }},ADMIN_ASA_TEAM_ID=${{ secrets.ADMIN_ASA_TEAM_ID }},ADMIN_ASA_KEY_ID=${{ secrets.ADMIN_ASA_KEY_ID }},ADMIN_ASA_PRIVATE_KEY=${{ secrets.ADMIN_ASA_PRIVATE_KEY }},ADMIN_ASA_ORG_ID=${{ secrets.ADMIN_ASA_ORG_ID }}" \
               --memory 512Mi \
               --cpu 1 \
               --task-timeout 30m \

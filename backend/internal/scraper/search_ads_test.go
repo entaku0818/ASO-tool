@@ -141,7 +141,7 @@ func TestSearchAdsClient_GetKeywordPopularity(t *testing.T) {
 		},
 	}
 
-	results, err := client.GetKeywordPopularity(context.Background(), 123456789, []string{"calculator", "math"}, 10)
+	results, err := client.GetKeywordPopularity(context.Background(), 123456789, []string{"calculator", "math"}, "jp", 10)
 	if err != nil {
 		t.Fatalf("GetKeywordPopularity() error = %v", err)
 	}
@@ -184,7 +184,7 @@ func TestSearchAdsClient_GetKeywordPopularity_DefaultLimit(t *testing.T) {
 		},
 	}
 
-	_, _ = client.GetKeywordPopularity(context.Background(), 1, nil, 0) // limit=0 should default to 25
+	_, _ = client.GetKeywordPopularity(context.Background(), 1, nil, "", 0) // limit=0 should default to 25
 	if capturedBody.Limit != 25 {
 		t.Errorf("default limit = %v, want 25", capturedBody.Limit)
 	}
@@ -213,7 +213,7 @@ func TestSearchAdsClient_GetKeywordPopularity_APIError(t *testing.T) {
 		},
 	}
 
-	_, err := client.GetKeywordPopularity(context.Background(), 1, []string{"test"}, 10)
+	_, err := client.GetKeywordPopularity(context.Background(), 1, []string{"test"}, "", 10)
 	if err == nil {
 		t.Error("GetKeywordPopularity() expected error for API 500, got nil")
 	}

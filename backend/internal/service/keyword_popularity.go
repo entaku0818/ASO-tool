@@ -107,8 +107,8 @@ func (s *KeywordPopularityService) RefreshScores(ctx context.Context, userID, ap
 		texts[i] = kw.Keyword
 	}
 
-	// Fetch scores in one API call
-	results, err := client.GetKeywordPopularity(ctx, creds.AdamID, texts, len(texts))
+	// Fetch scores in one API call (use org default country)
+	results, err := client.GetKeywordPopularity(ctx, creds.AdamID, texts, "", len(texts))
 	if err != nil {
 		_ = s.credRepo.UpdateValidity(ctx, appID, false)
 		return 0, err
@@ -154,8 +154,8 @@ func (s *KeywordPopularityService) GetSuggestions(ctx context.Context, userID, a
 		return nil, err
 	}
 
-	// Pass empty keywords slice to get suggestions from Apple
-	results, err := client.GetKeywordPopularity(ctx, creds.AdamID, nil, limit)
+	// Pass empty keywords slice to get suggestions from Apple (use org default country)
+	results, err := client.GetKeywordPopularity(ctx, creds.AdamID, nil, "", limit)
 	if err != nil {
 		_ = s.credRepo.UpdateValidity(ctx, appID, false)
 		return nil, err
@@ -177,7 +177,7 @@ func (s *KeywordPopularityService) GetCompetitorSuggestions(ctx context.Context,
 		return nil, err
 	}
 
-	results, err := client.GetKeywordPopularity(ctx, competitorAdamID, nil, limit)
+	results, err := client.GetKeywordPopularity(ctx, competitorAdamID, nil, "", limit)
 	if err != nil {
 		_ = s.credRepo.UpdateValidity(ctx, appID, false)
 		return nil, err

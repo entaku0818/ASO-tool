@@ -328,7 +328,7 @@ func runKeywordCacheUpdate(ctx context.Context, cacheRepo *repository.PublicKeyw
 	total := 0
 	for _, country := range seedCountries {
 		for _, app := range seedApps {
-			results, err := client.GetKeywordPopularity(ctx, app.adamID, nil, 100)
+			results, err := client.GetKeywordPopularity(ctx, app.adamID, nil, country, 100)
 			if err != nil {
 				log.Printf("Keyword cache: country=%s adamID=%d error: %v", country, app.adamID, err)
 				errors = append(errors, fmt.Sprintf("keyword cache %s/%d: %v", country, app.adamID, err))

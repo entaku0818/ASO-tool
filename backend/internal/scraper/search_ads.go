@@ -167,9 +167,10 @@ func (c *SearchAdsClient) doRequest(ctx context.Context, method, path string, bo
 }
 
 type keywordSearchRequest struct {
-	AdamID   int64    `json:"adamId"`
-	Keywords []string `json:"keywords,omitempty"`
-	Limit    int      `json:"limit,omitempty"`
+	AdamID          int64    `json:"adamId"`
+	Keywords        []string `json:"keywords,omitempty"`
+	Limit           int      `json:"limit,omitempty"`
+	CountryOrRegion string   `json:"countryOrRegion,omitempty"`
 }
 
 type keywordSearchResponse struct {
@@ -178,16 +179,18 @@ type keywordSearchResponse struct {
 
 // GetKeywordPopularity fetches keyword popularity scores from Search Ads API.
 // adamID is the app's iTunes numeric ID. If keywords is empty, returns suggestions.
+// country is the ISO 3166-1 alpha-2 country code (e.g. "jp", "us"). Empty uses org default.
 // limit controls the max number of results (default 25).
-func (c *SearchAdsClient) GetKeywordPopularity(ctx context.Context, adamID int64, keywords []string, limit int) ([]KeywordPopularity, error) {
+func (c *SearchAdsClient) GetKeywordPopularity(ctx context.Context, adamID int64, keywords []string, country string, limit int) ([]KeywordPopularity, error) {
 	if limit <= 0 {
 		limit = 25
 	}
 
 	reqBody := keywordSearchRequest{
-		AdamID:   adamID,
-		Keywords: keywords,
-		Limit:    limit,
+		AdamID:          adamID,
+		Keywords:        keywords,
+		Limit:           limit,
+		CountryOrRegion: country,
 	}
 
 	bodyBytes, err := json.Marshal(reqBody)
