@@ -5,54 +5,31 @@ on:
     workflows: ["Frontend CI"]
     types: [completed]
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Only deploy if CI passed
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Only deploy if CI passed (skip check for manual dispatch)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     environment: production
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          node-version: '20'
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
-
-      - name: Build and Push Docker image
+      - name: Deploy to Vercel
         working-directory: frontend
         env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.PRODUCTION_API_URL }}
-        run: |
-          docker build \
-            --build-arg NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-            -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/frontend:${{ github.sha }} \
-            -t asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/frontend:latest \
-            .
-          docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/frontend:${{ github.sha }}
-          docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/frontend:latest
-
-      - name: Deploy to Cloud Run
-        env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-        run: |
-          gcloud run deploy aso-frontend \
-            --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/frontend:${{ github.sha }} \
-            --region asia-northeast1 \
-            --platform managed \
-            --allow-unauthenticated \
-            --memory 256Mi \
-            --cpu 1 \
-            --min-instances 0 \
-            --max-instances 3 \
-            --concurrency 80
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel --prod --token=$VERCEL_TOKEN
