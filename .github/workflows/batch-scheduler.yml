@@ -53,7 +53,27 @@ jobs:
       - name: Create or update Cloud Run Job
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          ADMIN_ASA_CLIENT_ID: ${{ secrets.ADMIN_ASA_CLIENT_ID }}
+          ADMIN_ASA_TEAM_ID: ${{ secrets.ADMIN_ASA_TEAM_ID }}
+          ADMIN_ASA_KEY_ID: ${{ secrets.ADMIN_ASA_KEY_ID }}
+          ADMIN_ASA_PRIVATE_KEY: ${{ secrets.ADMIN_ASA_PRIVATE_KEY }}
+          ADMIN_ASA_ORG_ID: ${{ secrets.ADMIN_ASA_ORG_ID }}
         run: |
+          # Build base env vars
+          ENV_VARS="DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}"
+
+          # Append ASA env vars only if secrets are set
+          if [ -n "$ADMIN_ASA_CLIENT_ID" ]; then
+            ENV_VARS="$ENV_VARS,ADMIN_ASA_CLIENT_ID=$ADMIN_ASA_CLIENT_ID"
+            ENV_VARS="$ENV_VARS,ADMIN_ASA_TEAM_ID=$ADMIN_ASA_TEAM_ID"
+            ENV_VARS="$ENV_VARS,ADMIN_ASA_KEY_ID=$ADMIN_ASA_KEY_ID"
+            ENV_VARS="$ENV_VARS,ADMIN_ASA_PRIVATE_KEY=$ADMIN_ASA_PRIVATE_KEY"
+            ENV_VARS="$ENV_VARS,ADMIN_ASA_ORG_ID=$ADMIN_ASA_ORG_ID"
+            echo "ASA credentials found, will be passed to Cloud Run job"
+          else
+            echo "ADMIN_ASA_* secrets not set, keyword-cache job will be skipped by batch"
+          fi
+
           # Check if job exists
           if gcloud run jobs describe aso-batch --region asia-northeast1 --project $PROJECT_ID 2>/dev/null; then
             echo "Updating existing job..."
@@ -61,7 +81,7 @@ jobs:
               --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
               --region asia-northeast1 \
               --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
-              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},ADMIN_ASA_CLIENT_ID=${{ secrets.ADMIN_ASA_CLIENT_ID }},ADMIN_ASA_TEAM_ID=${{ secrets.ADMIN_ASA_TEAM_ID }},ADMIN_ASA_KEY_ID=${{ secrets.ADMIN_ASA_KEY_ID }},ADMIN_ASA_PRIVATE_KEY=${{ secrets.ADMIN_ASA_PRIVATE_KEY }},ADMIN_ASA_ORG_ID=${{ secrets.ADMIN_ASA_ORG_ID }}" \
+              --set-env-vars "$ENV_VARS" \
               --memory 512Mi \
               --cpu 1 \
               --task-timeout 30m \
@@ -72,7 +92,7 @@ jobs:
               --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
               --region asia-northeast1 \
               --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
-              --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }},ADMIN_ASA_CLIENT_ID=${{ secrets.ADMIN_ASA_CLIENT_ID }},ADMIN_ASA_TEAM_ID=${{ secrets.ADMIN_ASA_TEAM_ID }},ADMIN_ASA_KEY_ID=${{ secrets.ADMIN_ASA_KEY_ID }},ADMIN_ASA_PRIVATE_KEY=${{ secrets.ADMIN_ASA_PRIVATE_KEY }},ADMIN_ASA_ORG_ID=${{ secrets.ADMIN_ASA_ORG_ID }}" \
+              --set-env-vars "$ENV_VARS" \
               --memory 512Mi \
               --cpu 1 \
               --task-timeout 30m \
