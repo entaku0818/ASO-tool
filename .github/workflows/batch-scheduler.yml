@@ -50,12 +50,6 @@ jobs:
           docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }}
           docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:latest
 
-      - name: Enable required GCP APIs
-        env:
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-        run: |
-          gcloud services enable sqladmin.googleapis.com --project $PROJECT_ID --quiet
-
       - name: Create or update Cloud Run Job
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -83,10 +77,11 @@ jobs:
           # Check if job exists
           if gcloud run jobs describe aso-batch --region asia-northeast1 --project $PROJECT_ID 2>/dev/null; then
             echo "Updating existing job..."
+            # Note: --set-cloudsql-instances is omitted on update to avoid sqladmin API requirement.
+            # Cloud SQL connection is already configured on the existing job.
             gcloud run jobs update aso-batch \
               --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }} \
               --region asia-northeast1 \
-              --set-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
               --set-env-vars "$ENV_VARS" \
               --memory 512Mi \
               --cpu 1 \
