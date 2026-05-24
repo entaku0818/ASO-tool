@@ -50,6 +50,12 @@ jobs:
           docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:${{ github.sha }}
           docker push asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/batch:latest
 
+      - name: Enable required GCP APIs
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          gcloud services enable sqladmin.googleapis.com --project $PROJECT_ID --quiet
+
       - name: Create or update Cloud Run Job
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
