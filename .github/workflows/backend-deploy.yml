@@ -52,12 +52,13 @@ jobs:
         env:
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
+          # Note: --add-cloudsql-instances omitted to avoid sqladmin API requirement.
+          # Cloud SQL connection is already configured on the existing service.
           gcloud run deploy aso-api \
             --image asia-northeast1-docker.pkg.dev/$PROJECT_ID/aso-tool/api:${{ github.sha }} \
             --region asia-northeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --add-cloudsql-instances=$PROJECT_ID:asia-northeast1:aso-db \
             --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},ASC_ENCRYPTION_KEY=${{ secrets.ASC_ENCRYPTION_KEY }},STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }},STRIPE_PRICE_LICENSE=price_1TXIQ9Gv7DVBIWpT9gtxVE9Q,STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }},RESEND_API_KEY=${{ secrets.RESEND_API_KEY }},RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }},FRONTEND_BASE_URL=https://aso-tool.entaku.app" \
             --memory 256Mi \
             --cpu 1 \
