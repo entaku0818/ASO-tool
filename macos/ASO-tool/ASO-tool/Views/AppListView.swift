@@ -28,7 +28,7 @@ struct AppListView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("ASO Studio")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .tertiary)
+                            .foregroundStyle(colorScheme == .dark ? AnyShapeStyle(Aurora.textDim) : AnyShapeStyle(.tertiary))
                             .tracking(1.2)
                             .textCase(.uppercase)
                         Text("マイアプリ")
@@ -70,7 +70,7 @@ struct AppListView: View {
                 // Section label
                 Text("追跡中")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .tertiary)
+                    .foregroundStyle(colorScheme == .dark ? AnyShapeStyle(Aurora.textDim) : AnyShapeStyle(.tertiary))
                     .tracking(0.4)
                     .textCase(.uppercase)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -123,7 +123,7 @@ struct AppListView: View {
                             .lineLimit(1)
                         Text("Indie プラン")
                             .font(.system(size: 10))
-                            .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .tertiary)
+                            .foregroundStyle(colorScheme == .dark ? AnyShapeStyle(Aurora.textDim) : AnyShapeStyle(.tertiary))
                     }
                     Spacer()
                 }
@@ -212,7 +212,7 @@ struct AppSidebarRow: View {
                         .clipShape(RoundedRectangle(cornerRadius: 3))
                     Text(app.bundleID)
                         .font(.system(size: 10))
-                        .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .tertiary)
+                        .foregroundStyle(colorScheme == .dark ? AnyShapeStyle(Aurora.textDim) : AnyShapeStyle(.tertiary))
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }

@@ -20,7 +20,7 @@ struct KeywordGapView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("キーワードギャップ")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .tertiary)
+                            .foregroundStyle(colorScheme == .dark ? AnyShapeStyle(Aurora.textDim) : AnyShapeStyle(.tertiary))
                             .tracking(0.4)
                             .textCase(.uppercase)
                         Text("競合が上位、自社が圏外")

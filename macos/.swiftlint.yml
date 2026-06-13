@@ -1,0 +1,16 @@
+included:
+  - ASO-tool
+
+# Xcode が生成する ASO_toolApp 等のアンダースコア付き型名を許可
+type_name:
+  allowed_symbols: ["_"]
+
+disabled_rules:
+  - line_length
+  - identifier_name
+  - trailing_whitespace
+  - todo
+  - function_body_length
+  - type_body_length
+  - file_length
+  - cyclomatic_complexity

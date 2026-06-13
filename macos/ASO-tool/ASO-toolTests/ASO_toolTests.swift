@@ -6,7 +6,8 @@ import Foundation
 
 // MARK: - AppState Tests
 
-@Suite("AppState")
+// 各テストが共有の UserDefaults.standard を読み書きするため並列実行不可
+@Suite("AppState", .serialized)
 struct AppStateTests {
 
     @Test("初期状態: token がなければ非アクティブ")
