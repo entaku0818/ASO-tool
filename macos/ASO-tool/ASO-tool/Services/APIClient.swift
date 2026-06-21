@@ -104,6 +104,18 @@ final class APIClient {
         let _: Res = try await post("/api/apps/\(appID)/scrape/rankings", body: EmptyBody(), token: token)
     }
 
+    func getLatestRanking(token: String, appID: String, keywordID: String) async throws -> RankingHistory? {
+        do {
+            return try await get("/api/apps/\(appID)/keywords/\(keywordID)/rankings/latest", token: token)
+        } catch APIClientError.httpError(404, _) {
+            return nil
+        }
+    }
+
+    func deleteApp(token: String, appID: String) async throws {
+        try await delete("/api/apps/\(appID)", token: token)
+    }
+
     // MARK: - Competitors
 
     func getCompetitors(token: String, appID: String) async throws -> [Competitor] {

@@ -103,6 +103,13 @@ struct AppListView: View {
                             ForEach(filtered, id: \.id) { app in
                                 AppSidebarRow(app: app, isSelected: selectedApp?.id == app.id)
                                     .onTapGesture { selectedApp = app }
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            deleteApp(app)
+                                        } label: {
+                                            Label("削除", systemImage: "trash")
+                                        }
+                                    }
                             }
                         }
                         .padding(.horizontal, 8)
@@ -160,6 +167,16 @@ struct AppListView: View {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    private func deleteApp(_ app: ASOApp) {
+        Task {
+            try? await APIClient.shared.deleteApp(token: appState.token, appID: app.id)
+            await MainActor.run {
+                apps.removeAll { $0.id == app.id }
+                if selectedApp?.id == app.id { selectedApp = nil }
+            }
+        }
     }
 }
 

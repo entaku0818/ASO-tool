@@ -25,6 +25,25 @@ struct AppDetailView: View {
     // Multi-select
     @State private var multiSelectMode = false
     @State private var selectedKeywords: Set<String> = []
+    // Sort & Filter
+    enum SortOrder: String, CaseIterable { case alpha = "五十音", popularity = "人気度", country = "国" }
+    @State private var sortOrder: SortOrder = .alpha
+    @State private var filterCountry = "すべて"
+
+    private var availableCountries: [String] {
+        let countries = Set(keywords.map(\.country)).sorted()
+        return ["すべて"] + countries
+    }
+
+    private var displayedKeywords: [Keyword] {
+        var list = filterCountry == "すべて" ? keywords : keywords.filter { $0.country == filterCountry }
+        switch sortOrder {
+        case .alpha:       list.sort { $0.keyword < $1.keyword }
+        case .popularity:  list.sort { ($0.popularityScore ?? -1) > ($1.popularityScore ?? -1) }
+        case .country:     list.sort { $0.country < $1.country }
+        }
+        return list
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -147,27 +166,21 @@ struct AppDetailView: View {
                     Spacer()
 
                     if multiSelectMode {
-                        // Multi-select mode controls
                         Text("\(selectedKeywords.count)件選択")
                             .font(.caption).foregroundStyle(.secondary)
                         Button {
                             bulkDelete()
                         } label: {
-                            Image(systemName: "trash")
-                                .font(.system(size: 12))
+                            Image(systemName: "trash").font(.system(size: 12))
                                 .foregroundStyle(selectedKeywords.isEmpty
                                     ? (colorScheme == .dark ? Aurora.textDim : Color.secondary)
                                     : (colorScheme == .dark ? Aurora.negText : .red))
                         }
-                        .buttonStyle(.plain)
-                        .disabled(selectedKeywords.isEmpty)
-                        Button("完了") {
-                            multiSelectMode = false
-                            selectedKeywords.removeAll()
-                        }
-                        .buttonStyle(.borderless)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
+                        .buttonStyle(.plain).disabled(selectedKeywords.isEmpty)
+                        Button("完了") { multiSelectMode = false; selectedKeywords.removeAll() }
+                            .buttonStyle(.borderless)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color.accentColor)
                     } else {
                         Button { showSuggestions = true } label: {
                             Image(systemName: "lightbulb").font(.system(size: 12))
@@ -200,36 +213,48 @@ struct AppDetailView: View {
                 .padding(.horizontal, 12).padding(.vertical, 9)
                 .background(colorScheme == .dark ? Aurora.surface : Color.primary.opacity(0.02))
 
+                // Sort & Filter bar
+                if !keywords.isEmpty && !multiSelectMode {
+                    HStack(spacing: 6) {
+                        Picker("", selection: $sortOrder) {
+                            ForEach(SortOrder.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                        }
+                        .labelsHidden().frame(width: 80).controlSize(.small)
+
+                        if availableCountries.count > 2 {
+                            Picker("", selection: $filterCountry) {
+                                ForEach(availableCountries, id: \.self) { Text($0).tag($0) }
+                            }
+                            .labelsHidden().frame(width: 70).controlSize(.small)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(colorScheme == .dark ? Color.white.opacity(0.02) : Color.primary.opacity(0.02))
+                }
+
                 Rectangle()
                     .fill(colorScheme == .dark ? Aurora.divider : Color.primary.opacity(0.08))
                     .frame(height: 1)
 
                 if isLoading {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if keywords.isEmpty {
-                    ContentUnavailableView("キーワードなし", systemImage: "magnifyingglass")
+                } else if displayedKeywords.isEmpty {
+                    ContentUnavailableView(keywords.isEmpty ? "キーワードなし" : "該当なし", systemImage: "magnifyingglass")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 1) {
-                            ForEach(keywords, id: \.id) { kw in
+                            ForEach(displayedKeywords, id: \.id) { kw in
                                 if multiSelectMode {
-                                    KeywordRow(
-                                        keyword: kw,
-                                        isSelected: selectedKeywords.contains(kw.id),
-                                        isMultiSelect: true
-                                    )
-                                    .onTapGesture {
-                                        if selectedKeywords.contains(kw.id) { selectedKeywords.remove(kw.id) }
-                                        else { selectedKeywords.insert(kw.id) }
-                                    }
+                                    KeywordRow(keyword: kw, isSelected: selectedKeywords.contains(kw.id), isMultiSelect: true)
+                                        .onTapGesture {
+                                            if selectedKeywords.contains(kw.id) { selectedKeywords.remove(kw.id) }
+                                            else { selectedKeywords.insert(kw.id) }
+                                        }
                                 } else {
-                                    KeywordRow(
-                                        keyword: kw,
-                                        isSelected: selectedKeyword?.id == kw.id,
-                                        isMultiSelect: false
-                                    )
-                                    .onTapGesture { selectedKeyword = kw }
+                                    KeywordRow(keyword: kw, isSelected: selectedKeyword?.id == kw.id, isMultiSelect: false)
+                                        .onTapGesture { selectedKeyword = kw }
                                 }
                             }
                         }
@@ -289,14 +314,44 @@ struct AppDetailView: View {
     private func autoUpdateRankings() async {
         guard !keywords.isEmpty else { return }
         isUpdatingRankings = true
+
+        // Snapshot rankings before scrape
+        let kwSnapshot = keywords
+        var snapshot = [String: Int?]()
+        await withTaskGroup(of: (String, Int?).self) { group in
+            for kw in kwSnapshot {
+                group.addTask {
+                    let r = try? await APIClient.shared.getLatestRanking(
+                        token: appState.token, appID: app.id, keywordID: kw.id)
+                    return (kw.id, r?.rank)
+                }
+            }
+            for await (id, rank) in group { snapshot[id] = rank }
+        }
+
         do {
             try await APIClient.shared.scrapeRankings(token: appState.token, appID: app.id)
             await MainActor.run { lastUpdated = Date() }
-            // Re-fetch to pick up new ranks
+
+            // Compare after scrape and fire notifications
+            await withTaskGroup(of: Void.self) { group in
+                for kw in kwSnapshot {
+                    group.addTask {
+                        let newRanking = try? await APIClient.shared.getLatestRanking(
+                            token: appState.token, appID: app.id, keywordID: kw.id)
+                        let newRank = newRanking?.rank
+                        let oldRank = snapshot[kw.id] ?? nil
+                        if let old = oldRank, let new = newRank, abs(old - new) >= 3 {
+                            AppState.sendRankingNotification(
+                                keyword: kw.keyword, appName: app.name, oldRank: old, newRank: new)
+                        }
+                    }
+                }
+            }
+
             keywords = (try? await APIClient.shared.getKeywords(token: appState.token, appID: app.id)) ?? keywords
-        } catch {
-            // silently ignore auto-update errors
-        }
+        } catch { }
+
         await MainActor.run { isUpdatingRankings = false }
     }
 

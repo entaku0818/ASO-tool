@@ -3,6 +3,7 @@
 import SwiftUI
 
 struct MainView: View {
+    @EnvironmentObject var appState: AppState
     @State private var selectedApp: ASOApp?
     @Environment(\.colorScheme) var colorScheme
 
@@ -13,14 +14,8 @@ struct MainView: View {
             if let app = selectedApp {
                 AppDetailView(app: app)
             } else {
-                ContentUnavailableView(
-                    "アプリを選択",
-                    systemImage: "square.dashed",
-                    description: Text("左のリストからアプリを選んでください")
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(colorScheme == .dark ? Aurora.windowBg : Color(nsColor: .windowBackgroundColor))
-                .overlay(colorScheme == .dark ? AuroraGradient() : nil)
+                DashboardView(selectedApp: $selectedApp)
+                    .environmentObject(appState)
             }
         }
         .tint(colorScheme == .dark ? Aurora.accent : Daylight.accent)
