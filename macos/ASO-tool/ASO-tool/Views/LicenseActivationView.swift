@@ -84,7 +84,18 @@ struct LicenseActivationView: View {
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = error.localizedDescription
+                    let detail: String
+                    switch error {
+                    case APIClientError.networkError(let e):
+                        detail = "ネットワーク: \(e)"
+                    case APIClientError.httpError(let code, let msg):
+                        detail = "HTTP\(code): \(msg)"
+                    case APIClientError.decodingError(let e):
+                        detail = "デコード: \(e)"
+                    default:
+                        detail = error.localizedDescription
+                    }
+                    errorMessage = detail
                     isLoading = false
                 }
             }

@@ -164,6 +164,11 @@ func (s *ScraperService) SearchApps(ctx context.Context, keyword string, platfor
 	}
 }
 
+// GetKeywordSuggestions returns App Store autocomplete suggestions for a term
+func (s *ScraperService) GetKeywordSuggestions(ctx context.Context, term, country string) ([]scraper.KeywordSuggestion, error) {
+	return scraper.FetchKeywordSuggestions(ctx, term, country)
+}
+
 // TriggerAllUpdates updates rankings for all apps
 func (s *ScraperService) TriggerAllUpdates(ctx context.Context) (map[string]int, error) {
 	apps, err := s.appRepo.ListAll(ctx)

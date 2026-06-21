@@ -64,6 +64,55 @@ struct APIErrorResponse: Codable {
     let error: String
 }
 
+struct ImportKeywordsResponse: Codable {
+    let imported: Int
+    let skipped: Int
+}
+
+struct KeywordSuggestion: Codable, Identifiable {
+    let text: String
+    let popularityScore: Int
+    var id: String { text }
+}
+
+struct AutocompleteSuggestion: Codable, Identifiable {
+    let term: String
+    var id: String { term }
+}
+
+struct AppStoreSearchResult: Codable, Identifiable {
+    let rank: Int
+    let appInfo: AppStoreAppInfo
+    var id: String { appInfo.bundleID }
+
+    enum CodingKeys: String, CodingKey {
+        case rank = "Rank"
+        case appInfo = "AppInfo"
+    }
+}
+
+struct AppStoreAppInfo: Codable {
+    let bundleID: String
+    let name: String
+    let developer: String
+    let rating: Double
+    let ratingCount: Int
+    let storeURL: String
+    let iconURL: String
+    let price: Double
+
+    enum CodingKeys: String, CodingKey {
+        case bundleID = "BundleID"
+        case name = "Name"
+        case developer = "Developer"
+        case rating = "Rating"
+        case ratingCount = "RatingCount"
+        case storeURL = "StoreURL"
+        case iconURL = "IconURL"
+        case price = "Price"
+    }
+}
+
 // MARK: - Competitor
 
 struct Competitor: Codable, Identifiable, Hashable {

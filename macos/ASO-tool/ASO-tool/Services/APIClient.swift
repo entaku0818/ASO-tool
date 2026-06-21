@@ -1,6 +1,9 @@
 //  APIClient.swift
 
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: "com.entaku.ASO-tool", category: "APIClient")
 
 enum APIClientError: LocalizedError {
     case invalidURL
@@ -21,7 +24,7 @@ enum APIClientError: LocalizedError {
 final class APIClient {
     static let shared = APIClient()
 
-    var baseURL: String = "https://aso-tool.vercel.app"
+    var baseURL: String = "https://aso-api-671942133800.asia-northeast1.run.app"
     var session: URLSession = .shared
 
     private lazy var decoder: JSONDecoder = {
@@ -42,10 +45,43 @@ final class APIClient {
         try await get("/api/apps", token: token)
     }
 
+    func searchApps(token: String, keyword: String, platform: String, country: String, limit: Int = 20) async throws -> [AppStoreSearchResult] {
+        let q = keyword.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? keyword
+        return try await get("/api/scraper/search?keyword=\(q)&platform=\(platform)&country=\(country)&limit=\(limit)", token: token)
+    }
+
+    func createApp(token: String, name: String, bundleID: String, platform: String, storeURL: String?) async throws -> ASOApp {
+        struct Body: Encodable {
+            let name: String
+            let bundle_id: String
+            let platform: String
+            let store_url: String?
+        }
+        return try await post("/api/apps", body: Body(name: name, bundle_id: bundleID, platform: platform, store_url: storeURL.flatMap { $0.isEmpty ? nil : $0 }), token: token)
+    }
+
     // MARK: - Keywords
 
     func getKeywords(token: String, appID: String) async throws -> [Keyword] {
         try await get("/api/apps/\(appID)/keywords", token: token)
+    }
+
+    func importKeywords(token: String, appID: String, keywords: [[String: String]]) async throws -> ImportKeywordsResponse {
+        struct Body: Encodable { let keywords: [[String: String]] }
+        return try await post("/api/apps/\(appID)/keywords/import", body: Body(keywords: keywords), token: token)
+    }
+
+    func getKeywordSuggestions(token: String, appID: String, limit: Int = 20) async throws -> [KeywordSuggestion] {
+        try await get("/api/apps/\(appID)/keywords/suggestions?limit=\(limit)", token: token)
+    }
+
+    func getCompetitorSuggestions(token: String, appID: String, adamID: String, limit: Int = 50) async throws -> [KeywordSuggestion] {
+        try await get("/api/apps/\(appID)/keywords/competitor-suggestions?adam_id=\(adamID)&limit=\(limit)", token: token)
+    }
+
+    func getKeywordAutocomplete(token: String, term: String, country: String = "jp") async throws -> [AutocompleteSuggestion] {
+        let q = term.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? term
+        return try await get("/api/scraper/keyword-suggestions?term=\(q)&country=\(country.lowercased())", token: token)
     }
 
     func createKeyword(token: String, appID: String, keyword: String, country: String) async throws -> Keyword {
@@ -126,20 +162,27 @@ final class APIClient {
     }
 
     private func perform<T: Decodable>(_ req: URLRequest) async throws -> T {
+        logger.info("→ \(req.httpMethod ?? "?", privacy: .public) \(req.url?.absoluteString ?? "?", privacy: .public)")
         let data: Data
         let response: URLResponse
         do {
             (data, response) = try await session.data(for: req)
         } catch {
+            logger.error("networkError: \(error, privacy: .public)")
             throw APIClientError.networkError(error)
         }
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+        let http = response as? HTTPURLResponse
+        logger.info("← status: \(http?.statusCode ?? -1, privacy: .public)")
+        logger.debug("← body: \(String(data: data, encoding: .utf8) ?? "(binary)", privacy: .public)")
+        if let http = http, !(200..<300).contains(http.statusCode) {
             let msg = (try? JSONDecoder().decode(APIErrorResponse.self, from: data))?.error ?? "unknown error"
+            logger.error("httpError \(http.statusCode, privacy: .public): \(msg, privacy: .public)")
             throw APIClientError.httpError(http.statusCode, msg)
         }
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
+            logger.error("decodeError: \(error, privacy: .public)")
             throw APIClientError.decodingError(error)
         }
     }

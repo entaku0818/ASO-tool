@@ -329,6 +329,7 @@ func main() {
 			r.Route("/scraper", func(r chi.Router) {
 				r.Get("/app-info", scraperHandler.FetchAppInfo)
 				r.Get("/search", scraperHandler.SearchApps)
+				r.Get("/keyword-suggestions", scraperHandler.KeywordSuggestions)
 				r.Post("/trigger", scraperHandler.TriggerAllUpdates)
 			})
 

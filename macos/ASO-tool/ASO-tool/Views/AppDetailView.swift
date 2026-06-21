@@ -17,6 +17,8 @@ struct AppDetailView: View {
     @State private var keywords: [Keyword] = []
     @State private var selectedKeyword: Keyword?
     @State private var showAddKeyword = false
+    @State private var showImportKeywords = false
+    @State private var showSuggestions = false
     @State private var isLoading = false
 
     var body: some View {
@@ -146,6 +148,18 @@ struct AppDetailView: View {
             }
             .environmentObject(appState)
         }
+        .sheet(isPresented: $showImportKeywords) {
+            ImportKeywordsView(app: app) {
+                Task { await fetchKeywords() }
+            }
+            .environmentObject(appState)
+        }
+        .sheet(isPresented: $showSuggestions) {
+            KeywordSuggestionsView(app: app) { newKws in
+                keywords.append(contentsOf: newKws)
+            }
+            .environmentObject(appState)
+        }
     }
 
     // MARK: - Keywords pane
@@ -160,6 +174,26 @@ struct AppDetailView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(colorScheme == .dark ? Aurora.text : .primary)
                     Spacer()
+                    Button {
+                        showSuggestions = true
+                    } label: {
+                        Image(systemName: "lightbulb")
+                            .font(.system(size: 12))
+                            .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("キーワード提案")
+
+                    Button {
+                        showImportKeywords = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 12))
+                            .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("CSV からインポート")
+
                     Button {
                         showAddKeyword = true
                     } label: {

@@ -9,6 +9,7 @@ struct AppListView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var searchText = ""
+    @State private var showingAddApp = false
 
     private var filtered: [ASOApp] {
         guard !searchText.isEmpty else { return apps }
@@ -43,6 +44,12 @@ struct AppListView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(isLoading)
+                    Button { showingAddApp = true } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12))
+                            .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
@@ -133,6 +140,13 @@ struct AppListView: View {
         }
         .navigationSplitViewColumnWidth(min: 210, ideal: 248)
         .task { await fetch() }
+        .sheet(isPresented: $showingAddApp) {
+            AddAppView { newApp in
+                apps.append(newApp)
+                selectedApp = newApp
+            }
+            .environmentObject(appState)
+        }
     }
 
     private func load() { Task { await fetch() } }

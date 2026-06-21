@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/scraper"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
 )
@@ -106,6 +107,30 @@ func (h *ScraperHandler) SearchApps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, results)
+}
+
+// KeywordSuggestions returns App Store autocomplete suggestions for a term
+// GET /api/scraper/keyword-suggestions?term=xxx&country=jp
+func (h *ScraperHandler) KeywordSuggestions(w http.ResponseWriter, r *http.Request) {
+	term := r.URL.Query().Get("term")
+	if term == "" {
+		respondError(w, http.StatusBadRequest, "term is required")
+		return
+	}
+	country := r.URL.Query().Get("country")
+	if country == "" {
+		country = "jp"
+	}
+
+	suggestions, err := h.service.GetKeywordSuggestions(r.Context(), term, country)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if suggestions == nil {
+		suggestions = []scraper.KeywordSuggestion{}
+	}
+	respondJSON(w, http.StatusOK, suggestions)
 }
 
 // TriggerAllUpdates triggers updates for all apps (for scheduler)
