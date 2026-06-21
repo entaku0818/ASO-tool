@@ -235,6 +235,7 @@ func main() {
 					r.Get("/", keywordHandler.ListByApp)
 					r.Post("/", keywordHandler.Create)
 					r.Post("/import", keywordHandler.Import)
+					r.Get("/ranks", rankingHandler.GetAllKeywordRanks)
 					r.Get("/rising", rankingHandler.GetRisingKeywords)
 					r.Get("/{keywordID}", keywordHandler.Get)
 					r.Delete("/{keywordID}", keywordHandler.Delete)

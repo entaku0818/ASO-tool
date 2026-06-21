@@ -104,6 +104,14 @@ final class APIClient {
         let _: Res = try await post("/api/apps/\(appID)/scrape/rankings", body: EmptyBody(), token: token)
     }
 
+    func getKeywordRanks(token: String, appID: String) async throws -> [KeywordRankSummary] {
+        try await get("/api/apps/\(appID)/keywords/ranks", token: token)
+    }
+
+    func getRisingKeywords(token: String, appID: String, days: Int = 7) async throws -> [RisingKeyword] {
+        try await get("/api/apps/\(appID)/keywords/rising?days=\(days)", token: token)
+    }
+
     func getLatestRanking(token: String, appID: String, keywordID: String) async throws -> RankingHistory? {
         do {
             return try await get("/api/apps/\(appID)/keywords/\(keywordID)/rankings/latest", token: token)

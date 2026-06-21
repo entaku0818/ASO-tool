@@ -80,6 +80,41 @@ struct AutocompleteSuggestion: Codable, Identifiable {
     var id: String { term }
 }
 
+struct KeywordRankSummary: Codable, Identifiable {
+    let keywordID: String
+    let keyword: String
+    let country: String
+    let currentRank: Int?
+    let previousRank: Int?
+    let change: Int?
+    var id: String { keywordID }
+
+    enum CodingKeys: String, CodingKey {
+        case keyword, country
+        case keywordID    = "keyword_id"
+        case currentRank  = "current_rank"
+        case previousRank = "previous_rank"
+        case change
+    }
+}
+
+struct RisingKeyword: Codable, Identifiable {
+    let keywordID: String
+    let keyword: String
+    let country: String
+    let currentRank: Int
+    let previousRank: Int
+    let improvement: Int
+    var id: String { keywordID }
+
+    enum CodingKeys: String, CodingKey {
+        case keyword, country, improvement
+        case keywordID    = "keyword_id"
+        case currentRank  = "current_rank"
+        case previousRank = "previous_rank"
+    }
+}
+
 struct AppStoreSearchResult: Codable, Identifiable {
     let rank: Int
     let appInfo: AppStoreAppInfo

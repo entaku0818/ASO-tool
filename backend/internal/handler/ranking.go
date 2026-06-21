@@ -128,3 +128,17 @@ func (h *RankingHandler) GetRisingKeywords(w http.ResponseWriter, r *http.Reques
 
 	respondJSON(w, http.StatusOK, keywords)
 }
+
+// GetAllKeywordRanks handles GET /apps/{appID}/keywords/ranks
+func (h *RankingHandler) GetAllKeywordRanks(w http.ResponseWriter, r *http.Request) {
+	appID := chi.URLParam(r, "appID")
+	ranks, err := h.service.GetAllKeywordRanks(r.Context(), appID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	if ranks == nil {
+		ranks = []repository.KeywordRankSummary{}
+	}
+	respondJSON(w, http.StatusOK, ranks)
+}

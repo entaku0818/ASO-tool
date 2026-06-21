@@ -9,6 +9,7 @@ struct AppDetailView: View {
 
     enum Tab: String, CaseIterable {
         case keywords = "キーワード"
+        case rising   = "急上昇"
         case gap      = "競合ギャップ"
         case metadata = "メタデータ"
     }
@@ -25,10 +26,14 @@ struct AppDetailView: View {
     // Multi-select
     @State private var multiSelectMode = false
     @State private var selectedKeywords: Set<String> = []
-    // Sort & Filter
-    enum SortOrder: String, CaseIterable { case alpha = "五十音", popularity = "人気度", country = "国" }
-    @State private var sortOrder: SortOrder = .alpha
+    // Sort, Filter & Search
+    enum SortOrder: String, CaseIterable { case alpha = "五十音", rank = "順位", popularity = "人気度" }
+    @State private var sortOrder: SortOrder = .rank
     @State private var filterCountry = "すべて"
+    @State private var searchText = ""
+    // Ranks & Rising
+    @State private var rankSummaries: [String: KeywordRankSummary] = [:]
+    @State private var risingKeywords: [RisingKeyword] = []
 
     private var availableCountries: [String] {
         let countries = Set(keywords.map(\.country)).sorted()
@@ -36,13 +41,30 @@ struct AppDetailView: View {
     }
 
     private var displayedKeywords: [Keyword] {
-        var list = filterCountry == "すべて" ? keywords : keywords.filter { $0.country == filterCountry }
+        var list = keywords
+        if filterCountry != "すべて" { list = list.filter { $0.country == filterCountry } }
+        if !searchText.isEmpty { list = list.filter { $0.keyword.localizedCaseInsensitiveContains(searchText) } }
         switch sortOrder {
-        case .alpha:       list.sort { $0.keyword < $1.keyword }
-        case .popularity:  list.sort { ($0.popularityScore ?? -1) > ($1.popularityScore ?? -1) }
-        case .country:     list.sort { $0.country < $1.country }
+        case .alpha:
+            list.sort { $0.keyword < $1.keyword }
+        case .rank:
+            list.sort {
+                let r0 = rankSummaries[$0.id]?.currentRank ?? Int.max
+                let r1 = rankSummaries[$1.id]?.currentRank ?? Int.max
+                return r0 < r1
+            }
+        case .popularity:
+            list.sort { ($0.popularityScore ?? -1) > ($1.popularityScore ?? -1) }
         }
         return list
+    }
+
+    private var statsTop10: Int { rankSummaries.values.filter { ($0.currentRank ?? Int.max) <= 10 }.count }
+    private var statsTop50: Int { rankSummaries.values.filter { ($0.currentRank ?? Int.max) <= 50 }.count }
+    private var statsAvgRank: Double? {
+        let ranks = rankSummaries.values.compactMap(\.currentRank)
+        guard !ranks.isEmpty else { return nil }
+        return Double(ranks.reduce(0, +)) / Double(ranks.count)
     }
 
     var body: some View {
@@ -100,8 +122,15 @@ struct AppDetailView: View {
                                     .foregroundStyle(colorScheme == .dark
                                         ? (isActive ? Aurora.text : Aurora.textMuted)
                                         : (isActive ? Color.primary : Color.secondary))
-                                if tab == .keywords {
-                                    Text("\(keywords.count)")
+                                let badgeCount: Int? = {
+                                    switch tab {
+                                    case .keywords: return keywords.count
+                                    case .rising:   return risingKeywords.isEmpty ? nil : risingKeywords.count
+                                    default: return nil
+                                    }
+                                }()
+                                if let n = badgeCount {
+                                    Text("\(n)")
                                         .font(.system(size: 10, weight: .semibold)).monospacedDigit()
                                         .padding(.horizontal, 5).padding(.vertical, 1)
                                         .background(RoundedRectangle(cornerRadius: 3).fill(
@@ -133,6 +162,7 @@ struct AppDetailView: View {
 
             switch selectedTab {
             case .keywords: keywordsPane
+            case .rising:   risingPane
             case .gap:      KeywordGapView(app: app).environmentObject(appState)
             case .metadata: MetadataView(app: app).environmentObject(appState)
             }
@@ -213,6 +243,38 @@ struct AppDetailView: View {
                 .padding(.horizontal, 12).padding(.vertical, 9)
                 .background(colorScheme == .dark ? Aurora.surface : Color.primary.opacity(0.02))
 
+                // Stats bar
+                if !keywords.isEmpty && !multiSelectMode {
+                    HStack(spacing: 10) {
+                        statChip(label: "Top10", value: "\(statsTop10)", color: .green)
+                        statChip(label: "Top50", value: "\(statsTop50)", color: .orange)
+                        if let avg = statsAvgRank {
+                            statChip(label: "平均", value: String(format: "%.0f位", avg), color: .blue)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(colorScheme == .dark ? Color.white.opacity(0.03) : Color.primary.opacity(0.02))
+                }
+
+                // Search bar
+                if !keywords.isEmpty && !multiSelectMode {
+                    HStack(spacing: 6) {
+                        Image(systemName: "magnifyingglass").font(.system(size: 10)).foregroundStyle(.secondary)
+                        TextField("キーワードを検索", text: $searchText)
+                            .font(.system(size: 12)).textFieldStyle(.plain)
+                        if !searchText.isEmpty {
+                            Button { searchText = "" } label: {
+                                Image(systemName: "xmark.circle.fill").font(.system(size: 11)).foregroundStyle(.secondary)
+                            }.buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 8).padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 6)
+                        .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.primary.opacity(0.06)))
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                }
+
                 // Sort & Filter bar
                 if !keywords.isEmpty && !multiSelectMode {
                     HStack(spacing: 6) {
@@ -247,13 +309,13 @@ struct AppDetailView: View {
                         LazyVStack(spacing: 1) {
                             ForEach(displayedKeywords, id: \.id) { kw in
                                 if multiSelectMode {
-                                    KeywordRow(keyword: kw, isSelected: selectedKeywords.contains(kw.id), isMultiSelect: true)
+                                    KeywordRow(keyword: kw, rankSummary: rankSummaries[kw.id], isSelected: selectedKeywords.contains(kw.id), isMultiSelect: true)
                                         .onTapGesture {
                                             if selectedKeywords.contains(kw.id) { selectedKeywords.remove(kw.id) }
                                             else { selectedKeywords.insert(kw.id) }
                                         }
                                 } else {
-                                    KeywordRow(keyword: kw, isSelected: selectedKeyword?.id == kw.id, isMultiSelect: false)
+                                    KeywordRow(keyword: kw, rankSummary: rankSummaries[kw.id], isSelected: selectedKeyword?.id == kw.id, isMultiSelect: false)
                                         .onTapGesture { selectedKeyword = kw }
                                 }
                             }
@@ -302,6 +364,8 @@ struct AppDetailView: View {
 
     private func loadKeywordsAndUpdate() async {
         await fetchKeywords()
+        await fetchRankSummaries()
+        await fetchRising()
         await autoUpdateRankings()
     }
 
@@ -309,6 +373,20 @@ struct AppDetailView: View {
         isLoading = true
         keywords = (try? await APIClient.shared.getKeywords(token: appState.token, appID: app.id)) ?? []
         isLoading = false
+    }
+
+    private func fetchRankSummaries() async {
+        if let summaries = try? await APIClient.shared.getKeywordRanks(token: appState.token, appID: app.id) {
+            var dict = [String: KeywordRankSummary]()
+            for s in summaries { dict[s.keywordID] = s }
+            await MainActor.run { rankSummaries = dict }
+        }
+    }
+
+    private func fetchRising() async {
+        if let rising = try? await APIClient.shared.getRisingKeywords(token: appState.token, appID: app.id) {
+            await MainActor.run { risingKeywords = rising }
+        }
     }
 
     private func autoUpdateRankings() async {
@@ -350,9 +428,77 @@ struct AppDetailView: View {
             }
 
             keywords = (try? await APIClient.shared.getKeywords(token: appState.token, appID: app.id)) ?? keywords
+            await fetchRankSummaries()
+            await fetchRising()
         } catch { }
 
         await MainActor.run { isUpdatingRankings = false }
+    }
+
+    @ViewBuilder
+    private func statChip(label: String, value: String, color: Color) -> some View {
+        HStack(spacing: 3) {
+            Text(value).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(color)
+            Text(label).font(.system(size: 9)).foregroundStyle(colorScheme == .dark ? Aurora.textDim : .secondary)
+        }
+        .padding(.horizontal, 6).padding(.vertical, 3)
+        .background(color.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: 5))
+    }
+
+    private var risingPane: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("急上昇キーワード")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(colorScheme == .dark ? Aurora.text : .primary)
+                Spacer()
+                Button { Task { await fetchRising() } } label: {
+                    Image(systemName: "arrow.clockwise").font(.system(size: 12))
+                        .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(colorScheme == .dark ? Aurora.surface : Color.primary.opacity(0.02))
+
+            Divider().opacity(0.5)
+
+            if risingKeywords.isEmpty {
+                ContentUnavailableView("急上昇なし", systemImage: "arrow.up.right",
+                    description: Text("過去7日間で3位以上改善したキーワードがありません"))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                Table(risingKeywords) {
+                    TableColumn("キーワード") { r in
+                        Text(r.keyword)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(colorScheme == .dark ? Aurora.text : .primary)
+                    }
+                    TableColumn("国") { r in
+                        Text(r.country).font(.system(size: 11)).foregroundStyle(.secondary)
+                    }.width(40)
+                    TableColumn("現在") { r in
+                        Text("\(r.currentRank)位")
+                            .font(.system(size: 12, weight: .semibold)).monospacedDigit()
+                            .foregroundStyle(Color.asoPosText(colorScheme))
+                    }.width(60)
+                    TableColumn("前回") { r in
+                        Text("\(r.previousRank)位")
+                            .font(.system(size: 11)).monospacedDigit().foregroundStyle(.secondary)
+                    }.width(60)
+                    TableColumn("改善") { r in
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.up").font(.system(size: 9)).foregroundStyle(.green)
+                            Text("\(r.improvement)")
+                                .font(.system(size: 11, weight: .bold)).foregroundStyle(.green)
+                        }
+                    }.width(50)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .background(colorScheme == .dark ? Aurora.windowBg : Color(nsColor: .windowBackgroundColor))
     }
 
     private func bulkDelete() {
@@ -379,6 +525,7 @@ private let timeFormatter: DateFormatter = {
 
 struct KeywordRow: View {
     let keyword: Keyword
+    let rankSummary: KeywordRankSummary?
     let isSelected: Bool
     let isMultiSelect: Bool
     @Environment(\.colorScheme) var colorScheme
@@ -401,12 +548,29 @@ struct KeywordRow: View {
                     Text(keyword.country)
                         .font(.system(size: 11))
                         .foregroundStyle(colorScheme == .dark ? Aurora.textDim : .secondary)
-                    if let score = keyword.popularityScore {
-                        popularityBadge(score)
-                    }
+                    if let score = keyword.popularityScore { popularityBadge(score) }
                 }
             }
             Spacer()
+            // Rank + change
+            if let summary = rankSummary {
+                VStack(alignment: .trailing, spacing: 1) {
+                    if let rank = summary.currentRank {
+                        Text("\(rank)").font(.system(size: 13, weight: .bold, design: .monospaced))
+                            .foregroundStyle(rankColor(rank))
+                    } else {
+                        Text("圏外").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                    }
+                    if let change = summary.change, change != 0 {
+                        HStack(spacing: 1) {
+                            Image(systemName: change > 0 ? "arrow.up" : "arrow.down")
+                                .font(.system(size: 7))
+                            Text("\(abs(change))").font(.system(size: 9, weight: .semibold))
+                        }
+                        .foregroundStyle(change > 0 ? Color.green : Color.red)
+                    }
+                }
+            }
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
         .background(
@@ -423,6 +587,14 @@ struct KeywordRow: View {
         .onHover { isHovered = $0 }
         .animation(.easeOut(duration: 0.12), value: isHovered)
         .animation(.easeOut(duration: 0.12), value: isSelected)
+    }
+
+    private func rankColor(_ rank: Int) -> Color {
+        switch rank {
+        case 1...10:  return colorScheme == .dark ? Aurora.posText : Daylight.posText
+        case 11...50: return colorScheme == .dark ? Aurora.warnText : Daylight.warnText
+        default:      return colorScheme == .dark ? Aurora.textDim : Color.secondary
+        }
     }
 
     @ViewBuilder

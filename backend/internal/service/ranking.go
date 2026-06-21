@@ -56,3 +56,8 @@ func (s *RankingService) GetRisingKeywords(ctx context.Context, appID string, da
 	}
 	return s.repo.GetRisingKeywords(ctx, appID, days)
 }
+
+// GetAllKeywordRanks returns current/previous ranks for all keywords of an app.
+func (s *RankingService) GetAllKeywordRanks(ctx context.Context, appID string) ([]repository.KeywordRankSummary, error) {
+	return s.repo.GetAllKeywordRanks(ctx, appID)
+}

@@ -213,3 +213,70 @@ func (r *RankingRepository) GetLatestByKeyword(ctx context.Context, keywordID st
 
 	return ranking, nil
 }
+
+// KeywordRankSummary holds the latest rank and change for a keyword.
+type KeywordRankSummary struct {
+	KeywordID    string `json:"keyword_id"`
+	Keyword      string `json:"keyword"`
+	Country      string `json:"country"`
+	CurrentRank  *int   `json:"current_rank"`
+	PreviousRank *int   `json:"previous_rank"`
+	Change       *int   `json:"change"`
+}
+
+// GetAllKeywordRanks returns current and previous ranks for all keywords of an app.
+func (r *RankingRepository) GetAllKeywordRanks(ctx context.Context, appID string) ([]KeywordRankSummary, error) {
+	rows, err := r.pool.Query(ctx, `
+		WITH
+		cur AS (
+			SELECT DISTINCT ON (k.id)
+				k.id AS keyword_id, k.keyword, k.country, rh.rank AS current_rank
+			FROM keywords k
+			LEFT JOIN ranking_history rh ON k.id = rh.keyword_id
+			WHERE k.app_id = $1
+			ORDER BY k.id, rh.recorded_at DESC NULLS LAST
+		),
+		prev AS (
+			SELECT DISTINCT ON (k.id)
+				k.id AS keyword_id, rh.rank AS previous_rank
+			FROM keywords k
+			JOIN ranking_history rh ON k.id = rh.keyword_id
+			WHERE k.app_id = $1
+			ORDER BY k.id, rh.recorded_at DESC
+			OFFSET 0
+		),
+		prev2 AS (
+			SELECT kp.keyword_id, kp.previous_rank
+			FROM (
+				SELECT k.id AS keyword_id, rh.rank AS previous_rank,
+					ROW_NUMBER() OVER (PARTITION BY k.id ORDER BY rh.recorded_at DESC) AS rn
+				FROM keywords k
+				JOIN ranking_history rh ON k.id = rh.keyword_id
+				WHERE k.app_id = $1
+			) kp
+			WHERE kp.rn = 2
+		)
+		SELECT c.keyword_id, c.keyword, c.country, c.current_rank, p.previous_rank
+		FROM cur c
+		LEFT JOIN prev2 p ON c.keyword_id = p.keyword_id
+		ORDER BY c.keyword
+	`, appID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []KeywordRankSummary
+	for rows.Next() {
+		var s KeywordRankSummary
+		if err := rows.Scan(&s.KeywordID, &s.Keyword, &s.Country, &s.CurrentRank, &s.PreviousRank); err != nil {
+			return nil, err
+		}
+		if s.CurrentRank != nil && s.PreviousRank != nil {
+			change := *s.PreviousRank - *s.CurrentRank // positive = improved
+			s.Change = &change
+		}
+		result = append(result, s)
+	}
+	return result, nil
+}
