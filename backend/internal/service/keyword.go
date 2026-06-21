@@ -83,3 +83,15 @@ func (s *KeywordService) ListByApp(ctx context.Context, appID string) ([]*model.
 func (s *KeywordService) Delete(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *KeywordService) BulkImport(ctx context.Context, appID string, req *model.ImportKeywordsRequest) (*model.ImportKeywordsResponse, error) {
+	total := len(req.Keywords)
+	imported, err := s.repo.BulkImport(ctx, appID, req.Keywords)
+	if err != nil {
+		return nil, err
+	}
+	return &model.ImportKeywordsResponse{
+		Imported: imported,
+		Skipped:  total - imported,
+	}, nil
+}

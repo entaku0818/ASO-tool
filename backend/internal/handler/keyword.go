@@ -71,6 +71,28 @@ func (h *KeywordHandler) ListByApp(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, keywords)
 }
 
+func (h *KeywordHandler) Import(w http.ResponseWriter, r *http.Request) {
+	appID := chi.URLParam(r, "appID")
+
+	var req model.ImportKeywordsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if len(req.Keywords) == 0 {
+		respondError(w, http.StatusBadRequest, "keywords is empty")
+		return
+	}
+
+	resp, err := h.service.BulkImport(r.Context(), appID, &req)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	respondJSON(w, http.StatusOK, resp)
+}
+
 func (h *KeywordHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "keywordID")
 

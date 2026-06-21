@@ -18,6 +18,20 @@ type CreateKeywordRequest struct {
 	Country string `json:"country,omitempty"`
 }
 
+type ImportKeywordItem struct {
+	Keyword string `json:"keyword"`
+	Country string `json:"country"`
+}
+
+type ImportKeywordsRequest struct {
+	Keywords []ImportKeywordItem `json:"keywords"`
+}
+
+type ImportKeywordsResponse struct {
+	Imported int `json:"imported"`
+	Skipped  int `json:"skipped"`
+}
+
 func (r *CreateKeywordRequest) Validate() error {
 	if r.AppID == "" {
 		return ErrAppIDRequired

@@ -234,6 +234,7 @@ func main() {
 				r.Route("/{appID}/keywords", func(r chi.Router) {
 					r.Get("/", keywordHandler.ListByApp)
 					r.Post("/", keywordHandler.Create)
+					r.Post("/import", keywordHandler.Import)
 					r.Get("/rising", rankingHandler.GetRisingKeywords)
 					r.Get("/{keywordID}", keywordHandler.Get)
 					r.Delete("/{keywordID}", keywordHandler.Delete)

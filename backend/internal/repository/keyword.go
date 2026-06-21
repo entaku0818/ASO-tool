@@ -172,6 +172,29 @@ func (r *KeywordRepository) CountAndCreateWithLock(ctx context.Context, req *mod
 	return keyword, nil
 }
 
+// BulkImport inserts keywords in batch, skipping duplicates (same app_id+keyword+country).
+// Returns the number actually inserted.
+func (r *KeywordRepository) BulkImport(ctx context.Context, appID string, items []model.ImportKeywordItem) (int, error) {
+	if len(items) == 0 {
+		return 0, nil
+	}
+	imported := 0
+	for _, item := range items {
+		id := uuid.New().String()
+		_, err := r.pool.Exec(ctx,
+			`INSERT INTO keywords (id, app_id, keyword, country, created_at)
+			 VALUES ($1, $2, $3, $4, NOW())
+			 ON CONFLICT (app_id, keyword, country) DO NOTHING`,
+			id, appID, item.Keyword, item.Country,
+		)
+		if err != nil {
+			return imported, err
+		}
+		imported++
+	}
+	return imported, nil
+}
+
 func (r *KeywordRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM keywords WHERE id = $1`
 
