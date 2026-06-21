@@ -12,6 +12,7 @@ struct AppDetailView: View {
         case rising   = "急上昇"
         case gap      = "競合ギャップ"
         case metadata = "メタデータ"
+        case advice   = "アドバイス"
     }
 
     @State private var selectedTab: Tab = .keywords
@@ -126,7 +127,7 @@ struct AppDetailView: View {
                                     switch tab {
                                     case .keywords: return keywords.count
                                     case .rising:   return risingKeywords.isEmpty ? nil : risingKeywords.count
-                                    default: return nil
+                                    default:        return nil
                                     }
                                 }()
                                 if let n = badgeCount {
@@ -165,6 +166,7 @@ struct AppDetailView: View {
             case .rising:   risingPane
             case .gap:      KeywordGapView(app: app).environmentObject(appState)
             case .metadata: MetadataView(app: app).environmentObject(appState)
+            case .advice:   ASOAdviceView(app: app, token: appState.token ?? "")
             }
         }
         .background(colorScheme == .dark ? Aurora.windowBg : Color(nsColor: .windowBackgroundColor))

@@ -149,6 +149,10 @@ func main() {
 	metadataService := service.NewMetadataService(metadataRepo)
 	metadataHandler := handler.NewMetadataHandler(metadataService)
 
+	// ASO Advice
+	asoAdviceService := service.NewASOAdviceService(keywordRepo, rankingRepo, competitorRepo, metadataRepo, appRepo)
+	asoAdviceHandler := handler.NewASOAdviceHandler(asoAdviceService)
+
 	// Public service
 	popularKeywordsService := service.NewPopularKeywordsService(trackedKeywordRepo)
 	storeRankingRepo := repository.NewStoreRankingRepository(pool)
@@ -315,6 +319,7 @@ func main() {
 				})
 
 				r.Get("/{appID}/keywords/{keywordID}/comparison", competitorHandler.GetComparison)
+				r.Get("/{appID}/aso-advice", asoAdviceHandler.Generate)
 			})
 
 			// Templates
