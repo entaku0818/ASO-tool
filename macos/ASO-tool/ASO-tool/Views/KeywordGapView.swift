@@ -11,6 +11,7 @@ struct KeywordGapView: View {
     @State private var isLoading = false
     @State private var isUpdating = false
     @State private var errorMessage: String?
+    @State private var showAddCompetitor = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,6 +32,13 @@ struct KeywordGapView: View {
                     if isLoading || isUpdating {
                         ProgressView().scaleEffect(0.7)
                     }
+                    Button { showAddCompetitor = true } label: {
+                        Label("競合を追加", systemImage: "plus")
+                            .font(.system(size: 12))
+                            .foregroundStyle(colorScheme == .dark ? Aurora.textMuted : .secondary)
+                    }
+                    .buttonStyle(.borderless)
+
                     Button {
                         Task { await updateRankings() }
                     } label: {
@@ -124,6 +132,10 @@ struct KeywordGapView: View {
         }
         .background(colorScheme == .dark ? Aurora.windowBg : Color(nsColor: .windowBackgroundColor))
         .task { await fetchGaps() }
+        .sheet(isPresented: $showAddCompetitor) {
+            AddCompetitorView(app: app) { _ in Task { await fetchGaps() } }
+                .environmentObject(appState)
+        }
     }
 
     private func fetchGaps() async {

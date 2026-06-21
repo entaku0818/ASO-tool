@@ -99,10 +99,29 @@ final class APIClient {
         try await get("/api/apps/\(appID)/keywords/\(keywordID)/rankings?limit=\(limit)", token: token)
     }
 
+    func scrapeRankings(token: String, appID: String) async throws {
+        struct Res: Decodable { let updated: Int }
+        let _: Res = try await post("/api/apps/\(appID)/scrape/rankings", body: EmptyBody(), token: token)
+    }
+
     // MARK: - Competitors
 
     func getCompetitors(token: String, appID: String) async throws -> [Competitor] {
         try await get("/api/apps/\(appID)/competitors", token: token)
+    }
+
+    func createCompetitor(token: String, appID: String, bundleID: String, name: String, platform: String) async throws -> Competitor {
+        struct Body: Encodable {
+            let app_id: String; let competitor_bundle_id: String
+            let competitor_name: String; let platform: String
+        }
+        return try await post("/api/apps/\(appID)/competitors",
+            body: Body(app_id: appID, competitor_bundle_id: bundleID, competitor_name: name, platform: platform),
+            token: token)
+    }
+
+    func deleteCompetitor(token: String, appID: String, competitorID: String) async throws {
+        try await delete("/api/apps/\(appID)/competitors/\(competitorID)", token: token)
     }
 
     func getKeywordGap(token: String, appID: String) async throws -> [KeywordGap] {
