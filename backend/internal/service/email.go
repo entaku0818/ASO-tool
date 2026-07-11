@@ -21,6 +21,9 @@ func NewEmailService() *EmailService {
 		from = "noreply@aso-tool.app"
 	}
 	if apiKey == "" {
+		if isRunningOnCloudRun() {
+			log.Fatal("fatal: RESEND_API_KEY is not set in production — refusing to start with license/purchase emails unsendable")
+		}
 		log.Println("warn: RESEND_API_KEY is not set — email sending will be skipped")
 		return &EmailService{enabled: false, from: from}
 	}
@@ -33,7 +36,7 @@ func NewEmailService() *EmailService {
 
 func (s *EmailService) SendLicenseKey(to, licenseKey string) error {
 	if !s.enabled {
-		log.Printf("info: [email-stub] to=%s license=%s", to, licenseKey)
+		log.Printf("error: [email-stub] RESEND_API_KEY not configured — license key NOT emailed to=%s license=%s", to, licenseKey)
 		return nil
 	}
 
