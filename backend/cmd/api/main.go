@@ -84,7 +84,6 @@ func main() {
 
 	keywordRepo := repository.NewKeywordRepository(pool)
 	keywordService := service.NewKeywordServiceWithBilling(keywordRepo, appRepo, trackedKeywordRepo, userRepo)
-	keywordHandler := handler.NewKeywordHandler(keywordService)
 
 	rankingRepo := repository.NewRankingRepository(pool)
 	rankingService := service.NewRankingService(rankingRepo)
@@ -100,6 +99,8 @@ func main() {
 	competitorRepo := repository.NewCompetitorRepository(pool)
 	competitorService := service.NewCompetitorService(competitorRepo, keywordRepo)
 	competitorHandler := handler.NewCompetitorHandler(competitorService, userRepo)
+
+	keywordHandler := handler.NewKeywordHandler(keywordService, rankingService, competitorService, userRepo)
 
 	screenshotRepo := repository.NewScreenshotRepository(pool)
 	screenshotService := service.NewScreenshotService(screenshotRepo)
@@ -239,6 +240,7 @@ func main() {
 					r.Get("/", keywordHandler.ListByApp)
 					r.Post("/", keywordHandler.Create)
 					r.Post("/import", keywordHandler.Import)
+					r.Get("/export.csv", keywordHandler.ExportCSV)
 					r.Get("/ranks", rankingHandler.GetAllKeywordRanks)
 					r.Get("/rising", rankingHandler.GetRisingKeywords)
 					r.Get("/{keywordID}", keywordHandler.Get)

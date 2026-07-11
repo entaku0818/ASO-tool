@@ -294,6 +294,16 @@ export async function getKeywordGap(appId: string): Promise<KeywordGap[]> {
   return fetchApi<KeywordGap[]>(`/api/apps/${appId}/competitors/keyword-gap`)
 }
 
+export async function exportKeywordsCSV(appId: string): Promise<Blob> {
+  const token = getAuthToken()
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+  const response = await fetch(`${API_BASE_URL}/api/apps/${appId}/keywords/export.csv`, { headers })
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`)
+  }
+  return response.blob()
+}
+
 // App Metadata Versions
 export type AppMetadataVersion = {
   id: string

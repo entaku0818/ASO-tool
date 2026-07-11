@@ -18,8 +18,7 @@ import {
   refreshKeywordPopularity,
   getKeywordSuggestions,
   getCompetitorKeywordSuggestions,
-  getKeywordGap,
-  KeywordGap,
+  exportKeywordsCSV,
   translateKeyword,
   SearchAdsCredentials,
   KeywordPopularitySuggestion,
@@ -994,33 +993,19 @@ export default function AppDetailPage() {
   }
 
   const exportCSV = async () => {
-    let gaps: KeywordGap[] = []
     try {
-      gaps = await getKeywordGap(appId)
-    } catch {
-      // proceed without gap data
+      const blob = await exportKeywordsCSV(appId)
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `keywords_${appId}.csv`
+      a.click()
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('403')) {
+        upgradeModal.open('CSVエクスポート')
+      } else {
+        showToast('CSVエクスポートに失敗しました', 'error')
+      }
     }
-    const gapMap = new Map(gaps.map(g => [g.keyword_id, g]))
-
-    const header = 'キーワード,国,自社順位,人気スコア,競合名,競合順位,最終更新'
-    const rows = keywords.map(k => {
-      const gap = gapMap.get(k.id)
-      return [
-        `"${k.keyword}"`,
-        k.country,
-        k.latestRank ?? '圏外',
-        k.popularity_score ?? '',
-        gap ? `"${gap.competitor_name}"` : '',
-        gap ? gap.competitor_rank : '',
-        k.popularity_fetched_at ? new Date(k.popularity_fetched_at).toLocaleDateString('ja-JP') : '',
-      ].join(',')
-    })
-    const csv = [header, ...rows].join('\n')
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `keywords_${appId}.csv`
-    a.click()
   }
 
   const exportPDF = () => {
