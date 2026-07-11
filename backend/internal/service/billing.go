@@ -40,6 +40,9 @@ func NewBillingService(userRepo *repository.UserRepository) *BillingService {
 	}
 
 	if svc.webhookSecret == "" {
+		if isRunningOnCloudRun() {
+			log.Fatal("fatal: STRIPE_WEBHOOK_SECRET is not set in production — refusing to start with an unverifiable billing webhook")
+		}
 		log.Println("warn: STRIPE_WEBHOOK_SECRET is not set — webhook signature verification will fail")
 	}
 	if svc.priceIDMonthly == "" || svc.priceIDYearly == "" {
@@ -290,4 +293,12 @@ func getEnvOrDefault(key, defaultVal string) string {
 		return v
 	}
 	return defaultVal
+}
+
+// isRunningOnCloudRun reports whether the process is running as a Cloud Run
+// service. K_SERVICE is injected automatically by the Cloud Run runtime and
+// is never set in local development, so it doubles as a production signal
+// without requiring any extra configuration.
+func isRunningOnCloudRun() bool {
+	return os.Getenv("K_SERVICE") != ""
 }
