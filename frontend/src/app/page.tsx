@@ -384,10 +384,13 @@ export default function HomePage() {
       <footer className="bg-slate-900 text-slate-400 py-10 px-4">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
           <span className="font-semibold text-white">ASO Tool</span>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
             <Link href="/popular-keywords" className="hover:text-white transition-colors">人気キーワード</Link>
             <Link href="/buy" className="hover:text-white transition-colors">購入</Link>
             <Link href="/login" className="hover:text-white transition-colors">ログイン</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">利用規約</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">プライバシーポリシー</Link>
+            <Link href="/tokushoho" className="hover:text-white transition-colors">特定商取引法に基づく表記</Link>
           </div>
           <span>© 2026 ASO Tool</span>
         </div>
