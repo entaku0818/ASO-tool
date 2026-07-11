@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
+import { PLAN_LIMITS, PRICES, formatYen } from '@/lib/plans'
 
 const FEATURES = [
   {
@@ -48,11 +49,11 @@ const PAIN_POINTS = [
 const FAQS = [
   {
     q: 'Webダッシュボードの無料プランでできることは？',
-    a: '無料プランでは1アプリ・10キーワードまで登録でき、毎日の順位追跡・App Storeアナリティクス連携・キーワード提案などが使えます。登録不要の人気キーワードページも無料です。',
+    a: `無料プランでは${PLAN_LIMITS.freeAppLimit}アプリ・${PLAN_LIMITS.freeKeywordLimit}キーワードまで登録でき、毎日の順位追跡・App Storeアナリティクス連携・キーワード提案などが使えます。登録不要の人気キーワードページも無料です。`,
   },
   {
     q: 'WebダッシュボードのProプランとmacOSアプリの違いは？',
-    a: 'Webダッシュボード（Pro）はブラウザで使えるSaaSで、¥1,650/月〜のサブスクリプションです。macOSアプリは¥9,800/年の買い切りで、Dock・メニューバーからアクセスできるネイティブアプリです。機能は共通していますが、使い方の好みで選べます。',
+    a: `Webダッシュボード（Pro）はブラウザで使えるSaaSで、${formatYen(PRICES.webProYearlyMonthlyEquivalent)}/月〜のサブスクリプションです。macOSアプリは${formatYen(PRICES.macosLicenseYearly)}/年の買い切りで、Dock・メニューバーからアクセスできるネイティブアプリです。機能は共通していますが、使い方の好みで選べます。`,
   },
   {
     q: 'macOSアプリ購入後はどうすれば使えますか？',
@@ -134,7 +135,7 @@ export default function HomePage() {
               href="/buy"
               className="w-full sm:w-auto px-8 py-4 border border-white/30 text-white hover:bg-white/10 rounded-xl font-semibold text-lg transition-colors"
             >
-              macOSアプリを購入 ¥9,800/年
+              macOSアプリを購入 {formatYen(PRICES.macosLicenseYearly)}/年
             </Link>
           </div>
           <p className="mt-4 text-sm text-slate-400">クレジットカード不要で無料スタート · Stripe 決済対応</p>
@@ -278,10 +279,10 @@ export default function HomePage() {
                   <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">¥0</span>
                   <span className="text-gray-500 dark:text-gray-400 ml-2">無料で始められます</span>
                 </div>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Proプランは ¥1,650/月〜（年払い）</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Proプランは {formatYen(PRICES.webProYearlyMonthlyEquivalent)}/月〜（年払い）</p>
                 <ul className="space-y-2.5 text-sm text-gray-600 dark:text-gray-400 mb-8">
                   {[
-                    { text: '1アプリ・10キーワードまで無料', pro: false },
+                    { text: `${PLAN_LIMITS.freeAppLimit}アプリ・${PLAN_LIMITS.freeKeywordLimit}キーワードまで無料`, pro: false },
                     { text: 'キーワード順位の毎日追跡', pro: false },
                     { text: 'App Store アナリティクス連携', pro: false },
                     { text: '競合キーワードギャップ分析', pro: true },
@@ -312,7 +313,7 @@ export default function HomePage() {
               <div className="p-8 flex-1">
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">🍎 macOSネイティブアプリ</p>
                 <div className="mb-1">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">¥9,800</span>
+                  <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">{formatYen(PRICES.macosLicenseYearly)}</span>
                   <span className="text-gray-500 dark:text-gray-400 ml-2">/ 年</span>
                 </div>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">毎年自動更新 · 7日間返金保証</p>

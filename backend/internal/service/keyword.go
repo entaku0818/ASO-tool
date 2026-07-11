@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/plan"
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
 )
-
-const freePlanKeywordLimit = 10
 
 type KeywordService struct {
 	repo           *repository.KeywordRepository
@@ -47,7 +46,7 @@ func (s *KeywordService) Create(ctx context.Context, userID string, req *model.C
 	if s.userRepo != nil && userID != "" {
 		user, err := s.userRepo.GetByID(ctx, userID)
 		if err == nil && !user.IsPro() {
-			keyword, err = s.repo.CountAndCreateWithLock(ctx, req, freePlanKeywordLimit)
+			keyword, err = s.repo.CountAndCreateWithLock(ctx, req, plan.FreeKeywordLimit)
 			if err != nil {
 				return nil, err
 			}

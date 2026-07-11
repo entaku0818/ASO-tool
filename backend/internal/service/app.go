@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/plan"
 	"github.com/entaku0818/aso-tool/backend/internal/repository"
 )
-
-const freePlanAppLimit = 1
 
 type AppService struct {
 	repo     *repository.AppRepository
@@ -31,7 +30,7 @@ func (s *AppService) Create(ctx context.Context, userID string, req *model.Creat
 	if s.userRepo != nil && userID != "" {
 		user, err := s.userRepo.GetByID(ctx, userID)
 		if err == nil && !user.IsPro() {
-			return s.repo.CreateWithLimit(ctx, userID, req, freePlanAppLimit)
+			return s.repo.CreateWithLimit(ctx, userID, req, plan.FreeAppLimit)
 		}
 	}
 

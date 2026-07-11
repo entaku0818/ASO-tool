@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { createCheckoutSession } from '@/lib/api'
+import { PLAN_LIMITS, PRICES, formatYen } from '@/lib/plans'
 
 const COMPARISON_ROWS = [
-  { label: 'アプリ登録',         free: '1件まで',   pro: '無制限' },
-  { label: 'キーワード',         free: '10件まで',  pro: '無制限' },
+  { label: 'アプリ登録',         free: `${PLAN_LIMITS.freeAppLimit}件まで`,     pro: '無制限' },
+  { label: 'キーワード',         free: `${PLAN_LIMITS.freeKeywordLimit}件まで`, pro: '無制限' },
   { label: '競合キーワード逆引き', free: false,       pro: true },
   { label: 'CSVエクスポート',     free: false,       pro: true },
   { label: '多言語スクショ一括生成', free: false,     pro: true },
@@ -137,7 +138,7 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
                 className="accent-blue-600"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                月払い <span className="font-semibold">¥1,980</span>
+                月払い <span className="font-semibold">{formatYen(PRICES.webProMonthly)}</span>
                 <span className="text-gray-400 dark:text-gray-500"> / 月</span>
               </span>
             </label>
@@ -151,7 +152,7 @@ export function UpgradeModal({ isOpen, onClose, triggerFeature, subhead }: Upgra
                 className="accent-blue-600"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                年払い <span className="font-semibold">¥1,650</span>
+                年払い <span className="font-semibold">{formatYen(PRICES.webProYearlyMonthlyEquivalent)}</span>
                 <span className="text-gray-400 dark:text-gray-500"> / 月</span>
                 <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-semibold px-2 py-0.5 rounded-full">人気 17%OFF</span>
               </span>

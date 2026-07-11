@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createLicenseCheckout } from '@/lib/api'
+import { PRICES, formatYen } from '@/lib/plans'
 
 const FEATURES = [
   { icon: '📊', title: 'ランキング推移チャート', desc: '最大90日のキーワード順位推移を複数キーワード同時比較' },
@@ -61,7 +62,7 @@ export default function BuyPage() {
         {/* Pricing card */}
         <div className="bg-white dark:bg-[#12161e] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 max-w-md mx-auto">
           <div className="text-center mb-6">
-            <div className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-1">¥9,800</div>
+            <div className="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-1">{formatYen(PRICES.macosLicenseYearly)}</div>
             <div className="text-gray-500 dark:text-gray-400">年額・毎年自動更新</div>
           </div>
 
