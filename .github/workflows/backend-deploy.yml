@@ -59,7 +59,7 @@ jobs:
             --region asia-northeast1 \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},ASC_ENCRYPTION_KEY=${{ secrets.ASC_ENCRYPTION_KEY }},STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }},STRIPE_PRICE_LICENSE=price_1TXIQ9Gv7DVBIWpT9gtxVE9Q,STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }},RESEND_API_KEY=${{ secrets.RESEND_API_KEY }},RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }},FRONTEND_BASE_URL=https://aso-tool.entaku.app" \
+            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},ASC_ENCRYPTION_KEY=${{ secrets.ASC_ENCRYPTION_KEY }},STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }},STRIPE_PRICE_LICENSE=price_1TXIQ9Gv7DVBIWpT9gtxVE9Q,STRIPE_PRICE_MONTHLY=${{ secrets.STRIPE_PRICE_MONTHLY }},STRIPE_PRICE_YEARLY=${{ secrets.STRIPE_PRICE_YEARLY }},STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }},RESEND_API_KEY=${{ secrets.RESEND_API_KEY }},RESEND_FROM_EMAIL=${{ secrets.RESEND_FROM_EMAIL }},FRONTEND_BASE_URL=https://aso-tool.entaku.app" \
             --memory 256Mi \
             --cpu 1 \
             --min-instances 0 \
