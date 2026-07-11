@@ -8,17 +8,19 @@ import (
 
 	"github.com/entaku0818/aso-tool/backend/internal/middleware"
 	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/scraper"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 
 type KeywordPopularityHandler struct {
-	service *service.KeywordPopularityService
+	service  *service.KeywordPopularityService
+	userRepo *repository.UserRepository
 }
 
-func NewKeywordPopularityHandler(svc *service.KeywordPopularityService) *KeywordPopularityHandler {
-	return &KeywordPopularityHandler{service: svc}
+func NewKeywordPopularityHandler(svc *service.KeywordPopularityService, userRepo *repository.UserRepository) *KeywordPopularityHandler {
+	return &KeywordPopularityHandler{service: svc, userRepo: userRepo}
 }
 
 // SetCredentials handles POST /apps/{appID}/search-ads-credentials
@@ -114,6 +116,21 @@ func (h *KeywordPopularityHandler) GetSuggestions(w http.ResponseWriter, r *http
 // GetCompetitorSuggestions handles GET /apps/{appID}/keywords/competitor-suggestions?adam_id=xxx
 func (h *KeywordPopularityHandler) GetCompetitorSuggestions(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+
+	user, err := h.userRepo.GetByID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, model.ErrNotFound) {
+			respondError(w, http.StatusUnauthorized, "user not found")
+		} else {
+			respondError(w, http.StatusInternalServerError, "internal server error")
+		}
+		return
+	}
+	if !user.IsPro() {
+		respondError(w, http.StatusForbidden, "competitor keyword lookup requires Pro plan")
+		return
+	}
+
 	appID := chi.URLParam(r, "appID")
 
 	adamIDStr := r.URL.Query().Get("adam_id")

@@ -12,14 +12,18 @@ import {
   getKeywordGap,
   CompetitorComparison,
 } from '@/lib/api'
+import { useUpgradeModal } from '@/hooks/useUpgradeModal'
+import { UpgradeModal } from '@/components/UpgradeModal'
 
 type CompetitorSectionProps = {
   appId: string
   platform: 'ios' | 'android'
   selectedKeywordId?: string
+  isPro: boolean
 }
 
-export function CompetitorSection({ appId, platform, selectedKeywordId }: CompetitorSectionProps) {
+export function CompetitorSection({ appId, platform, selectedKeywordId, isPro }: CompetitorSectionProps) {
+  const upgradeModal = useUpgradeModal()
   const [competitors, setCompetitors] = useState<Competitor[]>([])
   const [comparison, setComparison] = useState<CompetitorComparison | null>(null)
   const [gaps, setGaps] = useState<KeywordGap[]>([])
@@ -93,6 +97,10 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
   }
 
   const handleShowGap = async () => {
+    if (!isPro) {
+      upgradeModal.open('キーワードギャップ')
+      return
+    }
     if (showGap) {
       setShowGap(false)
       return
@@ -149,11 +157,12 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
         <div className="flex gap-2">
           <button
             onClick={handleShowGap}
-            disabled={isLoadingGap || competitors.length === 0}
+            disabled={isLoadingGap || (isPro && competitors.length === 0)}
             className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
           >
+            {!isPro && <span>🔒</span>}
             {isLoadingGap ? '取得中...' : showGap ? 'ギャップ非表示' : 'キーワードギャップ'}
-            {!showGap && gaps.length > 0 && (
+            {isPro && !showGap && gaps.length > 0 && (
               <span className="inline-flex items-center justify-center w-5 h-5 text-xs bg-white dark:bg-[#12161e] text-purple-700 rounded-full font-bold">
                 {gaps.length}
               </span>
@@ -302,6 +311,12 @@ export function CompetitorSection({ appId, platform, selectedKeywordId }: Compet
           </table>
         </>
       )}
+
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={upgradeModal.close}
+        triggerFeature={upgradeModal.triggerFeature}
+      />
     </div>
   )
 }

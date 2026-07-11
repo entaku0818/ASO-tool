@@ -1276,6 +1276,7 @@ export default function AppDetailPage() {
           appId={appId}
           platform={app.platform}
           selectedKeywordId={selectedKeywordIds.size === 1 ? Array.from(selectedKeywordIds)[0] : undefined}
+          isPro={isPro}
         />
       </div>
 

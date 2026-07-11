@@ -99,7 +99,7 @@ func main() {
 
 	competitorRepo := repository.NewCompetitorRepository(pool)
 	competitorService := service.NewCompetitorService(competitorRepo, keywordRepo)
-	competitorHandler := handler.NewCompetitorHandler(competitorService)
+	competitorHandler := handler.NewCompetitorHandler(competitorService, userRepo)
 
 	screenshotRepo := repository.NewScreenshotRepository(pool)
 	screenshotService := service.NewScreenshotService(screenshotRepo)
@@ -119,7 +119,7 @@ func main() {
 	// Search Ads / keyword popularity
 	searchAdsCredRepo := repository.NewSearchAdsCredentialsRepository(pool)
 	keywordPopularityService := service.NewKeywordPopularityService(searchAdsCredRepo, keywordRepo, appRepo)
-	keywordPopularityHandler := handler.NewKeywordPopularityHandler(keywordPopularityService)
+	keywordPopularityHandler := handler.NewKeywordPopularityHandler(keywordPopularityService, userRepo)
 
 	// Billing
 	billingService := service.NewBillingService(userRepo)

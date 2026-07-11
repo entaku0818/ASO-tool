@@ -2,19 +2,43 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/entaku0818/aso-tool/backend/internal/middleware"
 	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-tool/backend/internal/repository"
 	"github.com/entaku0818/aso-tool/backend/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 
 type CompetitorHandler struct {
-	service *service.CompetitorService
+	service  *service.CompetitorService
+	userRepo *repository.UserRepository
 }
 
-func NewCompetitorHandler(service *service.CompetitorService) *CompetitorHandler {
-	return &CompetitorHandler{service: service}
+func NewCompetitorHandler(service *service.CompetitorService, userRepo *repository.UserRepository) *CompetitorHandler {
+	return &CompetitorHandler{service: service, userRepo: userRepo}
+}
+
+// requirePro returns false (and has already written an error response) if the
+// requesting user is not on the Pro plan.
+func (h *CompetitorHandler) requirePro(w http.ResponseWriter, r *http.Request) bool {
+	userID := middleware.GetUserID(r.Context())
+	user, err := h.userRepo.GetByID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, model.ErrNotFound) {
+			respondError(w, http.StatusUnauthorized, "user not found")
+		} else {
+			respondError(w, http.StatusInternalServerError, "internal server error")
+		}
+		return false
+	}
+	if !user.IsPro() {
+		respondError(w, http.StatusForbidden, "keyword gap analysis requires Pro plan")
+		return false
+	}
+	return true
 }
 
 func (h *CompetitorHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +127,10 @@ func (h *CompetitorHandler) GetComparison(w http.ResponseWriter, r *http.Request
 // GetKeywordGap returns keywords where a competitor outranks the app.
 // GET /api/apps/{appID}/competitors/keyword-gap
 func (h *CompetitorHandler) GetKeywordGap(w http.ResponseWriter, r *http.Request) {
+	if !h.requirePro(w, r) {
+		return
+	}
+
 	appID := chi.URLParam(r, "appID")
 
 	gaps, err := h.service.GetKeywordGap(r.Context(), appID)
