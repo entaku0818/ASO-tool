@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="lensClip">
+      <circle cx="430" cy="430" r="182"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="48" y="48" width="928" height="928" rx="208" fill="url(#bg)"/>
+  <rect x="48" y="48" width="928" height="928" rx="208" fill="url(#sheen)"/>
+
+  <!-- Magnifying glass handle -->
+  <rect x="586" y="586" width="220" height="72" rx="36" fill="#ffffff"
+        transform="rotate(45 586 622)"/>
+
+  <!-- Ascending bars inside the lens -->
+  <g clip-path="url(#lensClip)">
+    <rect x="330" y="440" width="66" height="120" rx="16" fill="#ffffff"/>
+    <rect x="412" y="380" width="66" height="180" rx="16" fill="#ffffff"/>
+    <rect x="494" y="310" width="66" height="250" rx="16" fill="#ffffff"/>
+  </g>
+
+  <!-- Magnifying glass lens ring (drawn after bars so it frames them cleanly) -->
+  <circle cx="430" cy="430" r="182" fill="none" stroke="#ffffff" stroke-width="52"/>
+</svg>
