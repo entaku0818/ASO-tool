@@ -32,7 +32,7 @@ export function Header() {
   const pathname = usePathname()
   const router = useRouter()
 
-  const publicPages = ['/', '/login', '/popular-keywords', '/buy', '/buy/success']
+  const publicPages = ['/', '/login', '/popular-keywords', '/buy', '/buy/success', '/terms', '/privacy', '/tokushoho']
   const isPublicPage = publicPages.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   useEffect(() => {
