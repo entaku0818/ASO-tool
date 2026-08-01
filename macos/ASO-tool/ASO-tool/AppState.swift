@@ -10,14 +10,39 @@ final class AppState: ObservableObject {
     @Published var email: String = ""
     @Published var licenseKey: String = ""
 
-    private let defaults = UserDefaults.standard
+    private let credentials: CredentialStore
+    private var observers: [NSObjectProtocol] = []
 
-    init() {
-        token = defaults.string(forKey: "jwt_token") ?? ""
-        email = defaults.string(forKey: "user_email") ?? ""
-        licenseKey = defaults.string(forKey: "license_key") ?? ""
+    init(credentials: CredentialStore = .standard) {
+        self.credentials = credentials
+        token = credentials.token
+        email = credentials.email
+        licenseKey = credentials.licenseKey
         isActivated = !token.isEmpty
         requestNotificationPermission()
+        observeTokenRefresh()
+    }
+
+    deinit {
+        observers.forEach { NotificationCenter.default.removeObserver($0) }
+    }
+
+    /// APIClient がトークン失効を検知して自動再アクティベートした結果を反映する。
+    private func observeTokenRefresh() {
+        let center = NotificationCenter.default
+        observers.append(center.addObserver(
+            forName: .asoTokenRefreshed, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let newToken = note.userInfo?["token"] as? String else { return }
+            self?.token = newToken
+            self?.isActivated = true
+        })
+
+        observers.append(center.addObserver(
+            forName: .asoReactivationRequired, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.deactivate()
+        })
     }
 
     private func requestNotificationPermission() {
@@ -41,9 +66,7 @@ final class AppState: ObservableObject {
         self.email = email
         self.licenseKey = key
         self.isActivated = true
-        defaults.set(token, forKey: "jwt_token")
-        defaults.set(email, forKey: "user_email")
-        defaults.set(key, forKey: "license_key")
+        credentials.save(token: token, email: email, licenseKey: key)
     }
 
     func deactivate() {
@@ -51,8 +74,6 @@ final class AppState: ObservableObject {
         email = ""
         licenseKey = ""
         isActivated = false
-        defaults.removeObject(forKey: "jwt_token")
-        defaults.removeObject(forKey: "user_email")
-        defaults.removeObject(forKey: "license_key")
+        credentials.clear()
     }
 }
