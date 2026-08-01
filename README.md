@@ -24,6 +24,37 @@ cd backend && go run cmd/api/main.go
 cd frontend && npm run dev
 ```
 
+## macOS アプリのローカル検証
+
+macOS アプリのビルド／テストは **CI では実行していません**。GitHub Actions の macOS ランナー
+(`macos-latest`) は課金が高いため廃止し、ローカル確認に統一しています
+(CI に残しているのは Linux 上で動く SwiftLint のみ)。macOS アプリは Linux ランナーでは
+ビルドできないため、`macos/` 配下を変更したら **コミット前に必ずローカルで以下を実行**してください。
+
+```bash
+cd macos/ASO-tool
+
+# ビルド
+xcodebuild build \
+  -project ASO-tool.xcodeproj \
+  -scheme ASO-tool \
+  -destination 'platform=macOS' \
+  CODE_SIGNING_ALLOWED=NO
+
+# テスト
+xcodebuild test \
+  -project ASO-tool.xcodeproj \
+  -scheme ASO-tool \
+  -destination 'platform=macOS' \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+SwiftLint もローカルで確認できます (CI と同じチェック)。
+
+```bash
+cd macos && swiftlint lint
+```
+
 ## ディレクトリ構成
 
 ```

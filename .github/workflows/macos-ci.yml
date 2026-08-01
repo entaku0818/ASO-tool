@@ -20,30 +20,5 @@ jobs:
         working-directory: macos
         run: swiftlint lint --reporter github-actions-logging
 
-  build:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build
-        working-directory: macos/ASO-tool
-        run: |
-          xcodebuild build \
-            -project ASO-tool.xcodeproj \
-            -scheme ASO-tool \
-            -destination 'platform=macOS' \
-            CODE_SIGNING_ALLOWED=NO
-
-  test:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Test
-        working-directory: macos/ASO-tool
-        run: |
-          xcodebuild test \
-            -project ASO-tool.xcodeproj \
-            -scheme ASO-tool \
-            -destination 'platform=macOS' \
-            CODE_SIGNING_ALLOWED=NO
+# NOTE: xcodebuild build / test は macOS ランナー (macos-latest) の課金が高いため CI から廃止。
+# コミット前にローカルで実行すること。手順は README.md「macOS アプリのローカル検証」を参照。
