@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/entaku0818/aso-tool/backend/internal/model"
@@ -224,53 +225,75 @@ type KeywordRankSummary struct {
 	Change       *int   `json:"change"`
 }
 
-// GetAllKeywordRanks returns current and previous ranks for all keywords of an app.
-func (r *RankingRepository) GetAllKeywordRanks(ctx context.Context, appID string) ([]KeywordRankSummary, error) {
-	rows, err := r.pool.Query(ctx, `
-		WITH
-		cur AS (
-			SELECT DISTINCT ON (k.id)
-				k.id AS keyword_id, k.keyword, k.country, rh.rank AS current_rank
-			FROM keywords k
-			LEFT JOIN ranking_history rh ON k.id = rh.keyword_id
-			WHERE k.app_id = $1
-			ORDER BY k.id, rh.recorded_at DESC NULLS LAST
-		),
-		prev AS (
-			SELECT DISTINCT ON (k.id)
-				k.id AS keyword_id, rh.rank AS previous_rank
-			FROM keywords k
-			JOIN ranking_history rh ON k.id = rh.keyword_id
-			WHERE k.app_id = $1
-			ORDER BY k.id, rh.recorded_at DESC
-			OFFSET 0
-		),
-		prev2 AS (
-			SELECT kp.keyword_id, kp.previous_rank
-			FROM (
-				SELECT k.id AS keyword_id, rh.rank AS previous_rank,
-					ROW_NUMBER() OVER (PARTITION BY k.id ORDER BY rh.recorded_at DESC) AS rn
-				FROM keywords k
-				JOIN ranking_history rh ON k.id = rh.keyword_id
-				WHERE k.app_id = $1
-			) kp
-			WHERE kp.rn = 2
-		)
-		SELECT c.keyword_id, c.keyword, c.country, c.current_rank, p.previous_rank
-		FROM cur c
-		LEFT JOIN prev2 p ON c.keyword_id = p.keyword_id
-		ORDER BY c.keyword
-	`, appID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// rankHistoryWindowDays is how far back GetAllKeywordRanks looks for a previous day.
+const rankHistoryWindowDays = 30
 
-	var result []KeywordRankSummary
-	for rows.Next() {
-		var s KeywordRankSummary
-		if err := rows.Scan(&s.KeywordID, &s.Keyword, &s.Country, &s.CurrentRank, &s.PreviousRank); err != nil {
-			return nil, err
+// jst is the timezone the daily batch is scheduled in. Using a fixed offset rather than
+// time.LoadLocation avoids depending on tzdata being present in the container image.
+var jst = time.FixedZone("JST", 9*60*60)
+
+// keywordRankRow is a single ranking_history row joined onto its keyword.
+// Rank and RecordedAt are nil when the keyword has no history at all.
+type keywordRankRow struct {
+	KeywordID  string
+	Keyword    string
+	Country    string
+	Rank       *int
+	RecordedAt *time.Time
+}
+
+// summarizeKeywordRanks reduces raw ranking history to one summary per keyword.
+//
+// The rank change must be measured against the previous *day*, not the previous row:
+// rankings are also scraped on demand (the macOS app refreshes on open), so a keyword
+// can have several rows on the same JST date. Each JST date is therefore collapsed to a
+// single point — the latest scrape of that day, which is what the UI shows as "today's
+// rank" — and the comparison is made against the most recent earlier date.
+//
+// Keywords are returned in the order they first appear in rows.
+func summarizeKeywordRanks(rows []keywordRankRow) []KeywordRankSummary {
+	type perDay struct {
+		rank *int
+		at   time.Time
+	}
+
+	order := []string{}
+	meta := map[string]keywordRankRow{}
+	days := map[string]map[string]perDay{} // keywordID -> JST date -> latest point of that day
+
+	for _, row := range rows {
+		if _, seen := meta[row.KeywordID]; !seen {
+			order = append(order, row.KeywordID)
+			meta[row.KeywordID] = row
+			days[row.KeywordID] = map[string]perDay{}
+		}
+		if row.RecordedAt == nil {
+			continue
+		}
+		at := row.RecordedAt.In(jst)
+		key := at.Format("2006-01-02")
+		// Keep the latest scrape of each day.
+		if prev, ok := days[row.KeywordID][key]; !ok || at.After(prev.at) {
+			days[row.KeywordID][key] = perDay{rank: row.Rank, at: at}
+		}
+	}
+
+	result := make([]KeywordRankSummary, 0, len(order))
+	for _, id := range order {
+		m := meta[id]
+		s := KeywordRankSummary{KeywordID: id, Keyword: m.Keyword, Country: m.Country}
+
+		dates := make([]string, 0, len(days[id]))
+		for d := range days[id] {
+			dates = append(dates, d)
+		}
+		sort.Sort(sort.Reverse(sort.StringSlice(dates))) // ISO dates sort lexicographically
+
+		if len(dates) > 0 {
+			s.CurrentRank = days[id][dates[0]].rank
+		}
+		if len(dates) > 1 {
+			s.PreviousRank = days[id][dates[1]].rank
 		}
 		if s.CurrentRank != nil && s.PreviousRank != nil {
 			change := *s.PreviousRank - *s.CurrentRank // positive = improved
@@ -278,5 +301,38 @@ func (r *RankingRepository) GetAllKeywordRanks(ctx context.Context, appID string
 		}
 		result = append(result, s)
 	}
-	return result, nil
+	return result
+}
+
+// GetAllKeywordRanks returns each keyword's latest rank and its change against the
+// previous JST day. See summarizeKeywordRanks for why the comparison is day-based.
+func (r *RankingRepository) GetAllKeywordRanks(ctx context.Context, appID string) ([]KeywordRankSummary, error) {
+	since := time.Now().AddDate(0, 0, -rankHistoryWindowDays)
+	rows, err := r.pool.Query(ctx, `
+		SELECT k.id, k.keyword, k.country, rh.rank, rh.recorded_at
+		FROM keywords k
+		LEFT JOIN ranking_history rh
+			ON k.id = rh.keyword_id
+			AND rh.recorded_at >= $2
+		WHERE k.app_id = $1
+		ORDER BY k.keyword, k.id, rh.recorded_at
+	`, appID, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var raw []keywordRankRow
+	for rows.Next() {
+		var row keywordRankRow
+		if err := rows.Scan(&row.KeywordID, &row.Keyword, &row.Country, &row.Rank, &row.RecordedAt); err != nil {
+			return nil, err
+		}
+		raw = append(raw, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return summarizeKeywordRanks(raw), nil
 }
