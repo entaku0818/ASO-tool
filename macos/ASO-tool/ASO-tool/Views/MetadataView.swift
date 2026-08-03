@@ -51,6 +51,8 @@ struct MetadataView: View {
                 Divider()
                 if versions.isEmpty {
                     Text("なし").foregroundStyle(.secondary).padding()
+                    // 中身が短いと VStack が縦中央寄せになるため、下方向に余白を押し出して上寄せにする
+                    Spacer(minLength: 0)
                 } else {
                     List(versions, id: \.id) { v in
                         VStack(alignment: .leading, spacing: 3) {
