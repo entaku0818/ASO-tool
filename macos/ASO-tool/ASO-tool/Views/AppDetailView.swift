@@ -12,7 +12,6 @@ struct AppDetailView: View {
         case rising   = "急上昇"
         case gap      = "競合ギャップ"
         case metadata = "メタデータ"
-        case advice   = "アドバイス"
     }
 
     @State private var selectedTab: Tab = .keywords
@@ -166,7 +165,6 @@ struct AppDetailView: View {
             case .rising:   risingPane
             case .gap:      KeywordGapView(app: app).environmentObject(appState)
             case .metadata: MetadataView(app: app).environmentObject(appState)
-            case .advice:   ASOAdviceView(app: app, token: appState.token ?? "")
             }
         }
         .background(colorScheme == .dark ? Aurora.windowBg : Color(nsColor: .windowBackgroundColor))

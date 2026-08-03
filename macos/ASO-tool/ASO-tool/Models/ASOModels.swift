@@ -244,20 +244,3 @@ struct UpsertMetadataRequest: Codable {
         case promotionalText = "promotional_text"
     }
 }
-
-// MARK: - ASO Advice
-
-struct ASOAdvice: Codable, Identifiable {
-    let priority: String
-    let category: String
-    let title: String
-    let description: String
-    let action: String
-
-    var id: String { "\(priority)-\(title)" }
-}
-
-struct ASOAdviceResponse: Codable {
-    let summary: String
-    let advice: [ASOAdvice]
-}

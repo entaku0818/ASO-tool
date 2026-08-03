@@ -163,12 +163,6 @@ final class APIClient {
         try await post("/api/apps/\(appID)/competitors/update-rankings", body: EmptyBody(), token: token)
     }
 
-    // MARK: - ASO Advice
-
-    func getASOAdvice(token: String, appID: String) async throws -> ASOAdviceResponse {
-        try await get("/api/apps/\(appID)/aso-advice", token: token)
-    }
-
     // MARK: - Metadata
 
     func getMetadata(token: String, appID: String) async throws -> [AppMetadataVersion] {
