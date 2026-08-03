@@ -103,24 +103,10 @@ private struct AppDashboardCard: View {
     let colorScheme: ColorScheme
     let onOpen: () -> Void
 
-    private let appColors: [(Color, Color)] = [
-        (Color(hex: "5B8FEF"), .white), (Color(hex: "E8624A"), .white),
-        (Color(hex: "48C78E"), .white), (Color(hex: "A78BFA"), .white),
-        (Color(hex: "F59E0B"), .white), (Color(hex: "06B6D4"), .white),
-    ]
-
-    private var iconColor: (Color, Color) {
-        appColors[abs(app.id.hashValue) % appColors.count]
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                let (bg, fg) = iconColor
-                ZStack {
-                    RoundedRectangle(cornerRadius: 9).fill(bg).frame(width: 36, height: 36)
-                    Text(String(app.name.prefix(1))).font(.system(size: 17, weight: .bold)).foregroundStyle(fg)
-                }
+                AppIconView(app: app, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(app.name)
                         .font(.system(size: 13, weight: .semibold))

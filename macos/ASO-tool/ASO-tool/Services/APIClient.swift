@@ -57,6 +57,12 @@ final class APIClient {
         return try await get("/api/scraper/search?keyword=\(q)&platform=\(platform)&country=\(country)&limit=\(limit)", token: token)
     }
 
+    /// App Store 上のアプリ情報を取得する。アイコンURL (`iconURL`) の取得元。
+    func fetchAppInfo(token: String, bundleID: String, platform: String, country: String = "jp") async throws -> AppStoreAppInfo {
+        let b = bundleID.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? bundleID
+        return try await get("/api/scraper/app-info?bundle_id=\(b)&platform=\(platform)&country=\(country)", token: token)
+    }
+
     func createApp(token: String, name: String, bundleID: String, platform: String, storeURL: String?) async throws -> ASOApp {
         struct Body: Encodable {
             let name: String

@@ -186,19 +186,6 @@ struct AppSidebarRow: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var isHovered = false
 
-    private var appColors: [(Color, Color)] {
-        [
-            (Color(hex: "5B8FEF"), .white), (Color(hex: "E8624A"), .white),
-            (Color(hex: "48C78E"), .white), (Color(hex: "A78BFA"), .white),
-            (Color(hex: "F59E0B"), .white), (Color(hex: "06B6D4"), .white),
-        ]
-    }
-
-    private func iconColor(for id: String) -> (Color, Color) {
-        let idx = abs(id.hashValue) % appColors.count
-        return appColors[idx]
-    }
-
     var body: some View {
         HStack(spacing: 10) {
             // Left accent bar for selected dark mode
@@ -209,15 +196,7 @@ struct AppSidebarRow: View {
             }
 
             // App icon
-            let (bgColor, fgColor) = iconColor(for: app.id)
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(bgColor)
-                    .frame(width: 32, height: 32)
-                Text(String(app.name.prefix(1)))
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(fgColor)
-            }
+            AppIconView(app: app, size: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.name)

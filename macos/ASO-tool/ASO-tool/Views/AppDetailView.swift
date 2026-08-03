@@ -71,14 +71,7 @@ struct AppDetailView: View {
         VStack(spacing: 0) {
             // App header bar
             HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 9)
-                        .fill(Color(hex: "5B8FEF"))
-                        .frame(width: 36, height: 36)
-                    Text(String(app.name.prefix(1)))
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(.white)
-                }
+                AppIconView(app: app, size: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(app.name)
                         .font(.system(size: 15, weight: .semibold))
