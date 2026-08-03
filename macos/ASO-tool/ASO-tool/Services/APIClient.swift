@@ -106,9 +106,13 @@ final class APIClient {
         try await get("/api/apps/\(appID)/keywords/\(keywordID)/rankings?limit=\(limit)", token: token)
     }
 
-    func scrapeRankings(token: String, appID: String) async throws {
-        struct Res: Decodable { let updated: Int }
-        let _: Res = try await post("/api/apps/\(appID)/scrape/rankings", body: EmptyBody(), token: token)
+    /// 順位の再スクレイプを実行し、更新されたキーワード数を返す。
+    @discardableResult
+    func scrapeRankings(token: String, appID: String) async throws -> Int {
+        let res: ScrapeRankingsResponse = try await post(
+            "/api/apps/\(appID)/scrape/rankings", body: EmptyBody(), token: token
+        )
+        return res.keywordsUpdated
     }
 
     func getKeywordRanks(token: String, appID: String) async throws -> [KeywordRankSummary] {

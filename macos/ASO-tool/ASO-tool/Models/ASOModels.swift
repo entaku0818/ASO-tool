@@ -187,8 +187,21 @@ struct KeywordGap: Codable, Identifiable {
     }
 }
 
+/// POST /api/apps/{appID}/competitors/update-rankings のレスポンス
 struct UpdateRankingsResponse: Codable {
     let updated: Int
+}
+
+/// POST /api/apps/{appID}/scrape/rankings のレスポンス。
+/// 競合側の update-rankings とはキー名が違う (`keywords_updated`) ので別型にしている。
+struct ScrapeRankingsResponse: Codable {
+    let message: String
+    let keywordsUpdated: Int
+
+    enum CodingKeys: String, CodingKey {
+        case message
+        case keywordsUpdated = "keywords_updated"
+    }
 }
 
 // MARK: - Metadata
