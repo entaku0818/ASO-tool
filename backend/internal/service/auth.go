@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"os"
 	"time"
 
@@ -19,6 +20,12 @@ type AuthService struct {
 func NewAuthService(userRepo *repository.UserRepository) *AuthService {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
+		// このフォールバック値は公開リポジトリに含まれるため、本番で使うと
+		// 誰でも任意のJWT(is_admin含む)を偽造できてしまう。
+		if isRunningOnCloudRun() {
+			log.Fatal("fatal: JWT_SECRET is not set in production — refusing to start with the public default signing key")
+		}
+		log.Println("warn: JWT_SECRET is not set — using the public default signing key (local development only)")
 		secret = "default-secret-change-in-production"
 	}
 	return &AuthService{
