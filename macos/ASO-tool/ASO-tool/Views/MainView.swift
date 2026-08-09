@@ -12,7 +12,11 @@ struct MainView: View {
             AppListView(selectedApp: $selectedApp)
         } detail: {
             if let app = selectedApp {
+                // アプリを切り替えたらビューを作り直す。
+                // これがないと SwiftUI が同一ビューを再利用し、keywords などの
+                // @State と .task が前のアプリのまま残る。
                 AppDetailView(app: app)
+                    .id(app.id)
             } else {
                 DashboardView(selectedApp: $selectedApp)
                     .environmentObject(appState)
