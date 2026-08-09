@@ -54,7 +54,7 @@ export function Header() {
     return (
       <header className="bg-white dark:bg-[#12161e] shadow-sm border-b dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <span className="text-xl font-bold text-gray-900 dark:text-gray-100">ASO Tool</span>
+          <span className="text-xl font-bold text-gray-900 dark:text-gray-100">ASO Compass</span>
           <div className="text-gray-400 dark:text-gray-500">Loading...</div>
         </div>
       </header>
@@ -66,7 +66,7 @@ export function Header() {
       <header className="bg-white dark:bg-[#12161e] shadow-sm border-b dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-white">
-            ASO Tool
+            ASO Compass
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/popular-keywords" className="hidden sm:block text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
@@ -114,7 +114,7 @@ export function Header() {
     <header className="bg-white dark:bg-[#12161e] shadow-sm border-b dark:border-white/10">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-white">
-          ASO Tool
+          ASO Compass
         </Link>
         <nav className="flex items-center gap-4">
           <Link href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">

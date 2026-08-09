@@ -12,5 +12,11 @@
 	<array>
 		<string>com.apple.usernotifications.usernotificationservice</string>
 	</array>
+	<!-- 旧 Bundle ID (com.entaku.ASO-tool) のコンテナから認証情報を引き継ぐため。
+	     移行期間限定。CredentialStore.migrateLegacyCredentialsIfNeeded と一緒に削除すること。 -->
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+	<array>
+		<string>/Library/Containers/com.entaku.ASO-tool/</string>
+	</array>
 </dict>
 </plist>

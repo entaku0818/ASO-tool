@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
-	"github.com/entaku0818/aso-tool/backend/internal/service"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/service"
 )
 
 type TemplateHandler struct {

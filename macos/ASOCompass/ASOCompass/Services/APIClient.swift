@@ -3,7 +3,7 @@
 import Foundation
 import os.log
 
-private let logger = Logger(subsystem: "com.entaku.ASO-tool", category: "APIClient")
+private let logger = Logger(subsystem: "com.entaku.ASOCompass", category: "APIClient")
 
 enum APIClientError: LocalizedError {
     case invalidURL

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/entaku0818/aso-tool/backend/internal/repository"
-	"github.com/entaku0818/aso-tool/backend/internal/scraper"
+	"github.com/entaku0818/aso-compass/backend/internal/repository"
+	"github.com/entaku0818/aso-compass/backend/internal/scraper"
 )
 
 type cachedRanking struct {

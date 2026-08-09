@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
-	"github.com/entaku0818/aso-tool/backend/internal/plan"
-	"github.com/entaku0818/aso-tool/backend/internal/repository"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/plan"
+	"github.com/entaku0818/aso-compass/backend/internal/repository"
 )
 
 type AppService struct {

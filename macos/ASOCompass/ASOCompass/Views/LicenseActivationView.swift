@@ -15,7 +15,7 @@ struct LicenseActivationView: View {
                 Image(systemName: "chart.bar.xaxis")
                     .font(.system(size: 56))
                     .foregroundStyle(Color.accentColor)
-                Text("ASO Tool")
+                Text("ASO Compass")
                     .font(.largeTitle.bold())
                 Text("ライセンスキーを入力してアクティベートしてください")
                     .font(.subheadline)

@@ -41,7 +41,7 @@ export default function BuyPage() {
         {/* Hero */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            ASO-tool macOS版
+            ASO Compass macOS版
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
             App Storeキーワード最適化をデスクトップから

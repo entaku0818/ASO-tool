@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

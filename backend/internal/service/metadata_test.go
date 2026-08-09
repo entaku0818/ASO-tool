@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
 )
 
 // TestMetadataUpsertValidation tests that Validate() is called by service.Upsert.

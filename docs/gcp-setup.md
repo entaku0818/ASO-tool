@@ -1,6 +1,6 @@
 # GCP Setup Guide
 
-ASO-tool を GCP にデプロイするためのセットアップガイドです。
+ASO Compass を GCP にデプロイするためのセットアップガイドです。
 
 ## 前提条件
 
@@ -40,7 +40,7 @@ gcloud services enable \
 gcloud artifacts repositories create aso-tool \
   --repository-format=docker \
   --location=asia-northeast1 \
-  --description="ASO Tool Docker images"
+  --description="ASO Compass Docker images"
 ```
 
 ## 4. Cloud SQL (PostgreSQL) のセットアップ

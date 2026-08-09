@@ -8,7 +8,7 @@ function buildShareTexts(kw: RisingKeyword): string[] {
   const { keyword, current_rank, previous_rank, improvement } = kw
   return [
     // パターン1（デフォルト）
-    `ASO Tool でキーワード「${keyword}」が #${previous_rank} → #${current_rank} に上昇しました 🎉\n+${improvement}位アップ！ App Store 最適化の成果が出ています 📈\n\n#ASO #AppStoreOptimization #アプリ開発`,
+    `ASO Compass でキーワード「${keyword}」が #${previous_rank} → #${current_rank} に上昇しました 🎉\n+${improvement}位アップ！ App Store 最適化の成果が出ています 📈\n\n#ASO #AppStoreOptimization #アプリ開発`,
     // パターン2
     `「${keyword}」が急上昇！ #${current_rank}位 を達成しました 🚀\n地道な ASO 施策が実を結びました✨\n\n#AppStoreOptimization #iOS #アプリ開発`,
     // パターン3
@@ -41,7 +41,7 @@ function ShareCardPreview({ kw, text }: { kw: RisingKeyword; text: string }) {
           <span className="text-green-300 font-semibold text-base mb-1">+{kw.improvement}位 ↑</span>
         </div>
         <hr className="border-white/30 mt-3 mb-2" />
-        <p className="text-white/50 text-xs">App Store Optimization · powered by ASO Tool</p>
+        <p className="text-white/50 text-xs">App Store Optimization · powered by ASO Compass</p>
       </div>
     </div>
   )

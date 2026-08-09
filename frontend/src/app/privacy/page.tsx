@@ -17,7 +17,7 @@ export default function PrivacyPage() {
 
         <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-6">
           <p>
-            ASO Tool（以下「当サービス」といいます）の運営者（以下「当社」といいます）は、
+            ASO Compass（以下「当サービス」といいます）の運営者（以下「当社」といいます）は、
             ユーザーの個人情報の重要性を認識し、その保護の徹底を図るため、本プライバシーポリシー
             （以下「本ポリシー」といいます）を定めます。
           </p>

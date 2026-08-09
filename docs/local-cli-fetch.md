@@ -1,6 +1,6 @@
 # ローカルCLIからASO順位を取得する手順
 
-ローカル（macOS）のシェルスクリプトやセッション開始フックから、ASO-tool のバックエンドAPI経由で
+ローカル（macOS）のシェルスクリプトやセッション開始フックから、ASO Compass のバックエンドAPI経由で
 自分のアプリのキーワード順位を取得するための手順書。**DBは直接叩かず、公開APIのみを使う。**
 
 実測日: 2026-08-02（すべて本番APIに対して実際にcurlを叩いて確認済み）
@@ -89,7 +89,7 @@ Content-Type: application/json
 ### 2.3 401 を受けたときの再アクティベート手順
 
 トークンをキャッシュする実装にする場合は、macOSアプリと同じ挙動にする
-（`macos/ASO-tool/ASO-tool/Services/APIClient.swift`）:
+（`macos/ASOCompass/ASO Compass/Services/APIClient.swift`）:
 
 1. 任意のAPI呼び出しが `401` を返す
 2. **保存済みのライセンスキー＋メールで `POST /api/licenses/activate` をやり直す**
@@ -284,7 +284,7 @@ VAULT=~/.claude/skills/credential-vault/scripts/credential.sh
 | 項目 | 値 |
 |---|---|
 | **service名** | `aso-tool-license` |
-| **account名** | ASO-tool に登録したメールアドレス（＝`activate` の `email`） |
+| **account名** | ASO Compass に登録したメールアドレス（＝`activate` の `email`） |
 | **password（値）** | ライセンスキー（`ASOT-` で始まる文字列） |
 
 取り出し方:
@@ -294,18 +294,18 @@ EMAIL=$($VAULT account aso-tool-license)   # → メールアドレス
 KEY=$($VAULT get aso-tool-license)         # → ライセンスキー
 ```
 
-**値の取得元**: macOSアプリ ASO-tool が保存している UserDefaults。
+**値の取得元**: macOSアプリ ASO Compass が保存している UserDefaults。
 
 ```bash
-defaults read com.entaku.ASO-tool user_email    # メールアドレス
-defaults read com.entaku.ASO-tool license_key   # ライセンスキー
+defaults read com.entaku.ASOCompass user_email    # メールアドレス
+defaults read com.entaku.ASOCompass license_key   # ライセンスキー
 ```
 
 （未登録の場合の登録コマンド。値は標準入力で渡し、シェル履歴に残さない）
 
 ```bash
-defaults read com.entaku.ASO-tool license_key \
-  | $VAULT set aso-tool-license "$(defaults read com.entaku.ASO-tool user_email)"
+defaults read com.entaku.ASOCompass license_key \
+  | $VAULT set aso-tool-license "$(defaults read com.entaku.ASOCompass user_email)"
 ```
 
 ---

@@ -119,7 +119,7 @@
 │                                                                 │
 │  ─────────────────────────────────────                          │
 │                                                                 │
-│  App Store Optimization · powered by ASO Tool  ← 16px white/40%│
+│  App Store Optimization · powered by ASO Compass  ← 16px white/40%│
 │                                                 右下配置         │
 └─────────────────────────────────────────────────────────────────┘
 

@@ -1,7 +1,7 @@
 included:
-  - ASO-tool
+  - ASOCompass
 
-# Xcode が生成する ASO_toolApp 等のアンダースコア付き型名を許可
+# Xcode が生成する ASOCompassApp 等のアンダースコア付き型名を許可
 type_name:
   allowed_symbols: ["_"]
 

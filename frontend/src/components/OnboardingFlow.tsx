@@ -221,7 +221,7 @@ export function OnboardingFlow({ userCreatedAt, appsCount, onComplete, onDismiss
           {step === 1 && (
             <div className="text-center">
               <div className="text-5xl mb-4">🎯</div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">ASO Tool へようこそ！</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">ASO Compass へようこそ！</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 あなたのアプリのキーワード順位を自動で追跡・分析します。
                 3ステップでセットアップが完了します。

@@ -4,7 +4,7 @@ import { Providers } from '@/components/Providers'
 import { Header } from '@/components/Header'
 
 export const metadata: Metadata = {
-  title: 'ASO Tool',
+  title: 'ASO Compass',
   description: 'App Store Optimization Tool',
 }
 

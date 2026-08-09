@@ -1,4 +1,4 @@
-# ASO-tool
+# ASO Compass
 
 App Store Optimization ツール - キーワードランキング追跡、レビュー監視、競合分析
 
@@ -32,19 +32,19 @@ macOS アプリのビルド／テストは **CI では実行していません**
 ビルドできないため、`macos/` 配下を変更したら **コミット前に必ずローカルで以下を実行**してください。
 
 ```bash
-cd macos/ASO-tool
+cd macos/ASOCompass
 
 # ビルド
 xcodebuild build \
-  -project ASO-tool.xcodeproj \
-  -scheme ASO-tool \
+  -project ASOCompass.xcodeproj \
+  -scheme ASOCompass \
   -destination 'platform=macOS' \
   CODE_SIGNING_ALLOWED=NO
 
 # テスト
 xcodebuild test \
-  -project ASO-tool.xcodeproj \
-  -scheme ASO-tool \
+  -project ASOCompass.xcodeproj \
+  -scheme ASOCompass \
   -destination 'platform=macOS' \
   CODE_SIGNING_ALLOWED=NO
 ```

@@ -1,6 +1,6 @@
-# ASO-tool MCP サーバ
+# ASO Compass MCP サーバ
 
-Claude Code / Claude Desktop などの MCP クライアントから、ASO-tool のデータを直接読めるようにする
+Claude Code / Claude Desktop などの MCP クライアントから、ASO Compass のデータを直接読めるようにする
 stdio ベースの MCP サーバ。
 
 **設計方針**: バックエンドが LLM を呼んで「AIアドバイス」を生成するのをやめ、代わりに**データを
@@ -139,6 +139,6 @@ cd backend && go test ./cmd/mcp/...
 MCP 経由で AI クライアントに分析させるほうが柔軟なため置き換えた。
 
 - 削除: `backend/internal/service/aso_advice.go`, `backend/internal/handler/aso_advice.go`,
-  `macos/ASO-tool/ASO-tool/Views/ASOAdviceView.swift`、および各所の導線
+  `macos/ASOCompass/ASO Compass/Views/ASOAdviceView.swift`、および各所の導線
 - `ANTHROPIC_API_KEY` は**キャプション生成**（`POST /api/apps/{appID}/captions/generate`）が
   まだ使っているので、環境変数自体は残す必要がある

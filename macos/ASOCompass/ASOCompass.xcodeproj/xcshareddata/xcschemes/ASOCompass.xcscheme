@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "610EBD6B2FB5E8A500454BB8"
-               BuildableName = "ASO-tool.app"
-               BlueprintName = "ASO-tool"
-               ReferencedContainer = "container:ASO-tool.xcodeproj">
+               BuildableName = "ASOCompass.app"
+               BlueprintName = "ASOCompass"
+               ReferencedContainer = "container:ASOCompass.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -34,9 +34,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "610EBD7A2FB5E8A600454BB8"
-               BuildableName = "ASO-toolTests.xctest"
-               BlueprintName = "ASO-toolTests"
-               ReferencedContainer = "container:ASO-tool.xcodeproj">
+               BuildableName = "ASOCompassTests.xctest"
+               BlueprintName = "ASOCompassTests"
+               ReferencedContainer = "container:ASOCompass.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -56,9 +56,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "610EBD6B2FB5E8A500454BB8"
-            BuildableName = "ASO-tool.app"
-            BlueprintName = "ASO-tool"
-            ReferencedContainer = "container:ASO-tool.xcodeproj">
+            BuildableName = "ASOCompass.app"
+            BlueprintName = "ASOCompass"
+            ReferencedContainer = "container:ASOCompass.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -73,9 +73,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "610EBD6B2FB5E8A500454BB8"
-            BuildableName = "ASO-tool.app"
-            BlueprintName = "ASO-tool"
-            ReferencedContainer = "container:ASO-tool.xcodeproj">
+            BuildableName = "ASOCompass.app"
+            BlueprintName = "ASOCompass"
+            ReferencedContainer = "container:ASOCompass.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

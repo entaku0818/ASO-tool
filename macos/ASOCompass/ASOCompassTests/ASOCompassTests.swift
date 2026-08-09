@@ -1,8 +1,8 @@
-//  ASO_toolTests.swift
+//  ASOCompassTests.swift
 
 import Testing
 import Foundation
-@testable import ASO_tool
+@testable import ASOCompass
 
 // MARK: - AppState Tests
 

@@ -223,7 +223,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100 mb-4">
             こんな悩み、ありませんか？
           </h2>
-          <p className="text-center text-gray-500 dark:text-gray-400 mb-12">ASO-tool はこれらをまとめて解決します</p>
+          <p className="text-center text-gray-500 dark:text-gray-400 mb-12">ASO Compass はこれらをまとめて解決します</p>
           <div className="space-y-4">
             {PAIN_POINTS.map(({ problem, solution }) => (
               <div key={problem} className="bg-white dark:bg-[#12161e] rounded-xl p-6 shadow-sm dark:shadow-black/20 border border-gray-100 dark:border-gray-800 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -384,7 +384,7 @@ export default function HomePage() {
       {/* ── Footer ── */}
       <footer className="bg-slate-900 text-slate-400 py-10 px-4">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-          <span className="font-semibold text-white">ASO Tool</span>
+          <span className="font-semibold text-white">ASO Compass</span>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
             <Link href="/popular-keywords" className="hover:text-white transition-colors">人気キーワード</Link>
             <Link href="/buy" className="hover:text-white transition-colors">購入</Link>
@@ -393,7 +393,7 @@ export default function HomePage() {
             <Link href="/privacy" className="hover:text-white transition-colors">プライバシーポリシー</Link>
             <Link href="/tokushoho" className="hover:text-white transition-colors">特定商取引法に基づく表記</Link>
           </div>
-          <span>© 2026 ASO Tool</span>
+          <span>© 2026 ASO Compass</span>
         </div>
       </footer>
     </div>

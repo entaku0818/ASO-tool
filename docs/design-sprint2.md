@@ -184,7 +184,7 @@ Free ユーザーが全言語生成を試みた場合 → UpgradeModal を `trig
 │  │  ░   「パズルゲーム」                            ░  │  │
 │  │  ░    #47  →  #3  ( +44位 ↑ )                  ░  │  │
 │  │  ░                                              ░  │  │
-│  │  ░   App Store Optimization · ASO Tool          ░  │  │
+│  │  ░   App Store Optimization · ASO Compass          ░  │  │
 │  │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  │  │
 │  └───────────────────────────────────────────────────┘  │
 │                                                         │
@@ -217,7 +217,7 @@ Free ユーザーが全言語生成を試みた場合 → UpgradeModal を `trig
   │  ─────────────────────────────  │
   │                                 │
   │  App Store Optimization         │  ← 12px, white/50%
-  │  powered by ASO Tool            │
+  │  powered by ASO Compass            │
   └─────────────────────────────────┘
 
 数字スタイル:
@@ -229,7 +229,7 @@ Free ユーザーが全言語生成を試みた場合 → UpgradeModal を `trig
 
 #### シェアテキスト（X / Twitter 用）
 ```
-ASO Tool でキーワード「パズルゲーム」が #47 → #3 に上昇しました 🎉
+ASO Compass でキーワード「パズルゲーム」が #47 → #3 に上昇しました 🎉
 +44位アップ！ App Store 最適化の成果が出ています 📈
 
 #ASO #AppStoreOptimization #アプリ開発

@@ -1,4 +1,4 @@
-# ASO Tool — Redesign
+# ASO Compass — Redesign
 
 macOS ネイティブアプリ + Web 版の UI リデザイン提案（2案比較）。
 Astro（tryastro.app）の美学を基調にした、A. Aurora（ダーク）/ B. Daylight（ライト）の2方向。
@@ -47,6 +47,6 @@ src/
 
 ## 既存リポジトリとの関係
 
-参照元: [entaku0818/ASO-tool](https://github.com/entaku0818/ASO-tool)
-- macOS 版は `macos/ASO-tool/ASO-tool/Views/*.swift` の構造をベースに再設計
+参照元: [entaku0818/ASOCompass](https://github.com/entaku0818/ASOCompass)
+- macOS 版は `macos/ASOCompass/ASO Compass/Views/*.swift` の構造をベースに再設計
 - Web 版は `frontend/src/app/apps/[id]/page.tsx` の構造を踏襲

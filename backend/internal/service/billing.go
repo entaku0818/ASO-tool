@@ -8,8 +8,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
-	"github.com/entaku0818/aso-tool/backend/internal/repository"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/repository"
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/checkout/session"
 	"github.com/stripe/stripe-go/v76/customer"

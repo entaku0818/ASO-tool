@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
 )
 
 const defaultMyMemoryURL = "https://api.mymemory.translated.net/get"

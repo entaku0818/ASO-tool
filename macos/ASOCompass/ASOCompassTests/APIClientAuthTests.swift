@@ -3,7 +3,7 @@
 
 import Testing
 import Foundation
-@testable import ASO_tool
+@testable import ASOCompass
 
 // MARK: - URLProtocol スタブ
 

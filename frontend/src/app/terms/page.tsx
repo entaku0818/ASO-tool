@@ -17,7 +17,7 @@ export default function TermsPage() {
 
         <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-6">
           <p>
-            本利用規約（以下「本規約」といいます）は、ASO Tool（以下「当サービス」といいます）の
+            本利用規約（以下「本規約」といいます）は、ASO Compass（以下「当サービス」といいます）の
             提供条件および当サービスの利用に関する当サービス運営者（以下「当社」といいます）と
             登録ユーザー（以下「ユーザー」といいます）との間の権利義務関係を定めるものです。
           </p>

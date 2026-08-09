@@ -1,4 +1,4 @@
-# ASO Tool — システム構成
+# ASO Compass — システム構成
 
 ## 全体像
 

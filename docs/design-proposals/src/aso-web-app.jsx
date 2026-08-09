@@ -1,4 +1,4 @@
-// AsoWebApp — web (browser) variant of the ASO Tool redesign.
+// AsoWebApp — web (browser) variant of the ASO Compass redesign.
 // Reuses the panes (KeywordsPane/GapPane/MetadataPane) from aso-app.jsx;
 // replaces macOS chrome+sidebar with web-native top nav + app switcher.
 

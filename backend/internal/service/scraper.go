@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
-	"github.com/entaku0818/aso-tool/backend/internal/repository"
-	"github.com/entaku0818/aso-tool/backend/internal/scraper"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/repository"
+	"github.com/entaku0818/aso-compass/backend/internal/scraper"
 )
 
 type ScraperService struct {

@@ -36,7 +36,7 @@ country : 国コード JP/US 等（任意、デフォルト JP）
 
 ┌─────────────────────────────────────┐  ← min-h-screen
 │                                     │
-│         ASO Tool                    │  ← ロゴ (上部, py-6)
+│         ASO Compass                    │  ← ロゴ (上部, py-6)
 │                                     │
 │  ┌─────────────────────────────┐   │
 │  │  [シェアカードビジュアル]    │   │  ← ①カードビジュアル
@@ -52,7 +52,7 @@ country : 国コード JP/US 等（任意、デフォルト JP）
 │                                     │
 │  ─────────────────────────────     │  ← divider
 │                                     │
-│  ASO Tool で同じ成果を              │  ← ④バリュープロポジション
+│  ASO Compass で同じ成果を              │  ← ④バリュープロポジション
 │  あなたのアプリにも。               │     text-lg text-gray-700
 │                                     │
 │  ✓ キーワード順位を自動追跡         │  ← ⑤3つの価値訴求（チェックリスト）
@@ -70,19 +70,19 @@ country : 国コード JP/US 等（任意、デフォルト JP）
 │  [SNSシェアボタン]                  │  ← ⑧シェア再拡散
 │  [ 🐦 X でシェア ]  [ 📋 コピー ]   │
 │                                     │
-│  © ASO Tool  · プライバシーポリシー │  ← フッター text-xs text-gray-400
+│  © ASO Compass  · プライバシーポリシー │  ← フッター text-xs text-gray-400
 └─────────────────────────────────────┘
 
 
 [デスクトップ / max-w-2xl mx-auto]
 ┌────────────────────────────────────────────────────────┐
-│  ASO Tool                                              │
+│  ASO Compass                                              │
 ├─────────────────────────────┬──────────────────────────┤
 │  [カードビジュアル]         │  🎉 {kw}が{n}位上昇！     │
 │  aspect-[1200/630]         │                            │
 │  left column               │  {アプリ名} · {国}         │
 │  (flex-1)                  │  ──────────────────       │
-│                            │  ASO Tool で同じ成果を     │
+│                            │  ASO Compass で同じ成果を     │
 │                            │  あなたのアプリにも。       │
 │                            │                            │
 │                            │  ✓ キーワード順位を追跡    │
@@ -126,7 +126,7 @@ country : 国コード JP/US 等（任意、デフォルト JP）
       text-green-300 text-xl sm:text-2xl font-semibold
 
   [下段]
-    App Store Optimization · powered by ASO Tool
+    App Store Optimization · powered by ASO Compass
       text-white/40 text-xs sm:text-sm text-right
 ```
 
@@ -156,7 +156,7 @@ Secondary:
 
 | 状況 | 表示 |
 |------|------|
-| `kw` パラメータ欠如 | 「シェアリンクが無効です」メッセージ + ASO Tool トップへの CTA |
+| `kw` パラメータ欠如 | 「シェアリンクが無効です」メッセージ + ASO Compass トップへの CTA |
 | `from` <= `to`（下落） | カードは表示するが「上昇」テキストは出さない。CTAは通常通り |
 | 数字が異常値（0以下など） | 「−」表示にフォールバック |
 

@@ -1,9 +1,9 @@
-//  ASO_toolApp.swift
+//  ASOCompassApp.swift
 
 import SwiftUI
 
 @main
-struct ASO_toolApp: App {
+struct ASOCompassApp: App {
     @StateObject private var appState = AppState()
 
     var body: some Scene {

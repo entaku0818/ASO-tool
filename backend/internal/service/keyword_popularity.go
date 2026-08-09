@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/entaku0818/aso-tool/backend/internal/crypto"
-	"github.com/entaku0818/aso-tool/backend/internal/model"
-	"github.com/entaku0818/aso-tool/backend/internal/repository"
-	"github.com/entaku0818/aso-tool/backend/internal/scraper"
+	"github.com/entaku0818/aso-compass/backend/internal/crypto"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/repository"
+	"github.com/entaku0818/aso-compass/backend/internal/scraper"
 )
 
 type KeywordPopularityService struct {

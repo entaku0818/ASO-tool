@@ -18,10 +18,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
   const title = improvement > 0
     ? `${appName}「${keyword}」が #${toRank} に急上昇！`
-    : `${appName} のキーワード順位 — ASO Tool`
+    : `${appName} のキーワード順位 — ASO Compass`
   const description = improvement > 0
-    ? `キーワード「${keyword}」で #${fromRank} → #${toRank}（+${improvement}位）。ASO Tool でキーワード順位を自動追跡。`
-    : 'ASO Tool でキーワード順位を自動追跡・分析。無料プランで今すぐ始められます。'
+    ? `キーワード「${keyword}」で #${fromRank} → #${toRank}（+${improvement}位）。ASO Compass でキーワード順位を自動追跡。`
+    : 'ASO Compass でキーワード順位を自動追跡・分析。無料プランで今すぐ始められます。'
 
   return {
     title,
@@ -30,7 +30,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       title,
       description,
       type: 'website',
-      siteName: 'ASO Tool',
+      siteName: 'ASO Compass',
     },
     twitter: {
       card: 'summary',
@@ -90,7 +90,7 @@ export default function SharePage({ searchParams }: Props) {
             <span className="text-green-300 font-bold text-xl mb-3">+{improvement}位 ↑</span>
           </div>
           <hr className="border-white/30 mb-3" />
-          <p className="text-white/50 text-xs">App Store Optimization · powered by ASO Tool</p>
+          <p className="text-white/50 text-xs">App Store Optimization · powered by ASO Compass</p>
         </div>
       </div>
 
@@ -115,7 +115,7 @@ export default function SharePage({ searchParams }: Props) {
           あなたのアプリも上位表示を狙えます
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          ASO Tool でキーワード順位を自動追跡・分析。<br />
+          ASO Compass でキーワード順位を自動追跡・分析。<br />
           無料プランでも今すぐ始められます。
         </p>
         <Link
@@ -167,7 +167,7 @@ export default function SharePage({ searchParams }: Props) {
 
       {/* ── フッター ────────────────────────────────────────── */}
       <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-8 mb-4">
-        © ASO Tool — App Store Optimization Platform
+        © ASO Compass — App Store Optimization Platform
       </p>
     </div>
   )

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
 	"github.com/golang-jwt/jwt/v5"
 )
 

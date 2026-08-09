@@ -27,7 +27,7 @@ struct AppListView: View {
                 // Section header
                 HStack {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("ASO Studio")
+                        Text("ASO Compass")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(colorScheme == .dark ? AnyShapeStyle(Aurora.textDim) : AnyShapeStyle(.tertiary))
                             .tracking(1.2)

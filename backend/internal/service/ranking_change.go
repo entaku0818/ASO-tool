@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/entaku0818/aso-tool/backend/internal/notification"
-	"github.com/entaku0818/aso-tool/backend/internal/repository"
+	"github.com/entaku0818/aso-compass/backend/internal/notification"
+	"github.com/entaku0818/aso-compass/backend/internal/repository"
 )
 
 // RankingChangeService detects significant ranking changes

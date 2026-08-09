@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/entaku0818/aso-tool/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
 )
 
 func newTestSvc(handler http.HandlerFunc) (*TranslationService, func()) {

@@ -15,6 +15,8 @@ final class AppState: ObservableObject {
 
     init(credentials: CredentialStore = .standard) {
         self.credentials = credentials
+        // 旧 Bundle ID (com.entaku.ASO-tool) からの引き継ぎ。読み込みより先に行う。
+        CredentialStore.migrateLegacyCredentialsIfNeeded(into: credentials)
         token = credentials.token
         email = credentials.email
         licenseKey = credentials.licenseKey

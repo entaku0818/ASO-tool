@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 
-const DOWNLOAD_URL = 'https://github.com/entaku0818/ASO-tool/releases/latest/download/ASO-tool.dmg'
+const DOWNLOAD_URL = 'https://github.com/entaku0818/ASOCompass/releases/latest/download/ASOCompass.dmg'
 
 const STEPS = [
   {
@@ -15,7 +15,7 @@ const STEPS = [
     num: 2,
     title: 'macOSアプリをダウンロード',
     desc: 'macOS 13 Ventura 以降に対応しています。',
-    action: { label: 'ASO-tool.dmg をダウンロード', href: DOWNLOAD_URL },
+    action: { label: 'ASOCompass.dmg をダウンロード', href: DOWNLOAD_URL },
   },
   {
     num: 3,

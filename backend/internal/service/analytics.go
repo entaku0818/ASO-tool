@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/entaku0818/aso-tool/backend/internal/appstoreconnect"
-	"github.com/entaku0818/aso-tool/backend/internal/crypto"
-	"github.com/entaku0818/aso-tool/backend/internal/model"
-	"github.com/entaku0818/aso-tool/backend/internal/repository"
+	"github.com/entaku0818/aso-compass/backend/internal/appstoreconnect"
+	"github.com/entaku0818/aso-compass/backend/internal/crypto"
+	"github.com/entaku0818/aso-compass/backend/internal/model"
+	"github.com/entaku0818/aso-compass/backend/internal/repository"
 )
 
 type AnalyticsService struct {

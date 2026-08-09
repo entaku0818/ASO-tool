@@ -1,13 +1,13 @@
 //
-//  ASO_toolUITestsLaunchTests.swift
-//  ASO-toolUITests
+//  ASOCompassUITestsLaunchTests.swift
+//  ASOCompassUITests
 //
 //  Created by 遠藤拓弥 on 2026/05/14.
 //
 
 import XCTest
 
-final class ASO_toolUITestsLaunchTests: XCTestCase {
+final class ASOCompassUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

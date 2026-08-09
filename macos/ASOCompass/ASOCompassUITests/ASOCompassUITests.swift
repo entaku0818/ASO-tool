@@ -1,13 +1,13 @@
 //
-//  ASO_toolUITests.swift
-//  ASO-toolUITests
+//  ASOCompassUITests.swift
+//  ASOCompassUITests
 //
 //  Created by 遠藤拓弥 on 2026/05/14.
 //
 
 import XCTest
 
-final class ASO_toolUITests: XCTestCase {
+final class ASOCompassUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

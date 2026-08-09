@@ -1,4 +1,4 @@
-module github.com/entaku0818/aso-tool/backend
+module github.com/entaku0818/aso-compass/backend
 
 go 1.24.0
 

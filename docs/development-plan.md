@@ -1,4 +1,4 @@
-# ASO-tool 開発計画
+# ASO Compass 開発計画
 
 ## 目次
 
@@ -12,7 +12,7 @@
 
 ## プロジェクト概要
 
-**ASO-tool** は App Store Optimization のための Web アプリケーションです。
+**ASO Compass** は App Store Optimization のための Web アプリケーションです。
 
 ### 主要機能
 
